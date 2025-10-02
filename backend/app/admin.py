@@ -18,6 +18,9 @@ admin_bp = Blueprint('admin', __name__)
 
 def admin_required(f):
     """Decorador para requerir permisos de administrador"""
+    from functools import wraps
+    
+    @wraps(f)
     def decorated_function(*args, **kwargs):
         if not current_user.is_admin():
             return jsonify({

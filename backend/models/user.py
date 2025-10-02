@@ -1,6 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_security import UserMixin, RoleMixin
-from sqlalchemy.orm import relationship, backref
+from datetime import datetime
+import uuid
 from sqlalchemy import Boolean, DateTime, Column, Integer, String, Text, ForeignKey
 from datetime import datetime
 
@@ -42,6 +43,7 @@ class User(db.Model, UserMixin):
     # Campos requeridos por Flask-Security
     active = db.Column(db.Boolean(), default=True)
     confirmed_at = db.Column(db.DateTime())
+    fs_uniquifier = db.Column(db.String(64), unique=True, nullable=False)
     
     # Información adicional del usuario
     first_name = db.Column(db.String(100))
@@ -57,6 +59,11 @@ class User(db.Model, UserMixin):
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __init__(self, **kwargs):
+        super(User, self).__init__(**kwargs)
+        if not self.fs_uniquifier:
+            self.fs_uniquifier = uuid.uuid4().hex
     
     # Relaciones
     roles = db.relationship('Role', secondary=roles_users,
