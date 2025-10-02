@@ -12,10 +12,11 @@ backend_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_dir))
 
 # Importar la aplicación Flask
-from app import create_app, db
+import app as app_module
+from models.user import db
 
 # Crear la aplicación
-app = create_app()
+app = app_module.create_app()
 
 # Inicializar la base de datos si es necesario
 with app.app_context():
