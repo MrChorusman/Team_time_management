@@ -28,7 +28,13 @@ class SupabaseConfig:
         if not cls.DB_PASSWORD:
             raise ValueError("SUPABASE_DB_PASSWORD no está configurado")
         
-        return f"postgresql://postgres:{cls.DB_PASSWORD}@{cls.DB_HOST}:{cls.DB_PORT}/{cls.DB_NAME}"
+        # Usar variables de entorno directas si están disponibles
+        db_password = os.environ.get('SUPABASE_DB_PASSWORD')
+        db_host = os.environ.get('SUPABASE_HOST', cls.DB_HOST)
+        db_port = os.environ.get('SUPABASE_PORT', cls.DB_PORT)
+        db_name = os.environ.get('SUPABASE_DB_NAME', cls.DB_NAME)
+        
+        return f"postgresql://postgres:{db_password}@{db_host}:{db_port}/{db_name}"
     
     @classmethod
     def is_configured(cls):
