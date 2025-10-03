@@ -16,7 +16,7 @@ def test_connection():
     password = os.environ.get('SUPABASE_DB_PASSWORD')
     
     print("URL:", url)
-    print("Host: aws-0-eu-west-1.pooler.supabase.com")
+    print("Host: aws-0-eu-west-3.pooler.supabase.com")
     print("Password configurado:", "SI" if password else "NO")
     
     # Probar conexión con psycopg2
@@ -24,10 +24,10 @@ def test_connection():
         import psycopg2
         
         conn = psycopg2.connect(
-            host="aws-0-eu-west-1.pooler.supabase.com",
-            port="5432",
+            host="aws-0-eu-west-3.pooler.supabase.com",
+            port="6543",
             database="postgres",
-            user="postgres",
+            user="postgres.xmaxohyxgsthligskjvg",
             password=password
         )
         

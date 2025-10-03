@@ -59,10 +59,12 @@ def create_supabase_tables():
     print("📊 Creando tablas en Supabase...")
     
     try:
-        from app import create_app
+        import sys
+        sys.path.insert(0, '.')
+        import app as app_module
         from models.user import db
         
-        app = create_app()
+        app = app_module.create_app()
         
         with app.app_context():
             # Crear todas las tablas
@@ -79,7 +81,9 @@ def migrate_data_from_local():
     print("📦 Migrando datos desde base de datos local...")
     
     try:
-        from app import create_app
+        import sys
+        sys.path.insert(0, '.')
+        import app as app_module
         from models.user import db, User, Role
         from models.employee import Employee
         from models.team import Team
@@ -87,7 +91,7 @@ def migrate_data_from_local():
         from models.calendar_activity import CalendarActivity
         from models.notification import Notification
         
-        app = create_app()
+        app = app_module.create_app()
         
         with app.app_context():
             # Verificar si ya hay datos en Supabase
@@ -119,13 +123,15 @@ def verify_migration():
     print("🔍 Verificando migración...")
     
     try:
-        from app import create_app
+        import sys
+        sys.path.insert(0, '.')
+        import app as app_module
         from models.user import db, User, Role
         from models.employee import Employee
         from models.team import Team
         from models.holiday import Holiday
         
-        app = create_app()
+        app = app_module.create_app()
         
         with app.app_context():
             # Verificar tablas principales

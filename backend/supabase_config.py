@@ -19,9 +19,10 @@ class SupabaseConfig:
     
     # Configuración de base de datos PostgreSQL
     DB_PASSWORD = os.environ.get('SUPABASE_DB_PASSWORD')
-    DB_HOST = os.environ.get('SUPABASE_HOST', 'aws-0-eu-west-1.pooler.supabase.com')
-    DB_PORT = os.environ.get('SUPABASE_PORT', '5432')
+    DB_HOST = os.environ.get('SUPABASE_HOST', 'aws-0-eu-west-3.pooler.supabase.com')
+    DB_PORT = os.environ.get('SUPABASE_PORT', '6543')
     DB_NAME = os.environ.get('SUPABASE_DB_NAME', 'postgres')
+    DB_USER = os.environ.get('SUPABASE_DB_USER', 'postgres.xmaxohyxgsthligskjvg')
     
     @classmethod
     def get_database_url(cls):
@@ -34,8 +35,9 @@ class SupabaseConfig:
         db_host = os.environ.get('SUPABASE_HOST', cls.DB_HOST)
         db_port = os.environ.get('SUPABASE_PORT', cls.DB_PORT)
         db_name = os.environ.get('SUPABASE_DB_NAME', cls.DB_NAME)
+        db_user = os.environ.get('SUPABASE_DB_USER', cls.DB_USER)
         
-        return f"postgresql://postgres:{db_password}@{db_host}:{db_port}/{db_name}"
+        return f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
     
     @classmethod
     def is_configured(cls):
