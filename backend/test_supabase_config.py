@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Script de prueba para verificar la configuración de Supabase
 """
@@ -29,9 +30,9 @@ def test_environment_variables():
         if value:
             # Mostrar solo los primeros caracteres por seguridad
             masked_value = value[:8] + "..." if len(value) > 8 else value
-            print(f"   ✅ {var}: {masked_value}")
+            print(f"   [OK] {var}: {masked_value}")
         else:
-            print(f"   ❌ {var}: NO CONFIGURADO")
+            print(f"   [ERROR] {var}: NO CONFIGURADO")
             missing_vars.append(var)
     
     if missing_vars:

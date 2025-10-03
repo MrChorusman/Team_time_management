@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Configuración específica para Supabase PostgreSQL
 Este archivo contiene la configuración para conectar con Supabase
@@ -18,7 +19,7 @@ class SupabaseConfig:
     
     # Configuración de base de datos PostgreSQL
     DB_PASSWORD = os.environ.get('SUPABASE_DB_PASSWORD')
-    DB_HOST = os.environ.get('SUPABASE_HOST', 'db.xmaxohyxgsthligskjvg.supabase.co')
+    DB_HOST = os.environ.get('SUPABASE_HOST', 'aws-0-eu-west-1.pooler.supabase.com')
     DB_PORT = os.environ.get('SUPABASE_PORT', '5432')
     DB_NAME = os.environ.get('SUPABASE_DB_NAME', 'postgres')
     
