@@ -59,6 +59,11 @@ class Config:
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
     MAIL_DEFAULT_SENDER = os.environ.get('MAIL_USERNAME')
     
+    # Configuración de Google OAuth
+    GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
+    GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
+    GOOGLE_REDIRECT_URI = os.environ.get('GOOGLE_REDIRECT_URI')
+    
     # Configuración de Redis para sesiones y caché
     REDIS_URL = os.environ.get('REDIS_URL') or 'redis://localhost:6379/0'
     SESSION_TYPE = 'redis'
