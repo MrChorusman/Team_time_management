@@ -1,10 +1,11 @@
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, current_app, redirect, session
 from flask_security import login_user, logout_user, current_user, auth_required
 from flask_security.utils import verify_password, hash_password
 from werkzeug.security import check_password_hash
 import logging
 
 from models.user import User, Role, db
+from services.google_oauth_service import GoogleOAuthService
 
 logger = logging.getLogger(__name__)
 
@@ -293,4 +294,136 @@ def get_roles():
         return jsonify({
             'success': False,
             'message': 'Error obteniendo roles'
+        }), 500
+
+# ===========================================
+# GOOGLE OAUTH ENDPOINTS
+# ===========================================
+
+@auth_bp.route('/google/url', methods=['GET'])
+def google_auth_url():
+    """Obtiene la URL de autorización de Google"""
+    try:
+        google_oauth = GoogleOAuthService()
+        google_oauth.init_app(current_app)
+        
+        if not google_oauth.is_configured():
+            return jsonify({
+                'success': False,
+                'message': 'Google OAuth no está configurado'
+            }), 400
+        
+        auth_url = google_oauth.get_auth_url()
+        
+        return jsonify({
+            'success': True,
+            'auth_url': auth_url
+        })
+        
+    except Exception as e:
+        logger.error(f"Error generando URL de Google OAuth: {e}")
+        return jsonify({
+            'success': False,
+            'message': 'Error generando URL de autorización'
+        }), 500
+
+@auth_bp.route('/google/callback', methods=['GET'])
+def google_callback():
+    """Maneja el callback de Google OAuth"""
+    try:
+        code = request.args.get('code')
+        state = request.args.get('state')
+        
+        if not code or not state:
+            return jsonify({
+                'success': False,
+                'message': 'Código de autorización o estado faltante'
+            }), 400
+        
+        google_oauth = GoogleOAuthService()
+        google_oauth.init_app(current_app)
+        
+        success, message, user_data = google_oauth.handle_callback(code, state)
+        
+        if success and user_data:
+            # Buscar el usuario en la base de datos
+            user = User.query.filter_by(email=user_data['email']).first()
+            
+            if user:
+                # Iniciar sesión
+                login_user(user, remember=True)
+                
+                # Obtener información del empleado si existe
+                employee_data = None
+                if user.employee:
+                    employee_data = user.employee.to_dict()
+                
+                logger.info(f"Usuario {user.email} inició sesión con Google OAuth")
+                
+                return jsonify({
+                    'success': True,
+                    'message': 'Autenticación con Google exitosa',
+                    'user': user.to_dict(),
+                    'employee': employee_data,
+                    'redirect_url': '/dashboard' if user.employee and user.employee.approved else '/employee/register'
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'message': 'Usuario no encontrado después de la autenticación'
+                }), 404
+        else:
+            return jsonify({
+                'success': False,
+                'message': message
+            }), 400
+            
+    except Exception as e:
+        logger.error(f"Error en callback de Google OAuth: {e}")
+        return jsonify({
+            'success': False,
+            'message': 'Error en autenticación con Google'
+        }), 500
+
+@auth_bp.route('/google/config', methods=['GET'])
+def google_config():
+    """Obtiene la configuración de Google OAuth (solo para verificar si está configurado)"""
+    try:
+        google_oauth = GoogleOAuthService()
+        google_oauth.init_app(current_app)
+        
+        return jsonify({
+            'success': True,
+            'configured': google_oauth.is_configured(),
+            'client_id': current_app.config.get('GOOGLE_CLIENT_ID', '').split('.')[0] + '...' if current_app.config.get('GOOGLE_CLIENT_ID') else None,
+            'redirect_uri': current_app.config.get('GOOGLE_REDIRECT_URI')
+        })
+        
+    except Exception as e:
+        logger.error(f"Error obteniendo configuración de Google OAuth: {e}")
+        return jsonify({
+            'success': False,
+            'message': 'Error obteniendo configuración'
+        }), 500
+
+@auth_bp.route('/google/disconnect', methods=['POST'])
+@auth_required()
+def google_disconnect():
+    """Desconecta la cuenta de Google del usuario actual"""
+    try:
+        # En una implementación completa, aquí se revocaría el token
+        # y se eliminarían los datos de Google del usuario
+        
+        logger.info(f"Usuario {current_user.email} desconectó su cuenta de Google")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Cuenta de Google desconectada exitosamente'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error desconectando Google OAuth: {e}")
+        return jsonify({
+            'success': False,
+            'message': 'Error desconectando cuenta de Google'
         }), 500

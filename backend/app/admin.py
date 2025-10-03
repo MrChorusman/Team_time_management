@@ -12,6 +12,7 @@ from models.notification import Notification
 from services.notification_service import NotificationService
 from services.holiday_service import HolidayService
 from services.email_service import EmailService
+from services.google_oauth_service import GoogleOAuthService
 
 logger = logging.getLogger(__name__)
 
@@ -668,5 +669,81 @@ def get_email_configuration():
         return jsonify({
             'success': False,
             'error': f'Error obteniendo configuración: {e}',
+            'timestamp': datetime.now().isoformat()
+        }), 500
+
+@admin_bp.route('/google-oauth-config', methods=['GET'])
+@auth_required()
+@admin_required
+def get_google_oauth_configuration():
+    """Obtiene la configuración actual de Google OAuth (sin mostrar credenciales)"""
+    try:
+        from flask import current_app
+        
+        google_oauth = GoogleOAuthService()
+        google_oauth.init_app(current_app)
+        
+        config = {
+            'configured': google_oauth.is_configured(),
+            'client_id': current_app.config.get('GOOGLE_CLIENT_ID', '').split('.')[0] + '...' if current_app.config.get('GOOGLE_CLIENT_ID') else None,
+            'redirect_uri': current_app.config.get('GOOGLE_REDIRECT_URI'),
+            'has_client_secret': bool(current_app.config.get('GOOGLE_CLIENT_SECRET'))
+        }
+        
+        return jsonify({
+            'success': True,
+            'config': config,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error obteniendo configuración de Google OAuth: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Error obteniendo configuración: {e}',
+            'timestamp': datetime.now().isoformat()
+        }), 500
+
+@admin_bp.route('/test-google-oauth', methods=['POST'])
+@auth_required()
+@admin_required
+def test_google_oauth_configuration():
+    """Prueba la configuración de Google OAuth"""
+    try:
+        from flask import current_app
+        
+        google_oauth = GoogleOAuthService()
+        google_oauth.init_app(current_app)
+        
+        if not google_oauth.is_configured():
+            return jsonify({
+                'success': False,
+                'error': 'Google OAuth no está configurado completamente',
+                'timestamp': datetime.now().isoformat()
+            }), 400
+        
+        # Intentar generar URL de autorización (prueba básica)
+        try:
+            auth_url = google_oauth.get_auth_url()
+            logger.info("Google OAuth configurado correctamente - URL generada")
+            
+            return jsonify({
+                'success': True,
+                'message': 'Google OAuth configurado correctamente',
+                'auth_url_preview': auth_url[:50] + '...',
+                'timestamp': datetime.now().isoformat()
+            })
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'error': f'Error generando URL de autorización: {e}',
+                'timestamp': datetime.now().isoformat()
+            }), 400
+            
+    except Exception as e:
+        logger.error(f"Error probando configuración Google OAuth: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Error probando configuración Google OAuth: {e}',
             'timestamp': datetime.now().isoformat()
         }), 500
