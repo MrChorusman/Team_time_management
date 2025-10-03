@@ -11,6 +11,7 @@ from models.calendar_activity import CalendarActivity
 from models.notification import Notification
 from services.notification_service import NotificationService
 from services.holiday_service import HolidayService
+from services.email_service import EmailService
 
 logger = logging.getLogger(__name__)
 
@@ -599,4 +600,73 @@ def get_system_logs():
         return jsonify({
             'success': False,
             'message': 'Error obteniendo logs'
+        }), 500
+
+@admin_bp.route('/test-smtp', methods=['POST'])
+@auth_required()
+@admin_required
+def test_smtp_configuration():
+    """Prueba la configuración SMTP"""
+    try:
+        from flask import current_app
+        
+        # Inicializar servicio de email
+        email_service = EmailService()
+        email_service.init_app(current_app)
+        
+        # Probar configuración
+        result = email_service.test_email_configuration()
+        
+        if result['success']:
+            logger.info(f"Prueba SMTP exitosa: {result['message']}")
+            return jsonify({
+                'success': True,
+                'message': result['message'],
+                'timestamp': datetime.now().isoformat()
+            })
+        else:
+            logger.error(f"Prueba SMTP fallida: {result['error']}")
+            return jsonify({
+                'success': False,
+                'error': result['error'],
+                'timestamp': datetime.now().isoformat()
+            }), 400
+            
+    except Exception as e:
+        logger.error(f"Error probando configuración SMTP: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Error probando configuración SMTP: {e}',
+            'timestamp': datetime.now().isoformat()
+        }), 500
+
+@admin_bp.route('/email-config', methods=['GET'])
+@auth_required()
+@admin_required
+def get_email_configuration():
+    """Obtiene la configuración actual de email (sin mostrar credenciales)"""
+    try:
+        from flask import current_app
+        
+        config = {
+            'mail_server': current_app.config.get('MAIL_SERVER'),
+            'mail_port': current_app.config.get('MAIL_PORT'),
+            'mail_use_tls': current_app.config.get('MAIL_USE_TLS'),
+            'mail_username': current_app.config.get('MAIL_USERNAME'),
+            'mail_default_sender': current_app.config.get('MAIL_DEFAULT_SENDER'),
+            'configured': bool(current_app.config.get('MAIL_USERNAME') and current_app.config.get('MAIL_PASSWORD'))
+        }
+        
+        return jsonify({
+            'success': True,
+            'config': config,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error obteniendo configuración de email: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Error obteniendo configuración: {e}',
+            'timestamp': datetime.now().isoformat()
         }), 500
