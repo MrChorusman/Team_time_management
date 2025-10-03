@@ -1,0 +1,655 @@
+# 📊 **DESCRIPCIÓN ANALÍTICA Y EXHAUSTIVA DE LA APLICACIÓN "Team Time Management"**
+
+## 🎯 **RESUMEN EJECUTIVO**
+
+La aplicación de Time es un sistema completo de gestión de horarios empresarial desarrollado con arquitectura moderna full-stack, diseñado para empresas multinacionales con capacidades globales avanzadas. La aplicación combina gestión de empleados, control de horarios, cálculos de previsión horaria, calendarios interactivos y un sistema de gestión automática de festivos a nivel mundial.
+
+---
+Proyecto en GITHUB: https://github.com/MrChorusman/Team_time_management
+
+**NOTA**: Las credenciales y tokens de acceso están configurados en variables de entorno locales para seguridad.
+
+
+##  **ARQUITECTURA GENERAL**
+
+### **Stack Tecnológico:**
+- **Frontend**: React + Vite + React Router 
+- **Backend**: Flask + SQLAlchemy + Flask-Security-Too
+- **Base de Datos**: PostgreSQL (Supabase) + SQLite (desarrollo local)
+- **Autenticación**: BUSCAR UN SISTEMA DE GESTIÓN DE USUARIOS, CON VALIDACIÓN DE EMAIL Y POSIBILIDAD DE REGISTRO VÍA GOOGLE
+
+### **Estructura del Proyecto:**
+Aplicacion_Control_horario/
+├── app-control-horarios-backend/ # API Flask
+├── app-control-horarios-frontend/ # React App
+
+#### **Servicios Avanzados:**
+- **HolidayServiceNew**: Gestión automática de festivos globales
+- **HoursCalculator**: Cálculos complejos de horas y eficiencia
+- **HealthMonitor**: Monitoreo de sistema en tiempo real
+- **MetricsCollector**: Recopilación de métricas de rendimiento
+
+### **2. FRONTEND (React)**
+
+#### **Componentes Principales:**
+- **App.jsx**: Layout principal con navegación lateral
+- **Dashboard**: Panel de control con métricas
+- **Calendar**: Calendario interactivo con gestión de actividades
+- **Admin**: Panel para la gestión de todas las funcionalides y campos de la aplicación
+- **EmployeeForm**: Formulario de registro de empleados
+- **Summary**: Resúmenes y reportes
+- **LoginPage**: Autenticación de usuarios
+
+DISEÑO Y UX
+
+Layout Visual:
+Grid Responsivo: 2 columnas en desktop, 1 en móvil
+Cards: Diseño con sombras y bordes redondeados
+Colores: Toda la aplicación será en blanco y negro
+Tipo de letra:sans-serif geométrica y moderna
+Iconos: Se utilizaran los iconos SVG, nunca emojis
+Espaciado: Padding y márgenes optimizados
+Feedback Visual:
+Mensajes de Éxito:  icono de check
+Mensajes de Error: icono de alerta
+Estados de Carga: Botón deshabilitado con texto "Registrando..."
+Validaciones: Errores en rojo debajo de cada campo
+Accesibilidad:
+Labels: Todos los campos tienen etiquetas asociadas
+Placeholders: Textos de ayuda descriptivos
+Focus: Navegación por teclado funcional
+ARIA: Atributos de accesibilidad implementados
+
+Pantalla de Registro/LOGIN
+- Una pantalla moderna con las funcionalidades standard de las pantallas de login/registro de las aplicaciones actuales
+- La pantalla estaría dividida en dos partes; la izquierda (25% de la ventana)con todo el apartado de login/registro y la derecha (un 75% de la ventana) con una imagen que evoque la vida laboral, registros horarios, calendarios, etc...
+
+#### **Características UI/UX:**
+- **Navegación lateral** con leyenda de actividades
+- **Diseño responsive** preparado para móviles
+- **Sistema de roles** (admin/user/manager/employee/viewer)
+- **Gestión de estado** con React Context
+- **Routing protegido** con autenticación
+--
+
+** Ejemplo de Operativa ** 
+
+1. Un usuario llega a nuestra aplicación, lo recibe nuestra ventana de registro/login
+2. Se registra con un formulario de registro standard, se enviará un correo de verificación de email y la aplicación no le permitirá el acceso hasta que verifique el email
+3. Una vez verifique su email registraremos su usuario en la aplicación con el rol viewer y no cambiará su rol a employee hasta que no complete su registro como empleado
+4. Al entrar con sus datos de acceso lo único que podrá ver será el formulario de regitro de empleado, donde deberá introducir todos los datos requeridos 
+5. Una vez completado el formulario se enviará un email al manager del equipo al que el usaurio se ha registrado y cuando el manager apruebe su solicitud se le asignará el rol empleado
+6. Una vez tenga el rol employee ya podrá acceder a ver su calendario con el resto de los empleados de su mismo equipo
+
+- Si un usuario es admin puede acceder a todas las funcionalidades de la aplicación
+
+
+---
+
+**REGISTRO Y GESTIÓN DE EMPLEADOS **
+
+El formulario de registro de empleado debe ser un componente  completo y robusto que permite registrar nuevos empleados en el sistema de control horario. Debe combinar una interfaz intuitiva con validaciones exhaustivas tanto en frontend como backend, e incluir funcionalidades avanzadas de gestión.
+
+- CAMPOS DEL FORMULARIO
+
+1. Información Básica del Empleado:
+
+A. Nombre del Equipo (Requerido)
+    * Tipo: Select desplegable
+    * Validación: Campo obligatorio, no puede estar vacío
+    * Funcionalidad:
+        - Lista desplegable con equipos existentes en la base de datos y previamente registrados a través del panel Admin
+        - Autocompletado inteligente
+        - Sugerencias basadas en equipos previos
+    Ejemplo: "Desarrollo Frontend", "Marketing Digital"
+B. Nombre y Apellidos (Requerido)
+    * Tipo: Campo de texto
+    * Validación:
+        - Campo obligatorio
+        - Mínimo 2 caracteres
+        - No puede duplicarse (verificación en backend)
+    Ejemplo: "Juan Pérez García"
+
+2. Configuración Horaria:
+
+A. Horas Lunes a Jueves (Requerido)
+    * Tipo: Campo numérico
+    * Validación:
+        - Entre 0 y 12 horas
+        - Acepta decimales (step 0.5)
+        - Número positivo obligatorio
+    Ejemplo: 8, 7.5, 6
+B. Horas Viernes (Requerido)
+    * Tipo: Campo numérico
+    * Validación:
+        - Entre 0 y 12 horas
+        - Acepta decimales (step 0.5)
+        - Número positivo obligatorio
+    Ejemplo: 7, 6.5, 5
+C. Horario de Verano
+    * Tipo: Campo numérico
+    * Validación:
+        - Entre 0 y 12 horas
+        - Acepta decimales (step 0.5)
+        - Número positivo obligatorio
+    Ejemplo: 8, 7.5, 6
+
+3. Beneficios Laborales:
+
+A. Días de Vacaciones Anuales (Requerido)
+    * Tipo: Campo numérico entero
+    * Validación:
+        - Entre 1 y 40 días
+        - Número entero positivo
+    Ejemplo: 22, 25, 30
+
+B. Horas de Libre Disposición Anuales (Requerido)
+    * Tipo: Campo numérico entero
+    * Validación:
+        - Entre 0 y 200 horas
+        - Número entero no negativo
+    Ejemplo: 40, 60, 80
+
+4. Ubicación Geográfica:
+
+A. Comunidad Autónoma (Requerido)
+        * Tipo: Select desplegable
+        * Opciones: 19 comunidades autónomas españolas
+        * Lista completa:
+        - Andalucía, Aragón, Asturias, Baleares, Canarias
+        - Cantabria, Castilla-La Mancha, Castilla y León
+        - Cataluña, Comunidad Valenciana, Extremadura
+        - Galicia, La Rioja, Madrid, Murcia, Navarra
+        - País Vasco, Ceuta, Melilla
+7. ¿Tiene horario verano?
+    * Tipo: Buelano
+    * Opciones: Sí / No
+6. Meses horario Verano
+    Tipo: Select despleable multiopción
+    * Validación: Campo obligatorio, no puede estar vacío si seleccionó como positivo si tiene horario verano
+    * Funcionalidad:
+        - Lista desplegable con meses del año
+
+    Ejemplo: Julio, Agosto
+
+--
+  
+
+
+
+---
+
+## 🌍 **SISTEMA GLOBAL DE FESTIVOS**
+
+### **Características Revolucionarias:**
+
+#### **Cobertura Mundial:**
+- **118 países** disponibles para carga automática
+- **589 festivos** cargados actualmente
+- **26.27% de cobertura** (31 países activos)
+- **87 países** listos para carga inmediata
+
+#### **Jerarquía Inteligente:**
+
+🇪🇸 España (Nacional)
+└── Galicia (Autonómico)
+└── A Coruña (Local)
+├── Navidad (Nacional)
+├── Santiago Apóstol (Autonómico)
+└── San Juan (Local)
+
+#### **Carga Automática:**
+- **API Nager.Date**: Fuente oficial gubernamental
+- **Detección automática** al registrar empleados
+- **Prevención de duplicados** inteligente
+- **Categorización automática** (Nacional/Autonómico/Local)
+
+#### **Estadísticas Actuales:**
+- 🇺🇸 **Estados Unidos**: 45 festivos
+- 🇪🇸 **España**: 39 festivos
+- 🇳🇦 **Namibia**: 36 festivos
+- 🇨🇦 **Canadá**: 31 festivos
+- 🇦🇺 **Australia**: 24 festivos
+
+---
+
+##  **GESTIÓN DE CALENDARIO Y HORARIOS**
+
+### **Tipos de Actividades:**
+- **V** - Vacaciones (Verde claro)
+- **F** - Ausencias (Amarillo claro)
+- **HLD** - Horas Libre Disposición (Verde)
+- **G** - Guardia (Naranja)
+- **A** - Formación/Evento (Morado)
+- **C** - Permiso/Otro (Azul claro)
+
+### **Funcionalidades del Calendario:**
+- **Vista mensual** interactiva
+--**Vista anual** global
+- **Gestión por empleado** individual
+- **Cálculo automático** de horas trabajadas
+- **Integración con festivos** automática
+- **Validación de datos** en tiempo real
+
+### **Cálculos Avanzados:**
+- **Horas semanales** por empleado y/o equipo
+- **Horas mensuales** teóricas vs reales
+- **Eficiencia por equipo** y global
+- **Proyecciones** de horas futuras
+- **Análisis de tendencias**
+
+--
+
+## **MÉTRICAS Y ANÁLISIS**
+
+### **Dashboard Principal:**
+- **Resumen por equipos** con eficiencia
+- **Métricas globales** de la empresa
+- **Proyecciones** de horas mensuales
+- **Análisis de tendencias** temporales
+- **Alertas** de rendimiento
+
+### **Reportes Disponibles:**
+- **Resumen anual** por empleado
+- **Eficiencia por equipo**
+- **Análisis de festivos** por región
+- **Proyecciones** de carga de trabajo
+- **Métricas de asistencia**
+
+---
+
+## 🌟 **CARACTERÍSTICAS DESTACADAS**
+
+### **1. Escalabilidad Global:**
+- Soporte para **cualquier país del mundo**
+- Carga automática de festivos
+- Estructura geográfica jerárquica
+- APIs gubernamentales oficiales
+- Paginación preparada para muchos empleados
+- Filtros por equipo y comunidad
+- API RESTful bien estructurada
+- Componentes reutilizables
+
+### **2. Automatización Inteligente:**
+- Detección automática de países sin festivos
+- Carga inteligente sin duplicados
+- Cálculos automáticos de horas
+- Validación de datos en tiempo real
+
+### **3. Arquitectura Moderna:**
+- Separación clara frontend/backend
+- API RESTful bien diseñada
+- Autenticación JWT segura
+- Testing completo implementado
+
+### **4. Experiencia de Usuario:**
+- Interfaz intuitiva y responsive
+- Navegación fluida  
+- Feedback visual inmediato
+- Gestión de errores robusta
+- Formulario intuitivo con campos claramente etiquetados
+- Validación en tiempo real con feedback inmediato
+- Autocompletado inteligente para equipos
+- Mensajes descriptivos de error y éxito
+
+---
+
+## 🎯 **CASOS DE USO PRINCIPALES**
+
+### **1. Gestión de Empleados Multinacionales:**
+- Registro de empleados de cualquier país
+- Carga automática de festivos específicos
+- Gestión de horarios por región
+- Análisis de eficiencia global
+
+### **2. Control de Horarios Avanzado:**
+- Calendario interactivo mensual
+- Tipos de actividad configurables
+- Cálculos automáticos de horas
+- Proyecciones y análisis
+
+### **3. Administración Empresarial:**
+- Panel de control con métricas
+- Gestión de usuarios y roles
+- Monitoreo de sistema
+- Reportes automáticos
+---
+**EXPLICACIÓN DEL CALENDARIO LABORAL ***
+
+¿QUÉ ES EL CALENDARIO?
+El calendario es como un "tablero de control visual" donde cada empleado puede ver y gestionar sus actividades laborales de forma muy intuitiva. Es como tener un calendario de pared digital pero mucho más inteligente, porque automáticamente sabe qué días son festivos, fines de semana, y te permite marcar tus vacaciones, ausencias y otras actividades con solo hacer clic.
+CÓMO SE VE EL CALENDARIO
+Estructura Visual:
+Columnas Principales:
+Equipo: Nombre del equipo (Frontend, Backend, etc.)
+Empleado: Nombre completo del empleado
+Vac: Días de vacaciones del mes
+Aus: Días de ausencias del mes
+1-31: Cada día del mes con sus actividades
+
+Bajo cada mes del calendario se debería ver una leyenda con la información de los festivos que hay para ese mes a nivel del país, comunidad autónoma y ciudad de los empleados que se muestran.
+
+El calendario debe tener dos opciones de visualización:
+- Vista mensual donde únicamente se ve en la pantalla el mes el curso y se puede ir navegando con las flechas entre los meses del año
+- Vista anual donde en la pantalla se ven todos los meses del año de manera consecutiva y se necesita hacer escroll para ir viendo todo el año.
+
+CÓDIGO DE COLORES
+Colores por Tipo de Actividad:
+ VERDE CLARO - Vacaciones (V)
+Cuándo: Cuando te vas de vacaciones
+Qué hace: Resta todas las horas del día (día completo perdido)
+Ejemplo: Si tienes 8h configuradas y marcas V, ese día cuenta 0h
+ AMARILLO - Ausencias (A)
+Cuándo: Cuando faltas por enfermedad, cita médica, etc.
+Qué hace: Resta todas las horas del día (día completo perdido)
+Ejemplo: Si tienes 8h configuradas y marcas A, ese día cuenta 0h
+VERDE OSCURO - Horas Libre Disposición (HLD)
+Cuándo: Cuando tomas horas libres (salir antes, llegar tarde)
+Qué hace: Resta solo las horas que especifiques
+Ejemplo: Si tienes 8h y tomas 2h libres, ese día cuenta 6h
+Se muestra: "HLD -2h" (con el número de horas)
+ AZUL CLARO - Guardia (G)
+Cuándo: Cuando haces guardia o horas extra
+Qué hace: Suma las horas que especifiques
+Ejemplo: Si tienes 8h y haces 4h de guardia, ese día cuenta 12h
+Se muestra: "G +4h" (con el número de horas)
+ MORADO - Formación/Evento (F)
+Cuándo: Cuando vas a formación, eventos de empresa, etc.
+Qué hace: Resta solo las horas que especifiques
+Ejemplo: Si tienes 8h y tomas 2h libres, ese día cuenta 6h
+Se muestra: "F -2h" (con el número de horas)
+ AZUL CLARO - Permiso/Otro (C)
+Cuándo: Otros permisos, citas personales, etc.
+Qué hace: Resta todas las horas del día (día completo perdido)
+Ejemplo: Si tienes 8h configuradas y marcas C, ese día cuenta 0h
+Colores del Sistema:
+ ROJO CLARO - Festivos
+Cuándo: Días festivos nacionales o de tu comunidad
+Qué hace: No puedes marcar actividades (día no laborable)
+Automático: El sistema los marca automáticamente según tu comunidad
+ GRIS - Fines de Semana
+Cuándo: Sábados y domingos
+Qué hace: No puedes marcar actividades (día no laborable)
+Automático: El sistema los marca automáticamente
+ BLANCO - Días Laborables Vacíos
+Cuándo: Días normales sin actividades marcadas
+Qué hace: Cuenta las horas normales según tu configuración
+Ejemplo: Si tienes 8h L-J configuradas, cuenta 8h
+ CÓMO USAR EL CALENDARIO
+Paso 1: Navegación
+Paso 2: Marcar Actividades
+Paso 3: Actividades con Horas
+Paso 4: Eliminar Actividades
+EJEMPLO PRÁCTICO DE USO
+Escenario: Juan del equipo Frontend en Enero 2025
+Configuración de Juan:
+Horario: 8h Lunes-Jueves, 7h Viernes
+Comunidad: Madrid
+Actividades que marca:
+Semana 1 (1-5 enero):
+1 enero:  Festivo (automático) - No puede marcar nada
+2 enero:  Vacaciones - Marca "V" (día completo perdido)
+3 enero:  Normal - No marca nada (cuenta 8h)
+4 enero:  HLD - Marca "HLD" con 2h (cuenta 6h)
+5 enero:  Normal - No marca nada (cuenta 7h)
+Semana 2 (6-12 enero):
+6 enero:  Guardia - Marca "G" con 4h (cuenta 12h)
+7 enero:  Normal - No marca anada (cuenta 8h)
+8 enero:  Ausencia - Marca "A" (día completo perdido)
+9 enero:  Normal - No marca nada (cuenta 8h)
+10 enero:  Normal - No marca nada (cuenta 7h)
+11 enero:  Fin de semana (automático)
+12 enero:  Fin de semana (automático)
+Resultado Visual:
+Cálculo de Horas:
+ CARACTERÍSTICAS INTELIGENTES
+1. Festivos Automáticos:
+Nacionales: Navidad, Año Nuevo, etc. (para todos)
+Regionales: Santiago Apóstol en Galicia, San Juan en A Coruña, etc.
+Específicos: Cada empleado ve solo los festivos de su comunidad
+2. Validaciones Inteligentes:
+No puedes marcar actividades en festivos o fines de semana
+Solo puedes marcar en días laborables (blancos)
+El sistema previene errores automáticamente
+3. Resumen Automático:
+Contador de vacaciones: Te dice cuántos días de vacaciones llevas
+Contador de ausencias: Te dice cuántos días has faltado
+Actualización en tiempo real: Los números se actualizan al marcar actividades
+4. Responsive y Móvil:
+Se adapta a pantallas pequeñas
+Scroll horizontal para ver todos los días
+Funciona en móviles y tablets
+ CONSEJOS DE USO
+Para Empleados:
+Marca las actividades tan pronto como sepas que vas a faltar
+Usa HLD para salir antes o llegar tarde (más flexible que vacaciones)
+Usa Guardia para horas extra que hagas
+Revisa el resumen para ver cómo vas de vacaciones y ausencias
+Para Managers:
+Revisa el calendario para ver la disponibilidad del equipo
+Controla las vacaciones para planificar proyectos
+Identifica patrones de ausencias o guardias
+Usa los datos para el forecast y facturación
+ VENTAJAS DEL SISTEMA
+Para el Empleado:
+✅ Visual e intuitivo - Ves todo de un vistazo
+✅ Automático - No tienes que calcular festivos
+✅ Flexible - Puedes marcar actividades parciales (HLD)
+✅ Inmediato - Los cambios se ven al instante
+Para la Empresa:
+✅ Control total - Sabes exactamente quién está disponible
+✅ Datos precisos - Para facturación y forecast
+✅ Prevención de errores - No puedes marcar días imposibles
+✅ Historial completo - Queda registro de todas las actividades
+ RESULTADO FINAL
+El calendario te da un control visual completo de tu tiempo laboral:
+Ves el mes completo con todas tus actividades
+Colores intuitivos que entiendes al instante
+ Marcado rápido con clic derecho
+Resumen automático de vacaciones y ausencias
+Validaciones inteligentes que previenen errores
+Funciona en cualquier dispositivo
+Es como tener un asistente personal que se encarga de todos los cálculos complicados mientras tú solo tienes que hacer clic para marcar tus actividades. ¡Súper fácil y eficiente!  
+---
+** EXPLICACIÓN DEL CÁLCULO DE FORECAST ** 
+
+¿QUÉ ES EL FORECAST?
+El forecast es un sistema de proyección y análisis de horas que calcula automáticamente cuántas horas debería trabajar cada empleado, cuántas ha trabajado realmente, y cómo se distribuyen esas horas entre los diferentes proyectos . Es como tener una bola de crista que te dice si tu equipo está cumpliendo con los objetivos.
+
+ LOS TRES TIPOS DE CÁLCULOS PRINCIPALES
+1.  HORAS TEÓRICAS (Lo que debería trabajar)
+"¿Cuántas horas debería trabajar Juan este mes?"
+El sistema toma cada día del mes y pregunta:
+¿Es fin de semana? → Si es sábado o domingo, no cuenta
+¿Es festivo? → Si es festivo nacional o de su comunidad, no cuenta
+¿El proyecto tiene horario de verano? → Si lo tiene será un horario especial
+¿Qué día de la semana es? →
+Lunes a Jueves: usa las horas configuradas del empleado (ej: 8h)
+Viernes: usa las horas de viernes (ej: 7h)
+Ejemplo práctico:
+2.  HORAS REALES (Lo que realmente trabajó)
+"¿Cuántas horas trabajó Juan realmente este mes?"
+El sistema mira el calendario del empleado y aplica las deducciones:
+Vacaciones (V): Si Juan se fue de vacaciones, ese día cuenta 0 horas
+Ausencias (F): Si Juan faltó por enfermedad, ese día cuenta 0 horas
+Horas Libre Disposición (HLD): Si Juan tomó 2h libres, se restan de las horas del día
+Guardias (G): Si Juan hizo guardia, se suman esas horas extra
+Ejemplo práctico:
+3.  DISTRIBUCIÓN POR PROYECTOS 
+Aquí viene la parte más compleja e interesante:
+ HORAS EMPRESA 1 cuaya facturación se calcula  del día 1 al último día del mes 
+"¿Cuántas horas trabajó Juan para INDRA este mes?"
+Período: Del día 1 al último día del mes
+Cálculo: Toma las horas reales del mes completo
+
+HORAS EMPRESA 2 cuaya facturación se calcula Del día 26 del mes anterior al día 25 del mes actual
+"¿Cuántas horas trabajó Juan para INDITEX este mes?"
+Período: Del día 26 del mes anterior al día 25 del mes actual
+Ejemplo: Para enero 2025, cuenta del 26 de diciembre 2024 al 25 de enero 2025
+Cálculo: Toma las horas reales de ese período específico
+
+¿Por qué este período raro?
+Es porque EMPRESA 2 tiene un calendario diferente, como si fuera un "mes corrido" que empieza a mediados de mes.
+
+ EJEMPLO REAL COMPLETO
+Datos del Empleado:
+Nombre: María García
+Equipo: Desarrollo Frontend
+Horario: 8h L-J, 7h Viernes
+Comunidad: Madrid
+Mes: Enero 2025
+Días laborables: 22 días (sin festivos)
+Horas teóricas: (16 L-J × 8h) + (6 V × 7h) = 170h
+Actividades del Mes:
+Vacaciones: 2 días (16h menos)
+Horas libres: 3 días con 2h cada uno (6h menos)
+Guardia: 1 día con 4h extra (+4h)
+Cálculo Final:
+Distribución por Proyectos:
+EMPRESA 1 : 152h (período 1-31 enero)
+EMPRESA 2 : 158h (período 26 dic - 25 ene)
+Eficiencia: (152/170) × 100 = 89.4%
+🎯 ¿PARA QUÉ SIRVE ESTO?
+Para los Empleados:
+Saber si están cumpliendo con sus objetivos de horas
+Ver su eficiencia en tiempo real
+Planificar vacaciones sin afectar demasiado el rendimiento
+Para los Managers:
+Controlar el rendimiento de cada equipo
+Detectar problemas de asistencia o productividad
+Planificar recursos para proyectos futuros
+Justificar facturación a clientes (EMPRESA 1 /EMPRESA 2)
+Para la Empresa:
+Cumplir contratos con clientes
+Optimizar recursos humanos
+Predecir necesidades de personal
+Mantener calidad del servicio
+🔍 CASOS ESPECIALES
+Horario de Verano (Julio-Agosto por ejemplo):
+Todos trabajan 7h por día independientemente de su configuración
+Es una política de empresa para el verano
+Festivos:
+Nacionales: Afectan a todos (Navidad, Año Nuevo, etc.)
+Regionales: Solo afectan a empleados de esa comunidad
+Locales: Solo afectan a empleados de esa ciudad
+Período por EMPRESA:
+En el panel de administración debe existir un apartado para introducir difentes empresas e indicar el periodo de facturación mensual para cada una de ellas, con ese dato se ralizará el cálculo
+
+RESULTADO FINAL
+El sistema te da un reporte completo que incluye:
+✅ Horas teóricas que debería trabajar
+✅ Horas reales que trabajó realmente
+✅ Horas para diferentes periodos de facturación
+✅ Porcentaje de eficiencia (¿cumple objetivos?)
+✅ Estado del rendimiento (Excelente/Bueno/Mejorable)
+✅ Desglose por actividades (vacaciones, ausencias, etc.)
+Es como tener un asistente personal que calcula automáticamente todo lo que necesitas saber sobre el rendimiento de tu equipo, sin que tengas que hacer cálculos manuales ni revisar calendarios complicados.
+
+--
+**ANÁLISIS COMPLETO DE LA BASE DE DATOS SUPABASE**
+
+1️⃣ TODAS LAS TABLAS (11 tablas)
+Tabla	Tamaño	Descripción
+holidays_new	96 kB	Días festivos nuevos (589 registros)
+cities	40 kB	Ciudades (201 registros)
+countries	40 kB	Países (188 registros)
+autonomous_communities	8 kB	Comunidades autónomas (74 registros)
+holidays	8 kB	Días festivos (63 registros)
+provinces	8 kB	Provincias (52 registros)
+roles	8 kB	Roles de usuario (5 registros)
+employees	8 kB	Empleados (4 registros)
+roles_users	8 kB	Relación usuarios-roles (4 registros)
+users	16 kB	Usuarios del sistema (4 registros)
+calendar_entries	8 kB	Entradas de calendario (0 registros)
+2️⃣ RELACIONES ENTRE TABLAS (15 Foreign Keys)
+Diagrama de Relaciones:
+countries (id) ←── autonomous_communities (country_id)
+                ←── employees (country_id)
+                ←── holidays_new (country_id)
+
+autonomous_communities (id) ←── cities (autonomous_community_id)
+                           ←── employees (autonomous_community_id)
+                           ←── holidays (autonomous_community_id)
+                           ←── holidays_new (autonomous_community_id)
+                           ←── provinces (autonomous_community_id)
+
+provinces (id) ←── employees (province_id)
+              ←── holidays (province_id)
+
+cities (id) ←── employees (city_id)
+           ←── holidays_new (city_id)
+
+employees (id) ←── calendar_entries (employee_id)
+
+users (id) ←── roles_users (user_id)
+
+roles (id) ←── roles_users (role_id)
+
+3️⃣ REGISTROS POR TABLA
+Tabla	Registros	Estado
+holidays_new	589	✅ Datos completos
+cities	201	✅ Datos completos
+countries	188	✅ Datos completos
+autonomous_communities	74	✅ Datos completos
+holidays	63	✅ Datos completos
+provinces	52	✅ Datos completos
+roles	5	✅ Datos completos
+employees	4	✅ Datos completos
+roles_users	4	✅ Datos completos
+users	4	✅ Datos completos
+calendar_entries	0	⚠️ Sin datos
+4️⃣ DATOS DETALLADOS POR TABLA
+�� EMPLEADOS (4 registros)
+ID	Nombre	Equipo	Horas L-V	Horas V	Vacaciones	Horas Libres	Comunidad	Ciudad
+10	Luis Federico	Monitorización	9	7	22	40	Galicia	A Coruña
+11	Marie Dubois	Desarrollo	8	7	25	35	Galicia	A Coruña
+12	João Silva	Marketing	8	7	30	40	Galicia	A Coruña
+13	Aisha Hamunyela	Ventas	8	7	21	40	Galicia	A Coruña
+👤 USUARIOS (4 registros)
+ID	Email	Nombre	Estado	Confirmado
+2	miguelchis@gmail.com	Administrador del Sistema	✅ Activo	❌ Pendiente
+3	test@example.com	Usuario Test	✅ Activo	✅ Confirmado
+5	admin@example.com	-	✅ Activo	✅ Confirmado
+6	testuser@example.com	Usuario de Prueba	✅ Activo	✅ Confirmado
+🔐 ROLES (5 registros)
+ID	Nombre	Descripción
+42	admin	Administrator
+43	user	Regular user
+44	manager	Gestor de equipos
+45	employee	Empleado básico
+46	viewer	Solo lectura
+🔗 ASIGNACIÓN DE ROLES (4 registros)
+Usuario ID	Rol ID	Usuario	Rol
+2	42	miguelchis@gmail.com	admin
+3	42	test@example.com	admin
+5	43	admin@example.com	user
+5	42	admin@example.com	admin
+🌍 DATOS GEOGRÁFICOS
+Países (188 registros)
+España, Francia, Portugal, Brasil, etc.
+Incluye países de todo el mundo
+Comunidades Autónomas (74 registros)
+Andalucía, Aragón, Galicia, etc.
+Incluye comunidades de España y otros países
+Ciudades (201 registros)
+A Coruña, Madrid, Barcelona, París, etc.
+Ciudades de España y otros países
+📅 DÍAS FESTIVOS
+holidays (63 registros)
+60 nacionales (Año Nuevo, Epifanía, Viernes Santo, etc.)
+2 autonómicos (Día de Andalucía, etc.)
+1 local
+holidays_new (589 registros)
+Base de datos más completa de festivos
+Incluye festivos de múltiples países y regiones
+📊 CALENDAR_ENTRIES (0 registros)
+⚠️ Tabla vacía - Sin entradas de calendario registradas
+Lista para recibir datos de horarios de empleados
+✅ RESUMEN DEL ESTADO
+Fortalezas:
+✅ Conexión estable con Supabase
+✅ Estructura de base de datos bien diseñada
+✅ Relaciones entre tablas correctas
+✅ Datos geográficos completos
+✅ Sistema de usuarios y roles funcional
+✅ Empleados registrados correctamente
