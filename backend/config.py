@@ -5,6 +5,13 @@ from dotenv import load_dotenv
 # Cargar variables de entorno
 load_dotenv()
 
+# Importar configuración de Supabase
+try:
+    from supabase_config import SupabaseConfig
+    SUPABASE_AVAILABLE = SupabaseConfig.is_configured()
+except ImportError:
+    SUPABASE_AVAILABLE = False
+
 class Config:
     """Configuración base de la aplicación"""
     
@@ -15,9 +22,14 @@ class Config:
     SUPABASE_URL = os.environ.get('SUPABASE_URL')
     SUPABASE_KEY = os.environ.get('SUPABASE_KEY')
     
-    # Para desarrollo local, usar PostgreSQL local si está disponible
-    DATABASE_URL = os.environ.get('DATABASE_URL') or \
-                  f'postgresql://postgres:postgres@localhost:5432/team_time_management'
+    # Configuración de base de datos - priorizar Supabase si está disponible
+    if SUPABASE_AVAILABLE:
+        from supabase_config import SupabaseConfig
+        DATABASE_URL = SupabaseConfig.get_database_url()
+    else:
+        # Fallback a PostgreSQL local o SQLite
+        DATABASE_URL = os.environ.get('DATABASE_URL') or \
+                      f'postgresql://postgres:postgres@localhost:5432/team_time_management'
     
     SQLALCHEMY_DATABASE_URI = DATABASE_URL
     SQLALCHEMY_TRACK_MODIFICATIONS = False

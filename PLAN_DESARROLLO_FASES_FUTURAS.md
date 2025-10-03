@@ -625,6 +625,49 @@ Creación del documento completo de planificación para las fases futuras del pr
 **Próximo Desarrollo**:  
 **Fase 2 - Migración a Supabase PostgreSQL**
 
+### **🔧 Desarrollo Activo: Migración a Supabase PostgreSQL**
+
+**Rama**: `fase2-migracion-supabase`  
+**Fecha Inicio**: 03/10/2025  
+**Fecha Finalización**: -  
+**Estado**: 🔄 Iniciando  
+**Responsable**: Equipo de Desarrollo  
+
+**Descripción**:  
+Migración completa del sistema de base de datos de SQLite a PostgreSQL en Supabase para preparar la aplicación para producción empresarial.
+
+**Objetivos**:
+- Configurar conexión estable a Supabase PostgreSQL
+- Migrar esquema de base de datos completo
+- Migrar datos existentes de SQLite
+- Configurar variables de entorno de producción
+- Implementar sistema de backup y recuperación
+- Testing completo de la nueva configuración
+
+**Tareas Específicas**:
+1. Configurar conexión a Supabase PostgreSQL
+2. Migrar esquema de base de datos (tablas, índices, relaciones)
+3. Migrar datos existentes de SQLite
+4. Configurar variables de entorno de producción
+5. Testing de conexión y funcionalidad
+6. Configurar sistema de backup automático
+7. Validar rendimiento y estabilidad
+
+**Criterios de Aceptación**:
+- ✅ Conexión estable a Supabase PostgreSQL
+- ✅ Todos los datos migrados correctamente
+- ✅ Aplicación funcionando en producción
+- ✅ Backup y recuperación configurados
+- ✅ Variables de entorno seguras
+- ✅ Testing completo validado
+
+**Entregables Esperados**:
+- Configuración de Supabase funcionando
+- Base de datos PostgreSQL con todos los datos
+- Variables de entorno configuradas
+- Documentación de configuración
+- Sistema de backup implementado
+
 ---
 
 **¡El futuro de la gestión de tiempo empresarial comienza ahora! 🚀**
