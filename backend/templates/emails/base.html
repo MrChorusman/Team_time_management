@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ subject }}</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        
+        .email-container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .content {
+            padding: 30px 20px;
+        }
+        
+        .greeting {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        
+        .message {
+            font-size: 16px;
+            margin-bottom: 25px;
+            line-height: 1.7;
+        }
+        
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            margin: 15px 0;
+            transition: transform 0.2s ease;
+        }
+        
+        .button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .priority-high {
+            border-left: 4px solid #e74c3c;
+            background-color: #fdf2f2;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .priority-medium {
+            border-left: 4px solid #f39c12;
+            background-color: #fef9e7;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .priority-low {
+            border-left: 4px solid #27ae60;
+            background-color: #f0f9f0;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .priority-urgent {
+            border-left: 4px solid #e74c3c;
+            background-color: #fdf2f2;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 2px solid #e74c3c;
+        }
+        
+        .additional-info {
+            margin-top: 25px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #6c757d;
+        }
+        
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #6c757d;
+            border-top: 1px solid #dee2e6;
+        }
+        
+        .footer p {
+            margin: 5px 0;
+        }
+        
+        .logo {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto 15px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            
+            .header {
+                padding: 20px 15px;
+            }
+            
+            .content {
+                padding: 20px 15px;
+            }
+            
+            .header h1 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <div class="logo">TT</div>
+            <h1>Team Time Management</h1>
+            <p>Sistema de Gestión de Tiempo Empresarial</p>
+        </div>
+        
+        <div class="content">
+            <div class="greeting">
+                Hola {{ user_name }},
+            </div>
+            
+            <div class="message priority-{{ priority }}">
+                <h3 style="margin-top: 0; color: #2c3e50;">{{ title }}</h3>
+                <p>{{ message }}</p>
+                
+                {% if action_url %}
+                <p style="text-align: center;">
+                    <a href="{{ action_url }}" class="button">Ver detalles</a>
+                </p>
+                {% endif %}
+            </div>
+            
+            {% if additional_info %}
+            <div class="additional-info">
+                {{ additional_info | safe }}
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="footer">
+            <p><strong>Team Time Management</strong></p>
+            <p>Este email fue enviado automáticamente por nuestro sistema.</p>
+            <p>Fecha: {{ sent_date }}</p>
+            <p>Si tienes preguntas, contacta con tu administrador del sistema.</p>
+        </div>
+    </div>
+</body>
+</html>
