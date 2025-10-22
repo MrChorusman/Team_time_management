@@ -630,6 +630,59 @@ Creación del documento completo de planificación para las fases futuras del pr
 **Fecha Finalización**: 03/10/2025  
 **Estado**: ✅ SEMANA 1 COMPLETADA
 
+### **🚀 Desarrollo en Progreso: Despliegue en Producción con Render**
+
+**Rama**: `fase2-configuracion-smtp`  
+**Fecha Inicio**: 22/10/2025  
+**Fecha Finalización**: Pendiente  
+**Estado**: 🔄 EN PROGRESO  
+**Responsable**: Equipo de Desarrollo  
+
+**Descripción**:  
+Despliegue completo del backend de Team Time Management en Render.com para ambiente de producción, permitiendo testing real y acceso remoto sin dependencia de ambiente local.
+
+**Objetivos**:
+- ✅ Preparar archivos de configuración para Render (Procfile, runtime.txt)
+- ✅ Configurar servidor de producción con gunicorn
+- ✅ Establecer Python 3.11 como runtime
+- ⏳ Configurar variables de entorno en Render
+- ⏳ Resolver problemas de dependencias (pandas/numpy con Python 3.13)
+- ⏳ Desplegar backend exitosamente
+- ⏳ Validar endpoints de API en producción
+- ⏳ Configurar Vercel para frontend apuntando al backend de Render
+
+**Tareas Específicas Completadas**:
+1. ✅ Añadido gunicorn==21.2.0 a requirements.txt
+2. ✅ Creado Procfile con configuración de gunicorn optimizada
+3. ✅ Creado runtime.txt especificando Python 3.11.0
+4. ✅ Configurado MCP de Render e identificado workspace
+5. ✅ Diagnosticado error de incompatibilidad Python 3.13 con pandas
+
+**Archivos Creados/Modificados**:
+- ✅ `backend/Procfile`: Configuración para Render
+- ✅ `backend/runtime.txt`: Especifica Python 3.11.0
+- ✅ `backend/requirements.txt`: Añadido gunicorn para producción
+
+**Problema Identificado**:
+- Render intentaba usar Python 3.13.4 (demasiado nueva)
+- pandas 2.0.3 no compila con Python 3.13
+- Solución: Forzar Python 3.11.0 mediante runtime.txt + push a GitHub
+
+**Próximos Pasos**:
+1. Commit y push de archivos de configuración a GitHub
+2. Trigger de nuevo deploy en Render
+3. Configurar variables de entorno de producción
+4. Validar endpoints funcionando
+5. Desplegar frontend en Vercel
+6. Actualizar Google OAuth con URLs de producción
+
+**Criterios de Aceptación**:
+- ✅ Backend desplegado en Render sin errores
+- ✅ API respondiendo en https://team-time-management.onrender.com
+- ✅ Endpoint /api/health retorna status healthy
+- ✅ Conexión a Supabase funcionando desde producción
+- ✅ Variables de entorno configuradas correctamente
+
 ### **🔄 Desarrollo en Progreso: Fase 2 - Preparación para Producción**
 
 **Rama**: `fase2-migracion-supabase` (eliminada tras merge)  
