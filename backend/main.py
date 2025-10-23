@@ -11,7 +11,7 @@ import logging
 from config import config
 
 # Importar modelos
-from models.user import db, User, Role
+from models import db, User, Role
 from models.employee import Employee
 from models.team import Team
 from models.holiday import Holiday

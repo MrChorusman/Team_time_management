@@ -1,7 +1,5 @@
-from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, date
-
-db = SQLAlchemy()
+from .base import db
 
 class Holiday(db.Model):
     """Modelo para festivos globales"""
