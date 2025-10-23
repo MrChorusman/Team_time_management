@@ -41,6 +41,10 @@ class Config:
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_pre_ping': True,
         'pool_recycle': 300,
+        'pool_size': 5,
+        'max_overflow': 10,
+        'pool_timeout': 30,
+        'pool_reset_on_return': 'commit',
     }
     
     # Configuración de Flask-Security-Too
@@ -132,6 +136,19 @@ class ProductionConfig(Config):
     
     # Usar Supabase en producción
     SQLALCHEMY_DATABASE_URI = f'postgresql://postgres:{os.environ.get("SUPABASE_DB_PASSWORD")}@{os.environ.get("SUPABASE_HOST")}/postgres'
+    
+    # Configuración específica para Session Pooler de Supabase
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_pre_ping': True,
+        'pool_recycle': 300,
+        'pool_size': 1,  # Reducir pool size para Session Pooler
+        'max_overflow': 0,  # Sin overflow para evitar conflictos
+        'pool_timeout': 30,
+        'pool_reset_on_return': 'commit',
+        'connect_args': {
+            'options': '-c default_transaction_isolation=read_committed'
+        }
+    }
     
     # Configuración de seguridad adicional
     SESSION_COOKIE_SECURE = True
