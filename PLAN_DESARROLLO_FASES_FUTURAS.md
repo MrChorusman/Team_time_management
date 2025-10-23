@@ -774,13 +774,112 @@ GOOGLE_REDIRECT_URI=https://team-time-management.onrender.com/api/auth/google/ca
 - [Ver logs completos para lista completa]
 
 **Próximos Pasos Inmediatos**:
-1. ⏳ Verificar que el servicio arranca correctamente
-2. ⏳ Configurar las variables de entorno de producción restantes
-3. ⏳ Probar endpoint /api/health
-4. ⏳ Probar conexión a Supabase desde producción
-5. ⏳ Desplegar frontend en Vercel
+1. ✅ Verificar que el servicio arranca correctamente
+2. ✅ Configurar las variables de entorno de producción restantes
+3. ✅ Probar endpoint /api/health
+4. ✅ Probar conexión a Supabase desde producción
+5. 🔄 Desplegar frontend en Vercel (EN PROGRESO)
 6. ⏳ Actualizar Google OAuth con URLs de producción
 7. ⏳ Testing end-to-end en producción
+
+---
+
+### **🚀 Desarrollo en Progreso: Despliegue Frontend en Vercel**
+
+**Fecha Inicio**: 23/10/2025 10:41  
+**Estado**: 🔄 EN PROGRESO - Resolviendo problemas de build  
+**Responsable**: Equipo de Desarrollo  
+
+**Descripción**:  
+Despliegue del frontend de React en Vercel.com para conectarse al backend desplegado en Render.
+
+**Cronología del Despliegue de Vercel**:
+
+**10:41** - Primer deploy fallido
+- Error: `pnpm-lock.yaml` desactualizado
+- Causa: Lockfile no coincide con `package.json`
+- Solución: Eliminar `pnpm-lock.yaml` y usar npm
+
+**10:44** - Segundo deploy fallido
+- Error: Mismo error de `pnpm-lock.yaml`
+- Causa: Vercel seguía detectando el archivo a pesar de eliminarlo
+- Solución: Cambiar de pnpm a npm en `vercel.json`
+
+**10:45** - Tercer deploy fallido
+- Error: `Could not resolve "../../lib/utils" from "src/components/ui/LoadingSpinner.jsx"`
+- Causa: Imports con rutas relativas inconsistentes
+- Solución: Unificar todos los imports usando alias `@/lib/utils`
+
+**10:57** - Cuarto deploy fallido
+- Error: `Could not load /vercel/path0/frontend/src/lib/utils`
+- Causa: Vite no resolvía el archivo sin extensión
+- Solución 1: Añadir extensiones explícitas a `vite.config.js`
+
+**11:03** - Quinto deploy fallido
+- Error: Mismo error de resolución de archivo
+- Causa: Vite necesita extensión `.js` explícita en los imports
+- Solución 2: Cambiar todos los imports de `@/lib/utils` a `@/lib/utils.js`
+
+**11:12** - Sexto deploy fallido
+- Error: Mismo error
+- Causa: Vercel usando commit anterior (`0b5b78a`) en lugar del último (`add7d5f`)
+- Solución: Forzar redeploy con el commit correcto
+
+**Archivos Modificados**:
+- ✅ `frontend/vercel.json`: Configuración de Vercel con npm
+- ✅ `frontend/vite.config.js`: Añadidas extensiones explícitas
+- ✅ `frontend/src/config/environment.js`: Gestión de variables de entorno
+- ✅ `frontend/src/services/apiClient.js`: Actualizado para usar environment.js
+- ✅ 43 archivos: Cambiados imports de `@/lib/utils` a `@/lib/utils.js`
+- ❌ `frontend/pnpm-lock.yaml`: Eliminado
+- ✅ `frontend/package-lock.json`: Generado por npm
+
+**Problemas Resueltos**:
+
+1. **Incompatibilidad pnpm-lock.yaml**
+   - Síntoma: Error de frozen-lockfile en Vercel
+   - Root cause: Lockfile desactualizado
+   - Solución: Eliminar pnpm-lock.yaml y usar npm
+   - Lección: Vercel necesita lockfiles actualizados o usar npm
+
+2. **Imports con rutas relativas**
+   - Síntoma: No encuentra archivos con `../../lib/utils`
+   - Root cause: Inconsistencia entre rutas relativas y alias
+   - Solución: Unificar usando alias `@/lib/utils.js`
+   - Lección: Usar siempre alias para imports
+
+3. **Resolución de módulos sin extensión**
+   - Síntoma: Vite no encuentra `/src/lib/utils`
+   - Root cause: Vite en producción necesita extensiones explícitas
+   - Solución: Cambiar imports a `@/lib/utils.js`
+   - Lección: En producción, Vite necesita extensiones explícitas
+
+**Commits Realizados**:
+1. `8ab42a6` - 🚀 Preparar frontend para despliegue en Vercel con configuración de producción
+2. `b245236` - 🔧 Fix: Cambiar de pnpm a npm para compatibilidad con Vercel
+3. `c9d740e` - 🚀 Commit completo: Frontend listo para Vercel con npm
+4. `0b5b78a` - 🔧 Fix: Unificar imports usando alias @/lib/utils para compatibilidad con Vercel
+5. `e89569e` - 🔧 Fix: Añadir extensiones explícitas a resolve en vite.config.js para Vercel
+6. `add7d5f` - 🔧 Fix: Añadir extensión .js a todos los imports de utils para Vercel
+
+**Configuración de Vercel**:
+- Framework: Vite
+- Root Directory: frontend
+- Build Command: npm run build
+- Output Directory: dist
+- Install Command: npm install
+
+**Variables de Entorno en Vercel**:
+```
+VITE_API_BASE_URL=https://team-time-management.onrender.com/api
+```
+
+**Próximos Pasos**:
+1. ⏳ Esperar a que Vercel use el commit correcto (add7d5f)
+2. ⏳ Verificar que el build sea exitoso
+3. ⏳ Obtener URL de Vercel
+4. ⏳ Actualizar Google OAuth con URL de Vercel
+5. ⏳ Configurar CORS en backend para permitir URL de Vercel
 
 **Criterios de Aceptación**:
 - ✅ Backend desplegado en Render sin errores de build
