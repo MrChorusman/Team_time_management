@@ -92,7 +92,7 @@ def create_app(config_name=None):
         """Endpoint de salud del sistema"""
         try:
             # Verificar conexión a base de datos
-            db.session.execute('SELECT 1')
+            db.session.execute(db.text('SELECT 1'))
             db_status = 'healthy'
         except Exception as e:
             db_status = f'error: {str(e)}'
