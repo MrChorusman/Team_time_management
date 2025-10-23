@@ -11,7 +11,7 @@ import {
 import { Card, CardContent } from './card'
 import { Badge } from './badge'
 import { Button } from './button'
-import { cn } from '../../lib/utils'
+import { cn } from '@/lib/utils'
 import { useNotifications } from '../../contexts/NotificationContext'
 
 const NotificationItem = ({ 

@@ -17,7 +17,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext'
 import { useNotifications } from '../../contexts/NotificationContext'
 import { Button } from '../ui/button'
-import { cn } from '../../lib/utils'
+import { cn } from '@/lib/utils'
 
 const Sidebar = ({ isOpen, onToggle }) => {
   const location = useLocation()
