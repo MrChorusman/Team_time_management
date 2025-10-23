@@ -136,7 +136,13 @@ class ProductionConfig(Config):
     TESTING = False
     
     # Usar Supabase en producción con Transaction Pooler (recomendado para serverless)
-    SQLALCHEMY_DATABASE_URI = f'postgresql://{os.environ.get("SUPABASE_USER")}:{os.environ.get("SUPABASE_DB_PASSWORD")}@{os.environ.get("SUPABASE_HOST")}:{os.environ.get("SUPABASE_PORT")}/{os.environ.get("SUPABASE_DB")}'
+    # Usar directamente la URL de SupabaseConfig para asegurar consistencia
+    try:
+        from supabase_config import SupabaseConfig
+        SQLALCHEMY_DATABASE_URI = SupabaseConfig.get_database_url()
+    except ImportError:
+        # Fallback si no se puede importar SupabaseConfig
+        SQLALCHEMY_DATABASE_URI = f'postgresql://{os.environ.get("SUPABASE_USER")}:{os.environ.get("SUPABASE_DB_PASSWORD")}@{os.environ.get("SUPABASE_HOST")}:{os.environ.get("SUPABASE_PORT")}/{os.environ.get("SUPABASE_DB")}'
     
     # Configuración específica para Transaction Pooler de Supabase (puerto 6543)
     # Recomendado por Supabase para aplicaciones serverless como Render
