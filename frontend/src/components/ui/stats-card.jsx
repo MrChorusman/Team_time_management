@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from './card'
 import { Badge } from './badge'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils.js'
 
 const StatsCard = ({ 
   title, 

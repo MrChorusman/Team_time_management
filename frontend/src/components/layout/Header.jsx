@@ -23,7 +23,7 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
 import { Badge } from '../ui/badge'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils.js'
 
 const Header = ({ onMenuClick }) => {
   const { user, employee, logout } = useAuth()
