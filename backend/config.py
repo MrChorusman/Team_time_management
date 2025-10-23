@@ -1,6 +1,7 @@
 import os
 from datetime import timedelta
 from dotenv import load_dotenv
+from sqlalchemy.pool import NullPool
 
 # Cargar variables de entorno
 load_dotenv()
@@ -134,17 +135,15 @@ class ProductionConfig(Config):
     DEBUG = False
     TESTING = False
     
-    # Usar Supabase en producción
+    # Usar Supabase en producción con Transaction Pooler (recomendado para serverless)
     SQLALCHEMY_DATABASE_URI = f'postgresql://postgres:{os.environ.get("SUPABASE_DB_PASSWORD")}@{os.environ.get("SUPABASE_HOST")}/postgres'
     
-    # Configuración específica para Session Pooler de Supabase
+    # Configuración específica para Transaction Pooler de Supabase (puerto 6543)
+    # Recomendado por Supabase para aplicaciones serverless como Render
     SQLALCHEMY_ENGINE_OPTIONS = {
+        'poolclass': NullPool,  # Usar NullPool para Transaction Pooler
         'pool_pre_ping': True,
         'pool_recycle': 300,
-        'pool_size': 1,  # Reducir pool size para Session Pooler
-        'max_overflow': 0,  # Sin overflow para evitar conflictos
-        'pool_timeout': 30,
-        'pool_reset_on_return': 'commit',
         'connect_args': {
             'options': '-c default_transaction_isolation=read_committed'
         }
