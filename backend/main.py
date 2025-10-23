@@ -89,20 +89,73 @@ def create_app(config_name=None):
     
     @app.route('/api/health')
     def health_check():
-        """Endpoint de salud del sistema"""
-        try:
-            # Verificar conexión a base de datos
-            db.session.execute(db.text('SELECT 1'))
-            db_status = 'healthy'
-        except Exception as e:
-            db_status = f'error: {str(e)}'
+        """Endpoint de salud del sistema con diagnóstico detallado"""
+        import os
+        import psycopg2
         
-        return jsonify({
-            'status': 'healthy' if db_status == 'healthy' else 'unhealthy',
-            'database': db_status,
+        # Información básica del sistema
+        health_info = {
+            'status': 'unhealthy',
             'timestamp': datetime.utcnow().isoformat(),
-            'version': '1.0.0'
-        })
+            'version': '1.0.0',
+            'environment': os.environ.get('FLASK_ENV', 'unknown'),
+            'diagnostics': {}
+        }
+        
+        # Verificar variables de entorno
+        env_vars = {
+            'SUPABASE_HOST': os.environ.get('SUPABASE_HOST'),
+            'SUPABASE_PORT': os.environ.get('SUPABASE_PORT'),
+            'SUPABASE_DB': os.environ.get('SUPABASE_DB'),
+            'SUPABASE_USER': os.environ.get('SUPABASE_USER'),
+            'SUPABASE_DB_PASSWORD': '***' if os.environ.get('SUPABASE_DB_PASSWORD') else None
+        }
+        
+        health_info['diagnostics']['environment_variables'] = env_vars
+        
+        # Verificar conexión SQLAlchemy
+        try:
+            db.session.execute(db.text('SELECT 1'))
+            health_info['diagnostics']['sqlalchemy'] = 'healthy'
+        except Exception as e:
+            health_info['diagnostics']['sqlalchemy'] = f'error: {str(e)}'
+        
+        # Verificar conexión directa con psycopg2
+        try:
+            host = os.environ.get('SUPABASE_HOST')
+            port = os.environ.get('SUPABASE_PORT')
+            db_name = os.environ.get('SUPABASE_DB')
+            user = os.environ.get('SUPABASE_USER')
+            password = os.environ.get('SUPABASE_DB_PASSWORD')
+            
+            if all([host, port, db_name, user, password]):
+                connection_url = f"postgresql://{user}:{password}@{host}:{port}/{db_name}"
+                conn = psycopg2.connect(connection_url)
+                cursor = conn.cursor()
+                cursor.execute("SELECT current_user, current_database(), version();")
+                current_user, current_db, version = cursor.fetchone()
+                cursor.close()
+                conn.close()
+                
+                health_info['diagnostics']['psycopg2'] = {
+                    'status': 'healthy',
+                    'current_user': current_user,
+                    'current_database': current_db,
+                    'postgresql_version': version
+                }
+            else:
+                health_info['diagnostics']['psycopg2'] = 'error: Missing environment variables'
+                
+        except Exception as e:
+            health_info['diagnostics']['psycopg2'] = f'error: {str(e)}'
+        
+        # Determinar estado general
+        if (health_info['diagnostics']['sqlalchemy'] == 'healthy' and 
+            isinstance(health_info['diagnostics']['psycopg2'], dict) and 
+            health_info['diagnostics']['psycopg2']['status'] == 'healthy'):
+            health_info['status'] = 'healthy'
+        
+        return jsonify(health_info)
     
     @app.route('/api/info')
     def app_info():
