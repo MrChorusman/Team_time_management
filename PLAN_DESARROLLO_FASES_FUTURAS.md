@@ -901,12 +901,75 @@ VITE_API_BASE_URL=https://team-time-management.onrender.com/api
 - Región: Frankfurt (europe-west3)
 - Service ID: srv-d3sh8im3jp1c738ovacg
 
+### **🔄 Desarrollo en Progreso: Actualización Configuración Supabase Session Pooler**
+
+**Rama**: `fase2-actualizacion-supabase-session-pooler`  
+**Fecha Inicio**: 23/10/2025  
+**Fecha Finalización**: -  
+**Estado**: 🔄 EN PROGRESO  
+**Responsable**: Equipo de Desarrollo
+
+**Descripción**:  
+Actualización de las variables de entorno en Render para usar la configuración del Session Pooler de Supabase, que es compatible con IPv4 y necesario para el funcionamiento correcto en Render.
+
+**Objetivos**:
+- ✅ Actualizar variables de entorno en Render con configuración de Session Pooler
+- ✅ Probar conexión a Supabase desde Render con nueva configuración
+- ⏳ Verificar que todos los endpoints de API funcionan correctamente
+- ⏳ Actualizar documentación con nueva configuración
+
+**Configuración del Session Pooler**:
+- **Host**: `aws-0-eu-west-3.pooler.supabase.com`
+- **Puerto**: `5432`
+- **Base de datos**: `postgres`
+- **Usuario**: `postgres.xmaxohyxgsthligskjvg`
+- **Modo de pool**: `session`
+- **Compatibilidad**: IPv4 (requerido para Render)
+
+**Progreso del Desarrollo**:
+
+**✅ COMPLETADO**:
+1. **Actualización de Variables de Entorno en Render**
+   - Configuradas las variables SUPABASE_HOST, SUPABASE_PORT, SUPABASE_DB, SUPABASE_USER
+   - Variables actualizadas con valores del Session Pooler de Supabase
+   - Deploy automático iniciado tras actualización de variables
+
+2. **Actualización de Configuración del Backend**
+   - Modificado `backend/supabase_config.py` para usar las nuevas variables
+   - Cambiado puerto de 6543 a 5432 (Session Pooler)
+   - Actualizado usuario para usar formato del Session Pooler
+   - Cambiado nombres de variables para coincidir con Render
+
+3. **Prueba Local Exitosa**
+   - Creado script `backend/test_session_pooler_connection.py`
+   - Verificada conexión local con nueva configuración
+   - Confirmada compatibilidad con IPv4
+   - Validadas 13 tablas existentes en la base de datos
+   - Confirmados 2 usuarios en la base de datos
+
+**⏳ EN PROGRESO**:
+4. **Despliegue en Render**
+   - Deploy iniciado automáticamente tras actualización de variables
+   - Estado actual: `update_in_progress`
+   - Esperando que el servicio arranque correctamente
+
+**📋 PENDIENTES**:
+5. **Verificación de Endpoints**
+   - Probar endpoint `/api/health` una vez que el servicio esté activo
+   - Verificar conexión a Supabase desde producción
+   - Validar que todos los endpoints de API funcionan
+
+6. **Actualización de Documentación**
+   - Documentar nueva configuración de Session Pooler
+   - Actualizar guías de configuración
+   - Registrar cambios en este documento
+
 ### **🔄 Desarrollo en Progreso: Fase 2 - Preparación para Producción**
 
 **Rama**: `fase2-migracion-supabase` (eliminada tras merge)  
 **Fecha Inicio**: 03/10/2025  
 **Fecha Finalización**: 03/10/2025  
-**Estado**: 🔄 EN PROGRESO - 1/3 semanas completadas  
+**Estado**: ✅ COMPLETADO - 1/3 semanas completadas  
 **Responsable**: Equipo de Desarrollo  
 
 **Descripción**:  
