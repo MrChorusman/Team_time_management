@@ -971,6 +971,90 @@ Configuración exitosa de Supabase Transaction Pooler para Render, optimizada pa
 - **Despliegue**: ✅ Render funcionando correctamente
 - **Configuración**: ✅ Optimizada para aplicaciones serverless
 
+### **🔄 Desarrollo en Progreso: Pantalla de Login**
+
+**Rama**: `Pantalla-Login`  
+**Fecha Inicio**: 23/10/2025  
+**Fecha Finalización**: -  
+**Estado**: 🔄 EN PROGRESO  
+**Responsable**: Equipo de Desarrollo
+
+**Descripción**:  
+Desarrollo de la pantalla de login para la aplicación Team Time Management, incluyendo diseño, funcionalidad de autenticación y integración con el sistema de usuarios existente.
+
+**Objetivos**:
+- ⏳ Diseñar interfaz de usuario moderna y responsive
+- ⏳ Implementar funcionalidad de login con validación
+- ⏳ Integrar con sistema de autenticación existente
+- ⏳ Implementar manejo de errores y feedback al usuario
+- ⏳ Testing completo de funcionalidad
+- ⏳ Documentar implementación
+
+**Tecnologías a utilizar**:
+- Frontend: React/Vue.js (según arquitectura actual)
+- Backend: Flask (ya implementado)
+- Autenticación: Sistema existente con Supabase
+- Estilos: CSS moderno con diseño responsive
+- Iconos: SVG (nunca emojis)
+
+**Criterios de Aceptación**:
+- ✅ Interfaz moderna y profesional
+- ✅ Funcionalidad de login operativa
+- ✅ Validación de campos implementada
+- ✅ Manejo de errores robusto
+- ✅ Diseño responsive (móvil y desktop)
+- ✅ Integración con backend exitosa
+- ✅ Testing completo realizado
+
+**Progreso del Desarrollo**:
+
+**✅ COMPLETADO**:
+1. **Configuración del entorno de desarrollo**
+   - ✅ Crear rama Pantalla-Login
+   - ✅ Configurar entorno local
+   - ✅ Verificar dependencias
+   - ✅ Backend ejecutándose en puerto 5001
+   - ✅ Frontend ejecutándose en puerto 5173
+   - ✅ CORS configurado correctamente
+
+2. **Diagnóstico y pruebas de la pantalla de login**
+   - ✅ Pantalla de login existente verificada
+   - ✅ Registrado blueprint auth-simple en main.py
+   - ✅ Verificados endpoints de autenticación
+   - ✅ Identificado bug en auth_simple.py (conexión cerrada prematuramente)
+   - ✅ Actualizada contraseña de prueba (admin@example.com / test123)
+
+**⏳ EN PROGRESO**:
+3. **Corrección de problemas identificados**
+   - ⏳ Arreglar bug en auth_simple.py
+   - ⏳ O actualizar frontend para usar /api/auth estándar
+
+**📋 PENDIENTES**:
+2. **Diseño de la interfaz**
+   - Crear mockups/wireframes
+   - Definir componentes necesarios
+   - Establecer paleta de colores y tipografía
+
+3. **Implementación del frontend**
+   - Crear componentes de login
+   - Implementar formularios
+   - Agregar validaciones
+
+4. **Integración con backend**
+   - Conectar con endpoints de autenticación
+   - Manejar respuestas del servidor
+   - Implementar manejo de errores
+
+5. **Testing y validación**
+   - Probar funcionalidad completa
+   - Verificar responsive design
+   - Validar integración con backend
+
+6. **Documentación**
+   - Documentar componentes creados
+   - Actualizar guías de desarrollo
+   - Registrar cambios en este documento
+
 ### **🔄 Desarrollo en Progreso: Fase 2 - Preparación para Producción**
 
 **Rama**: `fase2-migracion-supabase` (eliminada tras merge)  

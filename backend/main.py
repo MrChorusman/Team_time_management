@@ -25,6 +25,7 @@ from services.notification_service import NotificationService
 
 # Importar blueprints (rutas)
 from app.auth import auth_bp
+from auth_simple import auth_simple_bp
 from app.employees import employees_bp
 from app.teams import teams_bp
 from app.calendar import calendar_bp
@@ -69,6 +70,7 @@ def create_app(config_name=None):
     
     # Registrar blueprints
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
+    app.register_blueprint(auth_simple_bp, url_prefix='/api/auth-simple')
     app.register_blueprint(employees_bp, url_prefix='/api/employees')
     app.register_blueprint(teams_bp, url_prefix='/api/teams')
     app.register_blueprint(calendar_bp, url_prefix='/api/calendar')
@@ -327,6 +329,6 @@ app = create_app()
 if __name__ == '__main__':
     app.run(
         host='0.0.0.0',
-        port=5000,
+        port=5001,
         debug=app.config.get('DEBUG', False)
     )
