@@ -63,8 +63,14 @@ const RegisterPage = () => {
                   ¡Registro Exitoso!
                 </h2>
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  Tu cuenta ha sido creada exitosamente. Serás redirigido al login en unos segundos.
+                  Tu cuenta ha sido creada exitosamente. <strong>Por favor, verifica tu email</strong> para activar tu cuenta antes de iniciar sesión.
                 </p>
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-4">
+                  <p className="text-sm text-blue-800 dark:text-blue-200">
+                    📧 Revisa tu bandeja de entrada y busca el email de verificación. 
+                    Si no lo encuentras, revisa la carpeta de spam.
+                  </p>
+                </div>
                 <LoadingSpinner size="sm" />
               </div>
             </CardContent>

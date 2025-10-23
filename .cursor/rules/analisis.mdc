@@ -1,0 +1,6 @@
+---
+alwaysApply: true
+---
+- Nunca des nada por supuesto
+- Analiza de manera crítica los cambios antes de realizarlos, midiendo adecuadamente el riesgo que pueden tener
+- No desarrolles ninguna funcionalidad sin tener en cuenta sus dependencias y conexiones

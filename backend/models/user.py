@@ -69,7 +69,7 @@ class User(db.Model, UserMixin):
     roles = db.relationship('Role', secondary=roles_users,
                            backref=db.backref('users', lazy='dynamic'))
     
-    # Relación con empleado (one-to-one)
+    # Relación con empleado (one-to-one) - referencia tardía
     employee = db.relationship('Employee', backref='user', uselist=False, cascade='all, delete-orphan')
     
     # Relación con notificaciones

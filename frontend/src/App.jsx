@@ -12,6 +12,7 @@ import LoadingSpinner from './components/ui/LoadingSpinner'
 // Páginas principales
 import LoginPage from './pages/auth/LoginPage'
 import RegisterPage from './pages/auth/RegisterPage'
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage'
 import DashboardPage from './pages/DashboardPage'
 import CalendarPage from './pages/CalendarPage'
 import EmployeesPage from './pages/EmployeesPage'
@@ -26,7 +27,7 @@ import './App.css'
 
 // Componente de rutas protegidas
 function ProtectedRoute({ children, requiredRole = null }) {
-  const { user, employee, loading } = useAuth()
+  const { user, employee, loading, isAdmin, isManager } = useAuth()
   
   if (loading) {
     return <LoadingSpinner />
@@ -37,8 +38,14 @@ function ProtectedRoute({ children, requiredRole = null }) {
   }
   
   // Si el usuario no tiene empleado registrado, redirigir al registro
+  // EXCEPTO para administradores y managers que pueden acceder directamente
   if (user && !employee && window.location.pathname !== '/employee/register') {
-    return <Navigate to="/employee/register" replace />
+    // Verificar si es admin o manager
+    const isAdminOrManager = isAdmin() || isManager()
+    
+    if (!isAdminOrManager) {
+      return <Navigate to="/employee/register" replace />
+    }
   }
   
   // Verificar rol requerido
@@ -90,6 +97,10 @@ function AppContent() {
       <Route 
         path="/register" 
         element={user ? <Navigate to="/dashboard" replace /> : <RegisterPage />} 
+      />
+      <Route 
+        path="/forgot-password" 
+        element={user ? <Navigate to="/dashboard" replace /> : <ForgotPasswordPage />} 
       />
       
       {/* Rutas protegidas */}
@@ -191,7 +202,12 @@ function AppContent() {
 function App() {
   return (
     <ThemeProvider>
-      <Router>
+      <Router 
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true
+        }}
+      >
         <AuthProvider>
           <NotificationProvider>
             <AppContent />

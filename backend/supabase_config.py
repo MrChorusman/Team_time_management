@@ -22,7 +22,7 @@ class SupabaseConfig:
     DB_HOST = os.environ.get('SUPABASE_HOST', 'aws-0-eu-west-3.pooler.supabase.com')
     DB_PORT = os.environ.get('SUPABASE_PORT', '6543')
     DB_NAME = os.environ.get('SUPABASE_DB_NAME', 'postgres')
-    DB_USER = os.environ.get('SUPABASE_DB_USER', 'postgres.xmaxohyxgsthligskjvg')
+    DB_USER = os.environ.get('SUPABASE_DB_USER', 'postgres')
     
     @classmethod
     def get_database_url(cls):

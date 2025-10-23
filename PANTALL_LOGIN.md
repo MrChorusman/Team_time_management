@@ -1,0 +1,2 @@
+Pantalla de Registro/LOGIN
+- La pantalla estaría dividida en dos partes; la izquierda (25% de la ventana)con todo el apartado de login/registro y la derecha (un 75% de la ventana) con una imagen que te voy a facilitar para que la guardes en el sitio correcto dentro de nuestro proyecto

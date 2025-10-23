@@ -19,7 +19,13 @@ const LoginPage = () => {
     register,
     handleSubmit,
     formState: { errors, isSubmitting }
-  } = useForm()
+  } = useForm({
+    mode: 'onChange',
+    defaultValues: {
+      email: '',
+      password: ''
+    }
+  })
 
   const onSubmit = async (data) => {
     clearError()

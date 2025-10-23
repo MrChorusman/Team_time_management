@@ -47,13 +47,32 @@ const TeamsPage = () => {
   const loadTeams = async () => {
     setLoading(true)
     try {
-      // Simular carga de equipos
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      const response = await fetch('http://localhost:5001/api/auth-simple/teams')
+      const data = await response.json()
       
-      const mockTeams = generateMockTeams()
-      setTeams(mockTeams)
+      if (data.success) {
+        // Convertir equipos de la BD al formato esperado
+        const teamsFromDB = data.teams.map((teamName, index) => ({
+          id: index + 1,
+          name: teamName,
+          description: `Equipo de ${teamName}`,
+          manager: 'Por asignar',
+          members: 0,
+          performance: 85 + Math.random() * 15,
+          status: 'active'
+        }))
+        
+        setTeams(teamsFromDB)
+      } else {
+        // Fallback a datos mock si hay error
+        const mockTeams = generateMockTeams()
+        setTeams(mockTeams)
+      }
     } catch (error) {
       console.error('Error cargando equipos:', error)
+      // Fallback a datos mock
+      const mockTeams = generateMockTeams()
+      setTeams(mockTeams)
     } finally {
       setLoading(false)
     }
@@ -625,27 +644,60 @@ const TeamsPage = () => {
 const NewTeamForm = ({ onClose }) => {
   const [formData, setFormData] = useState({
     name: '',
-    description: '',
-    manager_id: ''
+    description: ''
   })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // Aquí iría la lógica para crear el nuevo equipo
-    console.log('Nuevo equipo:', formData)
-    onClose()
+    setLoading(true)
+    setError(null)
+    
+    try {
+      const response = await fetch('http://localhost:5001/api/auth-simple/teams/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        console.log('Equipo creado:', data.team)
+        onClose()
+        // Recargar la lista de equipos
+        window.location.reload()
+      } else {
+        setError(data.message || 'Error al crear el equipo')
+      }
+    } catch (error) {
+      setError('Error de conexión')
+      console.error('Error creando equipo:', error)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      
       <div>
-        <Label htmlFor="name">Nombre del Equipo</Label>
+        <Label htmlFor="name">Nombre del Equipo *</Label>
         <Input
           id="name"
           value={formData.name}
           onChange={(e) => setFormData({...formData, name: e.target.value})}
           placeholder="Ej: Frontend Development"
           required
+          disabled={loading}
         />
       </div>
 
@@ -657,28 +709,17 @@ const NewTeamForm = ({ onClose }) => {
           onChange={(e) => setFormData({...formData, description: e.target.value})}
           placeholder="Describe las responsabilidades del equipo"
           rows={3}
+          disabled={loading}
         />
       </div>
 
-      <div>
-        <Label htmlFor="manager">Manager del Equipo</Label>
-        <Select value={formData.manager_id} onValueChange={(value) => setFormData({...formData, manager_id: value})}>
-          <SelectTrigger>
-            <SelectValue placeholder="Selecciona un manager" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="1">Carlos Rodríguez</SelectItem>
-            <SelectItem value="2">Ana García</SelectItem>
-            <SelectItem value="3">Luis Martín</SelectItem>
-            <SelectItem value="4">María López</SelectItem>
-            <SelectItem value="5">David González</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
       <div className="flex space-x-2 pt-4">
-        <Button type="submit" className="flex-1">Crear Equipo</Button>
-        <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
+        <Button type="submit" className="flex-1" disabled={loading}>
+          {loading ? 'Creando...' : 'Crear Equipo'}
+        </Button>
+        <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+          Cancelar
+        </Button>
       </div>
     </form>
   )

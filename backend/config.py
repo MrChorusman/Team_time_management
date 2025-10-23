@@ -23,10 +23,15 @@ class Config:
     SUPABASE_KEY = os.environ.get('SUPABASE_KEY')
     
     # Configuración de base de datos - priorizar Supabase si está disponible
-    if SUPABASE_AVAILABLE:
+    try:
         from supabase_config import SupabaseConfig
-        DATABASE_URL = SupabaseConfig.get_database_url()
-    else:
+        if SupabaseConfig.is_configured():
+            DATABASE_URL = SupabaseConfig.get_database_url()
+        else:
+            # Fallback a PostgreSQL local o SQLite
+            DATABASE_URL = os.environ.get('DATABASE_URL') or \
+                          f'postgresql://postgres:postgres@localhost:5432/team_time_management'
+    except ImportError:
         # Fallback a PostgreSQL local o SQLite
         DATABASE_URL = os.environ.get('DATABASE_URL') or \
                       f'postgresql://postgres:postgres@localhost:5432/team_time_management'
