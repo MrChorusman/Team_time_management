@@ -27,9 +27,10 @@ export const AuthProvider = ({ children }) => {
       setLoading(true)
       const response = await authService.checkSession()
       
-      if (response.authenticated) {
+      // El endpoint /auth/me devuelve { success: true, user: {...}, employee: {...} }
+      if (response.success && response.user) {
         setUser(response.user)
-        setEmployee(response.employee)
+        setEmployee(response.employee || null)
       } else {
         setUser(null)
         setEmployee(null)
