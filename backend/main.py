@@ -97,7 +97,7 @@ def create_app(config_name=None):
         health_info = {
             'status': 'unhealthy',
             'timestamp': datetime.utcnow().isoformat(),
-            'version': '1.0.0',
+            'version': '1.0.1',
             'environment': os.environ.get('FLASK_ENV', 'unknown'),
             'diagnostics': {}
         }
