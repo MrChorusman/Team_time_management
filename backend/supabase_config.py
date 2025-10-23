@@ -17,10 +17,10 @@ class SupabaseConfig:
     PROJECT_URL = os.environ.get('SUPABASE_URL')
     SERVICE_KEY = os.environ.get('SUPABASE_KEY')
     
-    # Configuración de base de datos PostgreSQL (Session Pooler)
+    # Configuración de base de datos PostgreSQL (Transaction Pooler - recomendado para serverless)
     DB_PASSWORD = os.environ.get('SUPABASE_DB_PASSWORD')
     DB_HOST = os.environ.get('SUPABASE_HOST', 'aws-0-eu-west-3.pooler.supabase.com')
-    DB_PORT = os.environ.get('SUPABASE_PORT', '5432')  # Puerto del Session Pooler
+    DB_PORT = os.environ.get('SUPABASE_PORT', '6543')  # Puerto del Transaction Pooler (recomendado para serverless)
     DB_NAME = os.environ.get('SUPABASE_DB', 'postgres')  # Cambiado para coincidir con Render
     DB_USER = os.environ.get('SUPABASE_USER', 'postgres.xmaxohyxgsthligskjvg')  # Usuario del Session Pooler
     
