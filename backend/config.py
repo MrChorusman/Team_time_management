@@ -111,9 +111,18 @@ class DevelopmentConfig(Config):
     DEBUG = True
     TESTING = False
     
-    # Base de datos local para desarrollo
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-                             'postgresql://postgres:postgres@localhost:5432/team_time_management'
+    # Usar Supabase también en desarrollo si está configurado
+    # Si no, fallback a PostgreSQL local
+    try:
+        from supabase_config import SupabaseConfig
+        if SupabaseConfig.is_configured():
+            SQLALCHEMY_DATABASE_URI = SupabaseConfig.get_database_url()
+        else:
+            SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
+                                     'postgresql://postgres:postgres@localhost:5432/team_time_management'
+    except ImportError:
+        SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
+                                 'postgresql://postgres:postgres@localhost:5432/team_time_management'
 
 class TestingConfig(Config):
     """Configuración para testing"""

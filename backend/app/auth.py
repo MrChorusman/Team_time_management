@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, current_app, redirect, session
 from flask_security import login_user, logout_user, current_user, auth_required
-from flask_security.utils import verify_password, hash_password
+from flask_security.utils import hash_password
 from werkzeug.security import check_password_hash
 import logging
 
@@ -29,7 +29,7 @@ def login():
         # Buscar usuario
         user = User.query.filter_by(email=email).first()
         
-        if not user or not verify_password(password, user.password):
+        if not user or not check_password_hash(user.password, password):
             return jsonify({
                 'success': False,
                 'message': 'Credenciales inválidas'
