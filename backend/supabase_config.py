@@ -17,12 +17,12 @@ class SupabaseConfig:
     PROJECT_URL = os.environ.get('SUPABASE_URL')
     SERVICE_KEY = os.environ.get('SUPABASE_KEY')
     
-    # Configuración de base de datos PostgreSQL
+    # Configuración de base de datos PostgreSQL (Session Pooler)
     DB_PASSWORD = os.environ.get('SUPABASE_DB_PASSWORD')
     DB_HOST = os.environ.get('SUPABASE_HOST', 'aws-0-eu-west-3.pooler.supabase.com')
-    DB_PORT = os.environ.get('SUPABASE_PORT', '6543')
-    DB_NAME = os.environ.get('SUPABASE_DB_NAME', 'postgres')
-    DB_USER = os.environ.get('SUPABASE_DB_USER', 'postgres')
+    DB_PORT = os.environ.get('SUPABASE_PORT', '5432')  # Puerto del Session Pooler
+    DB_NAME = os.environ.get('SUPABASE_DB', 'postgres')  # Cambiado para coincidir con Render
+    DB_USER = os.environ.get('SUPABASE_USER', 'postgres.xmaxohyxgsthligskjvg')  # Usuario del Session Pooler
     
     @classmethod
     def get_database_url(cls):
@@ -30,12 +30,12 @@ class SupabaseConfig:
         if not cls.DB_PASSWORD:
             raise ValueError("SUPABASE_DB_PASSWORD no está configurado")
         
-        # Usar variables de entorno directas si están disponibles
+        # Usar variables de entorno directas si están disponibles (Session Pooler)
         db_password = os.environ.get('SUPABASE_DB_PASSWORD')
         db_host = os.environ.get('SUPABASE_HOST', cls.DB_HOST)
         db_port = os.environ.get('SUPABASE_PORT', cls.DB_PORT)
-        db_name = os.environ.get('SUPABASE_DB_NAME', cls.DB_NAME)
-        db_user = os.environ.get('SUPABASE_DB_USER', cls.DB_USER)
+        db_name = os.environ.get('SUPABASE_DB', cls.DB_NAME)  # Cambiado para coincidir con Render
+        db_user = os.environ.get('SUPABASE_USER', cls.DB_USER)  # Usuario del Session Pooler
         
         return f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
     
