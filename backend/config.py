@@ -78,7 +78,14 @@ class Config:
     PERMANENT_SESSION_LIFETIME = timedelta(hours=24)
     
     # Configuración de CORS
-    CORS_ORIGINS = ['http://localhost:3000', 'http://127.0.0.1:3000']
+    CORS_ORIGINS = [
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+        'https://team-time-management.vercel.app',
+        'https://team-time-management-miguels-projects-dcbd8c7f.vercel.app'
+    ]
     
     # APIs externas
     NAGER_DATE_API_URL = 'https://date.nager.at/api/v3'
