@@ -107,22 +107,31 @@ class Config:
     LOG_LEVEL = os.environ.get('LOG_LEVEL') or 'INFO'
 
 class DevelopmentConfig(Config):
-    """Configuración para desarrollo"""
+    """Configuración para desarrollo local (PostgreSQL local)"""
     DEBUG = True
     TESTING = False
     
-    # Usar Supabase también en desarrollo si está configurado
-    # Si no, fallback a PostgreSQL local
+    # Base de datos local para desarrollo
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
+                             'postgresql://postgres:postgres@localhost:5432/team_time_management_dev'
+
+class DevelopmentProductionLikeConfig(Config):
+    """Configuración para desarrollo que simula producción (Supabase dev)"""
+    DEBUG = True  # Mantener debug para desarrollo
+    TESTING = False
+    
+    # Usar Supabase de desarrollo si está configurado
     try:
         from supabase_config import SupabaseConfig
-        if SupabaseConfig.is_configured():
-            SQLALCHEMY_DATABASE_URI = SupabaseConfig.get_database_url()
+        if SupabaseConfig.is_development_configured():
+            SQLALCHEMY_DATABASE_URI = SupabaseConfig.get_development_database_url()
         else:
+            # Fallback a desarrollo local si no está configurado Supabase dev
             SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-                                     'postgresql://postgres:postgres@localhost:5432/team_time_management'
+                                     'postgresql://postgres:postgres@localhost:5432/team_time_management_dev'
     except ImportError:
         SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-                                 'postgresql://postgres:postgres@localhost:5432/team_time_management'
+                                 'postgresql://postgres:postgres@localhost:5432/team_time_management_dev'
 
 class TestingConfig(Config):
     """Configuración para testing"""
@@ -172,6 +181,7 @@ class ProductionConfig(Config):
 # Diccionario de configuraciones
 config = {
     'development': DevelopmentConfig,
+    'development-production-like': DevelopmentProductionLikeConfig,
     'testing': TestingConfig,
     'production': ProductionConfig,
     'default': DevelopmentConfig
