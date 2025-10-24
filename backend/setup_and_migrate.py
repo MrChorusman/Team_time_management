@@ -236,7 +236,7 @@ def migrate_data_after_setup():
     # Configuración de desarrollo
     DEV_CONFIG = {
         'host': 'aws-0-eu-west-3.pooler.supabase.com',
-        'port': '6543',
+        'port': '5432',  # Session Pooler para desarrollo
         'database': 'postgres',
         'user': 'postgres.qsbvoyjqfrhaqncqtknv',
         'password': 'Littletosti29.'
@@ -335,20 +335,34 @@ def migrate_data_after_setup():
         return False
 
 if __name__ == "__main__":
+    import sys
+    
     print("🚀 CONFIGURACIÓN Y MIGRACIÓN DEL PROYECTO DE DESARROLLO")
     print("=" * 60)
     print(f"📅 Fecha: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print()
     
-    # Paso 1: Configurar proyecto
-    setup_success = setup_development_project()
-    
-    if setup_success:
-        print("\n🎯 PRÓXIMOS PASOS:")
-        print("   1. Ve a https://qsbvoyjqfrhaqncqtknv.supabase.co")
-        print("   2. Ejecuta el SQL en SQL Editor")
-        print("   3. Ejecuta este script nuevamente para migrar datos")
-        print("\n   Comando: python setup_and_migrate.py --migrate")
+    # Verificar si se solicita migración
+    if len(sys.argv) > 1 and sys.argv[1] == '--migrate':
+        print("🔄 MODO MIGRACIÓN: Migrando datos de producción a desarrollo")
+        success = migrate_data_after_setup()
+        
+        if success:
+            print("\n🎉 ¡MIGRACIÓN COMPLETADA!")
+            print("✅ Proyecto de desarrollo listo para usar")
+        else:
+            print("\n❌ Error en la migración")
+            exit(1)
     else:
-        print("\n❌ Error configurando proyecto")
-        exit(1)
+        # Modo configuración (crear tablas)
+        setup_success = setup_development_project()
+        
+        if setup_success:
+            print("\n🎯 PRÓXIMOS PASOS:")
+            print("   1. Ve a https://qsbvoyjqfrhaqncqtknv.supabase.co")
+            print("   2. Ejecuta el SQL en SQL Editor")
+            print("   3. Ejecuta este script nuevamente para migrar datos")
+            print("\n   Comando: python setup_and_migrate.py --migrate")
+        else:
+            print("\n❌ Error configurando proyecto")
+            exit(1)
