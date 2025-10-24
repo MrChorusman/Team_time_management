@@ -80,6 +80,21 @@ def main():
         return
     
     env_name = sys.argv[1]
+    
+    # Manejar ayuda
+    if env_name in ['--help', '-h', 'help']:
+        print("🔧 GESTOR DE ENTORNOS - Team Time Management")
+        print("=" * 50)
+        print("Uso: python switch-env.py <entorno>")
+        print("\nEntornos disponibles:")
+        print("  local      - Desarrollo con PostgreSQL local")
+        print("  dev-prod   - Desarrollo con Supabase (simula producción)")
+        print("  production - Producción (SOLO para despliegues)")
+        print("\nEjemplos:")
+        print("  python switch-env.py local")
+        print("  python switch-env.py dev-prod")
+        return
+    
     success = switch_environment(env_name)
     
     if success:
