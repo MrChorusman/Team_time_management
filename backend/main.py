@@ -23,8 +23,11 @@ from services.email_service import EmailService
 from services.holiday_service import HolidayService
 from services.notification_service import NotificationService
 
+# Importar configuración de logging
+from logging_config import setup_logging, get_logger
+
 # Importar blueprints (rutas)
-from app.auth import auth_bp
+from app.auth_rest import auth_bp
 from auth_simple import auth_simple_bp
 from app.employees import employees_bp
 from app.teams import teams_bp
@@ -44,11 +47,8 @@ def create_app(config_name=None):
     config_name = config_name or os.environ.get('FLASK_ENV', 'development')
     app.config.from_object(config[config_name])
     
-    # Configurar logging
-    logging.basicConfig(
-        level=getattr(logging, app.config.get('LOG_LEVEL', 'INFO')),
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
+    # Configurar logging estructurado
+    setup_logging(app)
     
     # Inicializar extensiones
     db.init_app(app)
@@ -94,6 +94,10 @@ def create_app(config_name=None):
         """Endpoint de salud del sistema con diagnóstico detallado"""
         import os
         import psycopg2
+        import psutil
+        from config import config
+        
+        logger = get_logger('health')
         
         # Información básica del sistema
         health_info = {
@@ -151,11 +155,71 @@ def create_app(config_name=None):
         except Exception as e:
             health_info['diagnostics']['psycopg2'] = f'error: {str(e)}'
         
+        # Verificar servicios externos
+        try:
+            # Verificar Google OAuth
+            google_oauth_status = 'configured' if app.config.get('google_oauth_configured') else 'not_configured'
+            health_info['diagnostics']['google_oauth'] = {
+                'status': google_oauth_status,
+                'mock_mode': app.config.get('google_oauth_mock_mode', False)
+            }
+            
+            # Verificar configuración de email
+            email_status = 'configured' if app.config.get('email_configured') else 'not_configured'
+            health_info['diagnostics']['email'] = {
+                'status': email_status,
+                'mock_mode': app.config.get('should_use_mock_email', False)
+            }
+            
+        except Exception as e:
+            health_info['diagnostics']['external_services'] = f'error: {str(e)}'
+        
+        # Verificar recursos del sistema
+        try:
+            # Uso de memoria
+            memory = psutil.virtual_memory()
+            health_info['diagnostics']['system_resources'] = {
+                'memory': {
+                    'total': memory.total,
+                    'available': memory.available,
+                    'percent_used': memory.percent
+                },
+                'cpu_percent': psutil.cpu_percent(interval=1)
+            }
+        except Exception as e:
+            health_info['diagnostics']['system_resources'] = f'error: {str(e)}'
+        
+        # Verificar configuración de logging
+        try:
+            log_level = app.config.get('LOG_LEVEL', 'INFO')
+            health_info['diagnostics']['logging'] = {
+                'level': log_level,
+                'configured': True
+            }
+        except Exception as e:
+            health_info['diagnostics']['logging'] = f'error: {str(e)}'
+        
         # Determinar estado general
-        if (health_info['diagnostics']['sqlalchemy'] == 'healthy' and 
-            isinstance(health_info['diagnostics']['psycopg2'], dict) and 
-            health_info['diagnostics']['psycopg2']['status'] == 'healthy'):
+        critical_services = ['sqlalchemy', 'psycopg2']
+        healthy_services = 0
+        
+        for service in critical_services:
+            if service in health_info['diagnostics']:
+                if service == 'sqlalchemy' and health_info['diagnostics'][service] == 'healthy':
+                    healthy_services += 1
+                elif service == 'psycopg2' and isinstance(health_info['diagnostics'][service], dict) and health_info['diagnostics'][service].get('status') == 'healthy':
+                    healthy_services += 1
+        
+        if healthy_services == len(critical_services):
             health_info['status'] = 'healthy'
+        elif healthy_services > 0:
+            health_info['status'] = 'degraded'
+        
+        # Log del health check
+        logger.info("Health check ejecutado", 
+                   status=health_info['status'],
+                   healthy_services=healthy_services,
+                   total_services=len(critical_services))
         
         return jsonify(health_info)
     

@@ -69,10 +69,41 @@ class Config:
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
     MAIL_DEFAULT_SENDER = os.environ.get('MAIL_USERNAME')
     
+    # Modo mock para emails (cuando no hay credenciales SMTP)
+    MOCK_EMAIL_MODE = os.environ.get('MOCK_EMAIL_MODE', 'false').lower() in ['true', 'on', '1']
+    
+    @property
+    def email_configured(self):
+        """Verifica si el email está configurado correctamente"""
+        return all([
+            self.MAIL_USERNAME,
+            self.MAIL_PASSWORD
+        ])
+    
+    @property
+    def should_use_mock_email(self):
+        """Determina si debe usar modo mock para emails"""
+        return self.MOCK_EMAIL_MODE or not self.email_configured
+    
     # Configuración de Google OAuth
     GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
     GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
     GOOGLE_REDIRECT_URI = os.environ.get('GOOGLE_REDIRECT_URI')
+    
+    # Validación de configuración OAuth
+    @property
+    def google_oauth_configured(self):
+        """Verifica si Google OAuth está configurado correctamente"""
+        return all([
+            self.GOOGLE_CLIENT_ID,
+            self.GOOGLE_CLIENT_SECRET,
+            self.GOOGLE_REDIRECT_URI
+        ])
+    
+    @property
+    def google_oauth_mock_mode(self):
+        """Determina si debe usar modo mock para Google OAuth"""
+        return not self.google_oauth_configured
     
     # Configuración de Redis para sesiones y caché
     REDIS_URL = os.environ.get('REDIS_URL') or 'redis://localhost:6379/0'
