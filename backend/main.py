@@ -89,6 +89,14 @@ def create_app(config_name=None):
             'timestamp': datetime.utcnow().isoformat()
         })
     
+    @app.route('/api/auth/test-main', methods=['GET'])
+    def test_auth_main():
+        """Endpoint de prueba en main.py"""
+        return jsonify({
+            'success': True,
+            'message': 'Endpoint de prueba en main.py funcionando'
+        })
+    
     @app.route('/api/health')
     def health_check():
         """Endpoint de salud del sistema con diagnóstico detallado"""
