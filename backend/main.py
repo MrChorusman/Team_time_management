@@ -89,6 +89,14 @@ def create_app(config_name=None):
             'timestamp': datetime.utcnow().isoformat()
         })
     
+    @app.route('/api/auth-simple/test-main', methods=['GET'])
+    def test_auth_simple_main():
+        """Endpoint de prueba para auth-simple en main.py"""
+        return jsonify({
+            'success': True,
+            'message': 'Auth-simple endpoint en main.py funcionando'
+        })
+    
     @app.route('/api/auth/test-main', methods=['GET'])
     def test_auth_main():
         """Endpoint de prueba en main.py"""
