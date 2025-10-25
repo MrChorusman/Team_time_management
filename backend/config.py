@@ -5,6 +5,8 @@ from sqlalchemy.pool import NullPool
 
 # Cargar variables de entorno
 load_dotenv()
+# Cargar también archivo local si existe
+load_dotenv('.env.local')
 
 # Importar configuración de Supabase
 try:
@@ -69,10 +71,41 @@ class Config:
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
     MAIL_DEFAULT_SENDER = os.environ.get('MAIL_USERNAME')
     
+    # Modo mock para emails (cuando no hay credenciales SMTP)
+    MOCK_EMAIL_MODE = os.environ.get('MOCK_EMAIL_MODE', 'false').lower() in ['true', 'on', '1']
+    
+    @property
+    def email_configured(self):
+        """Verifica si el email está configurado correctamente"""
+        return all([
+            self.MAIL_USERNAME,
+            self.MAIL_PASSWORD
+        ])
+    
+    @property
+    def should_use_mock_email(self):
+        """Determina si debe usar modo mock para emails"""
+        return self.MOCK_EMAIL_MODE or not self.email_configured
+    
     # Configuración de Google OAuth
     GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
     GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
     GOOGLE_REDIRECT_URI = os.environ.get('GOOGLE_REDIRECT_URI')
+    
+    # Validación de configuración OAuth
+    @property
+    def google_oauth_configured(self):
+        """Verifica si Google OAuth está configurado correctamente"""
+        return all([
+            self.GOOGLE_CLIENT_ID,
+            self.GOOGLE_CLIENT_SECRET,
+            self.GOOGLE_REDIRECT_URI
+        ])
+    
+    @property
+    def google_oauth_mock_mode(self):
+        """Determina si debe usar modo mock para Google OAuth"""
+        return not self.google_oauth_configured
     
     # Configuración de Redis para sesiones y caché
     REDIS_URL = os.environ.get('REDIS_URL') or 'redis://localhost:6379/0'
@@ -107,13 +140,40 @@ class Config:
     LOG_LEVEL = os.environ.get('LOG_LEVEL') or 'INFO'
 
 class DevelopmentConfig(Config):
-    """Configuración para desarrollo"""
+    """Configuración para desarrollo local (usando Supabase)"""
     DEBUG = True
     TESTING = False
     
-    # Base de datos local para desarrollo
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-                             'postgresql://postgres:postgres@localhost:5432/team_time_management'
+    # Usar Supabase para desarrollo también
+    try:
+        from supabase_config import SupabaseConfig
+        if SupabaseConfig.is_configured():
+            SQLALCHEMY_DATABASE_URI = SupabaseConfig.get_database_url()
+        else:
+            # Fallback a base de datos local si Supabase no está configurado
+            SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
+                                     'postgresql://postgres:postgres@localhost:5432/team_time_management_dev'
+    except ImportError:
+        SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
+                                 'postgresql://postgres:postgres@localhost:5432/team_time_management_dev'
+
+class DevelopmentProductionLikeConfig(Config):
+    """Configuración para desarrollo que simula producción (Supabase dev)"""
+    DEBUG = True  # Mantener debug para desarrollo
+    TESTING = False
+    
+    # Usar Supabase de desarrollo si está configurado
+    try:
+        from supabase_config import SupabaseConfig
+        if SupabaseConfig.is_development_configured():
+            SQLALCHEMY_DATABASE_URI = SupabaseConfig.get_development_database_url()
+        else:
+            # Fallback a desarrollo local si no está configurado Supabase dev
+            SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
+                                     'postgresql://postgres:postgres@localhost:5432/team_time_management_dev'
+    except ImportError:
+        SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
+                                 'postgresql://postgres:postgres@localhost:5432/team_time_management_dev'
 
 class TestingConfig(Config):
     """Configuración para testing"""
@@ -163,6 +223,7 @@ class ProductionConfig(Config):
 # Diccionario de configuraciones
 config = {
     'development': DevelopmentConfig,
+    'development-production-like': DevelopmentProductionLikeConfig,
     'testing': TestingConfig,
     'production': ProductionConfig,
     'default': DevelopmentConfig

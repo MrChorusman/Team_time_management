@@ -1,7 +1,5 @@
-from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-
-db = SQLAlchemy()
+from .base import db
 
 class Team(db.Model):
     """Modelo para equipos de trabajo"""

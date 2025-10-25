@@ -11,7 +11,7 @@ import logging
 from config import config
 
 # Importar modelos
-from models.user import db, User, Role
+from models import db, User, Role
 from models.employee import Employee
 from models.team import Team
 from models.holiday import Holiday
@@ -23,8 +23,12 @@ from services.email_service import EmailService
 from services.holiday_service import HolidayService
 from services.notification_service import NotificationService
 
+# Importar configuración de logging
+from logging_config import setup_logging, get_logger
+
 # Importar blueprints (rutas)
-from app.auth import auth_bp
+from app.auth_rest import auth_bp
+from auth_simple import auth_simple_bp
 from app.employees import employees_bp
 from app.teams import teams_bp
 from app.calendar import calendar_bp
@@ -43,11 +47,8 @@ def create_app(config_name=None):
     config_name = config_name or os.environ.get('FLASK_ENV', 'development')
     app.config.from_object(config[config_name])
     
-    # Configurar logging
-    logging.basicConfig(
-        level=getattr(logging, app.config.get('LOG_LEVEL', 'INFO')),
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
+    # Configurar logging estructurado
+    setup_logging(app)
     
     # Inicializar extensiones
     db.init_app(app)
@@ -69,6 +70,7 @@ def create_app(config_name=None):
     
     # Registrar blueprints
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
+    app.register_blueprint(auth_simple_bp, url_prefix='/api/auth-simple')
     app.register_blueprint(employees_bp, url_prefix='/api/employees')
     app.register_blueprint(teams_bp, url_prefix='/api/teams')
     app.register_blueprint(calendar_bp, url_prefix='/api/calendar')
@@ -87,11 +89,112 @@ def create_app(config_name=None):
             'timestamp': datetime.utcnow().isoformat()
         })
     
+    @app.route('/api/auth/login-main', methods=['POST'])
+    def login_main():
+        """Endpoint de login directamente en main.py para pruebas"""
+        try:
+            from flask import request
+            from werkzeug.security import check_password_hash
+            from models.user import User
+            
+            data = request.get_json()
+            
+            if not data or not data.get('email') or not data.get('password'):
+                return jsonify({
+                    'success': False,
+                    'message': 'Email y contraseña son requeridos'
+                }), 400
+            
+            email = data['email'].lower().strip()
+            password = data['password']
+            
+            # Buscar usuario usando SQLAlchemy directamente
+            user = User.query.filter_by(email=email).first()
+            
+            if not user:
+                return jsonify({
+                    'success': False,
+                    'message': 'Credenciales inválidas'
+                }), 401
+            
+            # Verificar contraseña
+            if not check_password_hash(user.password, password):
+                return jsonify({
+                    'success': False,
+                    'message': 'Credenciales inválidas'
+                }), 401
+            
+            # Verificar si el usuario está activo
+            if not user.active:
+                return jsonify({
+                    'success': False,
+                    'message': 'Cuenta desactivada. Contacta al administrador.'
+                }), 401
+            
+            # Verificar si el usuario está confirmado
+            if not user.confirmed_at:
+                return jsonify({
+                    'success': False,
+                    'message': 'Debes confirmar tu email antes de iniciar sesión.',
+                    'requires_confirmation': True
+                }), 401
+            
+            # Obtener roles del usuario usando SQLAlchemy
+            roles = []
+            try:
+                roles = [role.name for role in user.roles]
+            except Exception as e:
+                pass
+            
+            # Respuesta exitosa
+            login_response = {
+                "success": True,
+                "message": "Inicio de sesión exitoso",
+                "user": {
+                    "id": user.id,
+                    "email": user.email,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                    "active": user.active,
+                    "confirmed_at": user.confirmed_at.isoformat() if user.confirmed_at else None
+                },
+                "roles": roles,
+                "redirectUrl": "/dashboard"
+            }
+            
+            return jsonify(login_response)
+            
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'message': f'Error interno del servidor: {str(e)}'
+            }), 500
+    
+    @app.route('/api/auth-simple/test-main', methods=['GET'])
+    def test_auth_simple_main():
+        """Endpoint de prueba para auth-simple en main.py"""
+        return jsonify({
+            'success': True,
+            'message': 'Auth-simple endpoint en main.py funcionando'
+        })
+    
+    @app.route('/api/auth/test-main', methods=['GET'])
+    def test_auth_main():
+        """Endpoint de prueba en main.py"""
+        return jsonify({
+            'success': True,
+            'message': 'Endpoint de prueba en main.py funcionando'
+        })
+    
     @app.route('/api/health')
     def health_check():
         """Endpoint de salud del sistema con diagnóstico detallado"""
         import os
         import psycopg2
+        import psutil
+        from config import config
+        
+        logger = get_logger('health')
         
         # Información básica del sistema
         health_info = {
@@ -149,11 +252,71 @@ def create_app(config_name=None):
         except Exception as e:
             health_info['diagnostics']['psycopg2'] = f'error: {str(e)}'
         
+        # Verificar servicios externos
+        try:
+            # Verificar Google OAuth
+            google_oauth_status = 'configured' if app.config.get('google_oauth_configured') else 'not_configured'
+            health_info['diagnostics']['google_oauth'] = {
+                'status': google_oauth_status,
+                'mock_mode': app.config.get('google_oauth_mock_mode', False)
+            }
+            
+            # Verificar configuración de email
+            email_status = 'configured' if app.config.get('email_configured') else 'not_configured'
+            health_info['diagnostics']['email'] = {
+                'status': email_status,
+                'mock_mode': app.config.get('should_use_mock_email', False)
+            }
+            
+        except Exception as e:
+            health_info['diagnostics']['external_services'] = f'error: {str(e)}'
+        
+        # Verificar recursos del sistema
+        try:
+            # Uso de memoria
+            memory = psutil.virtual_memory()
+            health_info['diagnostics']['system_resources'] = {
+                'memory': {
+                    'total': memory.total,
+                    'available': memory.available,
+                    'percent_used': memory.percent
+                },
+                'cpu_percent': psutil.cpu_percent(interval=1)
+            }
+        except Exception as e:
+            health_info['diagnostics']['system_resources'] = f'error: {str(e)}'
+        
+        # Verificar configuración de logging
+        try:
+            log_level = app.config.get('LOG_LEVEL', 'INFO')
+            health_info['diagnostics']['logging'] = {
+                'level': log_level,
+                'configured': True
+            }
+        except Exception as e:
+            health_info['diagnostics']['logging'] = f'error: {str(e)}'
+        
         # Determinar estado general
-        if (health_info['diagnostics']['sqlalchemy'] == 'healthy' and 
-            isinstance(health_info['diagnostics']['psycopg2'], dict) and 
-            health_info['diagnostics']['psycopg2']['status'] == 'healthy'):
+        critical_services = ['sqlalchemy', 'psycopg2']
+        healthy_services = 0
+        
+        for service in critical_services:
+            if service in health_info['diagnostics']:
+                if service == 'sqlalchemy' and health_info['diagnostics'][service] == 'healthy':
+                    healthy_services += 1
+                elif service == 'psycopg2' and isinstance(health_info['diagnostics'][service], dict) and health_info['diagnostics'][service].get('status') == 'healthy':
+                    healthy_services += 1
+        
+        if healthy_services == len(critical_services):
             health_info['status'] = 'healthy'
+        elif healthy_services > 0:
+            health_info['status'] = 'degraded'
+        
+        # Log del health check
+        logger.info("Health check ejecutado", 
+                   status=health_info['status'],
+                   healthy_services=healthy_services,
+                   total_services=len(critical_services))
         
         return jsonify(health_info)
     
@@ -327,6 +490,6 @@ app = create_app()
 if __name__ == '__main__':
     app.run(
         host='0.0.0.0',
-        port=5000,
+        port=5001,
         debug=app.config.get('DEBUG', False)
     )

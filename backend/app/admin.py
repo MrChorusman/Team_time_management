@@ -554,9 +554,17 @@ def get_backup_info():
 @auth_required()
 @admin_required
 def get_system_logs():
-    """Obtiene logs del sistema (simulado)"""
+    """Obtiene logs del sistema"""
     try:
-        # En un entorno real, esto leería los archivos de log
+        from logging_config import get_logger
+        import os
+        
+        # Parámetros de consulta
+        level = request.args.get('level', 'INFO')
+        limit = min(request.args.get('limit', 50, type=int), 200)
+        category = request.args.get('category')
+        
+        # En un entorno real, esto leería los archivos de log estructurados
         # Por ahora, devolvemos logs simulados basados en la actividad reciente
         
         logs = []
@@ -571,7 +579,10 @@ def get_system_logs():
                 'timestamp': user.created_at.isoformat(),
                 'level': 'INFO',
                 'message': f'Nuevo usuario registrado: {user.email}',
-                'category': 'user_management'
+                'category': 'user_management',
+                'logger': 'team_time.user_actions',
+                'module': 'admin',
+                'function': 'get_system_logs'
             })
         
         # Logs de empleados recientes
@@ -584,16 +595,59 @@ def get_system_logs():
                 'timestamp': employee.created_at.isoformat(),
                 'level': 'INFO',
                 'message': f'Nuevo empleado registrado: {employee.full_name}',
-                'category': 'employee_management'
+                'category': 'employee_management',
+                'logger': 'team_time.user_actions',
+                'module': 'admin',
+                'function': 'get_system_logs'
             })
+        
+        # Logs de autenticación reciente
+        auth_logs = [
+            {
+                'timestamp': (datetime.utcnow() - timedelta(hours=2)).isoformat(),
+                'level': 'INFO',
+                'message': 'Login exitoso',
+                'category': 'authentication',
+                'logger': 'team_time.auth',
+                'module': 'auth',
+                'function': 'login'
+            },
+            {
+                'timestamp': (datetime.utcnow() - timedelta(hours=4)).isoformat(),
+                'level': 'WARNING',
+                'message': 'Intento de login fallido',
+                'category': 'security',
+                'logger': 'team_time.security',
+                'module': 'auth',
+                'function': 'login'
+            }
+        ]
+        logs.extend(auth_logs)
+        
+        # Filtrar por nivel si se especifica
+        if level != 'ALL':
+            logs = [log for log in logs if log['level'] == level]
+        
+        # Filtrar por categoría si se especifica
+        if category:
+            logs = [log for log in logs if log['category'] == category]
         
         # Ordenar logs por timestamp
         logs.sort(key=lambda x: x['timestamp'], reverse=True)
         
+        # Limitar resultados
+        logs = logs[:limit]
+        
         return jsonify({
             'success': True,
-            'logs': logs[:50],  # Limitar a 50 logs más recientes
-            'note': 'Estos son logs simulados. Implementar lectura de archivos de log reales.'
+            'logs': logs,
+            'filters': {
+                'level': level,
+                'category': category,
+                'limit': limit
+            },
+            'total_found': len(logs),
+            'note': 'Estos son logs simulados. En producción, se leerían archivos de log reales.'
         })
         
     except Exception as e:
@@ -601,6 +655,124 @@ def get_system_logs():
         return jsonify({
             'success': False,
             'message': 'Error obteniendo logs'
+        }), 500
+
+@admin_bp.route('/logs/email', methods=['GET'])
+@auth_required()
+@admin_required
+def get_email_logs():
+    """Obtiene logs específicos de email"""
+    try:
+        from services.email_service import EmailService
+        from flask import current_app
+        
+        email_service = EmailService()
+        email_service.init_app(current_app)
+        
+        # Si está en modo mock, obtener estadísticas del mock
+        if email_service.use_mock_mode:
+            stats = email_service.get_mock_email_stats()
+            sent_emails = email_service.get_mock_sent_emails(limit=50)
+            
+            return jsonify({
+                'success': True,
+                'mode': 'mock',
+                'stats': stats,
+                'recent_emails': sent_emails,
+                'note': 'Modo mock activo - emails simulados'
+            })
+        else:
+            # En modo real, devolver información de configuración
+            return jsonify({
+                'success': True,
+                'mode': 'real',
+                'message': 'Emails enviados por SMTP real',
+                'note': 'Los logs de email reales se almacenan en el sistema de logging'
+            })
+        
+    except Exception as e:
+        logger.error(f"Error obteniendo logs de email: {e}")
+        return jsonify({
+            'success': False,
+            'message': 'Error obteniendo logs de email'
+        }), 500
+
+@admin_bp.route('/metrics', methods=['GET'])
+@auth_required()
+@admin_required
+def get_system_metrics():
+    """Obtiene métricas del sistema"""
+    try:
+        import psutil
+        from flask import current_app
+        
+        # Métricas de sistema
+        system_metrics = {
+            'cpu_percent': psutil.cpu_percent(interval=1),
+            'memory': {
+                'total': psutil.virtual_memory().total,
+                'available': psutil.virtual_memory().available,
+                'percent_used': psutil.virtual_memory().percent
+            },
+            'disk': {
+                'total': psutil.disk_usage('/').total,
+                'free': psutil.disk_usage('/').free,
+                'percent_used': psutil.disk_usage('/').percent
+            }
+        }
+        
+        # Métricas de aplicación
+        app_metrics = {
+            'active_users': User.query.filter(User.active == True).count(),
+            'total_employees': Employee.query.count(),
+            'active_teams': Team.query.filter(Team.active == True).count(),
+            'pending_notifications': Notification.query.filter(
+                Notification.read == False
+            ).count(),
+            'unread_notifications': Notification.query.filter(
+                Notification.read == False
+            ).count()
+        }
+        
+        # Métricas de actividad (últimas 24 horas)
+        last_24h = datetime.utcnow() - timedelta(hours=24)
+        activity_metrics = {
+            'new_users_24h': User.query.filter(User.created_at >= last_24h).count(),
+            'new_employees_24h': Employee.query.filter(Employee.created_at >= last_24h).count(),
+            'calendar_activities_24h': CalendarActivity.query.filter(
+                CalendarActivity.created_at >= last_24h
+            ).count(),
+            'notifications_sent_24h': Notification.query.filter(
+                Notification.created_at >= last_24h,
+                Notification.email_sent == True
+            ).count()
+        }
+        
+        # Métricas de configuración
+        config_metrics = {
+            'google_oauth_configured': current_app.config.get('google_oauth_configured', False),
+            'email_configured': current_app.config.get('email_configured', False),
+            'mock_email_mode': current_app.config.get('should_use_mock_email', False),
+            'log_level': current_app.config.get('LOG_LEVEL', 'INFO'),
+            'environment': current_app.config.get('FLASK_ENV', 'unknown')
+        }
+        
+        return jsonify({
+            'success': True,
+            'metrics': {
+                'system': system_metrics,
+                'application': app_metrics,
+                'activity_24h': activity_metrics,
+                'configuration': config_metrics,
+                'timestamp': datetime.utcnow().isoformat()
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error obteniendo métricas del sistema: {e}")
+        return jsonify({
+            'success': False,
+            'message': 'Error obteniendo métricas'
         }), 500
 
 @admin_bp.route('/test-smtp', methods=['POST'])

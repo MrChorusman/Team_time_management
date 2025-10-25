@@ -6,6 +6,7 @@ from datetime import datetime
 
 from models.notification import Notification
 from models.user import User
+from .mock_email_service import MockEmailService
 
 logger = logging.getLogger(__name__)
 
@@ -14,14 +15,36 @@ class EmailService:
     
     def __init__(self):
         self.mail = None
+        self.mock_service = MockEmailService()
+        self._use_mock_mode = None
     
     def init_app(self, app):
         """Inicializa el servicio con la aplicación Flask"""
         self.mail = Mail(app)
+        # Determinar si usar modo mock basado en configuración
+        self._use_mock_mode = app.config.get('should_use_mock_email', False)
+        
+        if self._use_mock_mode:
+            logger.info("EmailService inicializado en modo MOCK - emails se simularán en logs")
+        else:
+            logger.info("EmailService inicializado en modo REAL - emails se enviarán por SMTP")
+    
+    @property
+    def use_mock_mode(self):
+        """Determina si debe usar modo mock"""
+        if self._use_mock_mode is None:
+            # Fallback: verificar configuración directamente
+            return current_app.config.get('should_use_mock_email', False)
+        return self._use_mock_mode
     
     def send_notification_email(self, notification: Notification) -> bool:
         """Envía un email basado en una notificación"""
         try:
+            # Usar modo mock si está configurado
+            if self.use_mock_mode:
+                return self.mock_service.send_notification_email(notification)
+            
+            # Modo real - enviar por SMTP
             if not self.mail:
                 logger.error("Servicio de email no inicializado")
                 return False
@@ -96,6 +119,11 @@ Si tienes preguntas, contacta con tu administrador del sistema.
     def send_verification_email(self, user: User, token: str) -> bool:
         """Envía email de verificación de cuenta"""
         try:
+            # Usar modo mock si está configurado
+            if self.use_mock_mode:
+                return self.mock_service.send_verification_email(user, token)
+            
+            # Modo real - enviar por SMTP
             if not self.mail:
                 logger.error("Servicio de email no inicializado")
                 return False
@@ -129,6 +157,11 @@ Si tienes preguntas, contacta con tu administrador del sistema.
     def send_password_reset_email(self, user: User, token: str) -> bool:
         """Envía email de restablecimiento de contraseña"""
         try:
+            # Usar modo mock si está configurado
+            if self.use_mock_mode:
+                return self.mock_service.send_password_reset_email(user, token)
+            
+            # Modo real - enviar por SMTP
             if not self.mail:
                 logger.error("Servicio de email no inicializado")
                 return False
@@ -218,6 +251,17 @@ Si tienes preguntas, contacta con tu administrador del sistema.
     def test_email_configuration(self) -> Dict:
         """Prueba la configuración de email"""
         try:
+            # Si está en modo mock, devolver información del mock
+            if self.use_mock_mode:
+                stats = self.mock_service.get_email_stats()
+                return {
+                    'success': True,
+                    'mode': 'mock',
+                    'message': f'Modo mock activo - {stats["total_emails"]} emails simulados',
+                    'stats': stats
+                }
+            
+            # Modo real - probar SMTP
             if not self.mail:
                 return {
                     'success': False,
@@ -248,6 +292,7 @@ Si tienes preguntas, contacta con tu administrador del sistema.
             
             return {
                 'success': True,
+                'mode': 'real',
                 'message': f'Email de prueba enviado exitosamente a {mail_username}'
             }
             
@@ -256,3 +301,22 @@ Si tienes preguntas, contacta con tu administrador del sistema.
                 'success': False,
                 'error': f'Error en configuración de email: {e}'
             }
+    
+    def get_mock_email_stats(self) -> Dict:
+        """Obtiene estadísticas del servicio mock (solo disponible en modo mock)"""
+        if not self.use_mock_mode:
+            return {'error': 'Servicio no está en modo mock'}
+        
+        return self.mock_service.get_email_stats()
+    
+    def get_mock_sent_emails(self, limit: int = 50) -> List[Dict]:
+        """Obtiene emails enviados en modo mock (solo disponible en modo mock)"""
+        if not self.use_mock_mode:
+            return []
+        
+        return self.mock_service.get_sent_emails(limit)
+    
+    def clear_mock_emails(self):
+        """Limpia la lista de emails mock (solo disponible en modo mock)"""
+        if self.use_mock_mode:
+            self.mock_service.clear_sent_emails()

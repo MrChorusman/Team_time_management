@@ -1,9 +1,7 @@
-from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, date
 from calendar import monthrange
 import json
-
-db = SQLAlchemy()
+from .base import db
 
 class Employee(db.Model):
     """Modelo para empleados"""

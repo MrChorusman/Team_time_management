@@ -1,7 +1,5 @@
-from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, date
-
-db = SQLAlchemy()
+from .base import db
 
 class CalendarActivity(db.Model):
     """Modelo para actividades del calendario de empleados"""

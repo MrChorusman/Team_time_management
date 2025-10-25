@@ -1,0 +1,18 @@
+# Google OAuth Configuration
+# Para configurar Google OAuth, necesitas:
+# 1. Ir a https://console.developers.google.com/
+# 2. Crear un proyecto o seleccionar uno existente
+# 3. Habilitar Google+ API
+# 4. Crear credenciales OAuth 2.0
+# 5. Configurar URIs de redirección autorizadas:
+#    - http://localhost:5001/api/auth/google/callback (desarrollo)
+#    - https://team-time-management.onrender.com/api/auth/google/callback (producción)
+
+GOOGLE_CLIENT_ID=your-google-client-id-here
+GOOGLE_CLIENT_SECRET=your-google-client-secret-here
+GOOGLE_REDIRECT_URI=http://localhost:5001/api/auth/google/callback
+
+# Variables de entorno para el frontend
+VITE_GOOGLE_CLIENT_ID=your-google-client-id-here
+
+

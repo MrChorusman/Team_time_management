@@ -3,7 +3,7 @@ import { apiClient } from './apiClient'
 export const authService = {
   // Iniciar sesión
   async login(email, password) {
-    const response = await apiClient.post('/auth-simple/login', {
+    const response = await apiClient.post('/auth/login', {
       email,
       password
     })
@@ -12,19 +12,19 @@ export const authService = {
 
   // Registrar nuevo usuario
   async register(userData) {
-    const response = await apiClient.post('/auth-simple/register', userData)
+    const response = await apiClient.post('/auth/register', userData)
     return response.data
   },
 
   // Cerrar sesión
   async logout() {
-    const response = await apiClient.post('/auth-simple/logout')
+    const response = await apiClient.post('/auth/logout')
     return response.data
   },
 
   // Verificar sesión actual
   async checkSession() {
-    const response = await apiClient.get('/auth-simple/check-session')
+    const response = await apiClient.get('/auth/me')
     return response.data
   },
 
@@ -45,7 +45,7 @@ export const authService = {
 
   // Solicitar restablecimiento de contraseña
   async forgotPassword(email) {
-    const response = await apiClient.post('/auth-simple/forgot-password', {
+    const response = await apiClient.post('/auth/forgot-password', {
       email
     })
     return response.data

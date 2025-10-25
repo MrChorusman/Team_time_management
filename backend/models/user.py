@@ -1,11 +1,8 @@
-from flask_sqlalchemy import SQLAlchemy
 from flask_security import UserMixin, RoleMixin
 from datetime import datetime
 import uuid
 from sqlalchemy import Boolean, DateTime, Column, Integer, String, Text, ForeignKey
-from datetime import datetime
-
-db = SQLAlchemy()
+from .base import db
 
 # Tabla de asociación para roles de usuario (many-to-many)
 roles_users = db.Table('roles_users',
@@ -72,8 +69,10 @@ class User(db.Model, UserMixin):
     # Relación con empleado (one-to-one) - referencia tardía
     employee = db.relationship('Employee', backref='user', uselist=False, cascade='all, delete-orphan')
     
-    # Relación con notificaciones
-    notifications = db.relationship('Notification', backref='user', lazy='dynamic', cascade='all, delete-orphan')
+    # Relación con notificaciones (especificar foreign_keys para evitar ambigüedad)
+    notifications = db.relationship('Notification', backref='user', lazy='dynamic', 
+                                   cascade='all, delete-orphan',
+                                   foreign_keys='Notification.user_id')
     
     @property
     def full_name(self):
