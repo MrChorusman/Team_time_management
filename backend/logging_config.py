@@ -151,11 +151,7 @@ def setup_logging(app):
     configure_specific_loggers(log_dir, structured_formatter)
     
     # Log de inicio
-    app.logger.info("Sistema de logging inicializado", extra_fields={
-        'log_level': log_level,
-        'log_dir': log_dir,
-        'handlers': ['file', 'error_file'] + (['console'] if app.config.get('DEBUG') else [])
-    })
+    app.logger.info("Sistema de logging inicializado")
 
 def configure_specific_loggers(log_dir: str, formatter: StructuredFormatter):
     """Configura loggers específicos para diferentes componentes"""

@@ -5,6 +5,8 @@ from sqlalchemy.pool import NullPool
 
 # Cargar variables de entorno
 load_dotenv()
+# Cargar también archivo local si existe
+load_dotenv('.env.local')
 
 # Importar configuración de Supabase
 try:
@@ -138,13 +140,22 @@ class Config:
     LOG_LEVEL = os.environ.get('LOG_LEVEL') or 'INFO'
 
 class DevelopmentConfig(Config):
-    """Configuración para desarrollo local (PostgreSQL local)"""
+    """Configuración para desarrollo local (usando Supabase)"""
     DEBUG = True
     TESTING = False
     
-    # Base de datos local para desarrollo
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-                             'postgresql://postgres:postgres@localhost:5432/team_time_management_dev'
+    # Usar Supabase para desarrollo también
+    try:
+        from supabase_config import SupabaseConfig
+        if SupabaseConfig.is_configured():
+            SQLALCHEMY_DATABASE_URI = SupabaseConfig.get_database_url()
+        else:
+            # Fallback a base de datos local si Supabase no está configurado
+            SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
+                                     'postgresql://postgres:postgres@localhost:5432/team_time_management_dev'
+    except ImportError:
+        SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
+                                 'postgresql://postgres:postgres@localhost:5432/team_time_management_dev'
 
 class DevelopmentProductionLikeConfig(Config):
     """Configuración para desarrollo que simula producción (Supabase dev)"""

@@ -16,6 +16,39 @@ def test():
         'message': 'Auth blueprint funcionando'
     })
 
+@auth_bp.route('/test-password', methods=['POST'])
+def test_password():
+    """Endpoint de prueba para verificar contraseña"""
+    try:
+        data = request.get_json()
+        email = data.get('email', 'test@test.com')
+        password = data.get('password', 'test123')
+        
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            return jsonify({
+                'success': False,
+                'message': 'Usuario no encontrado'
+            })
+        
+        password_check = check_password_hash(user.password, password)
+        
+        return jsonify({
+            'success': True,
+            'user_found': True,
+            'password_match': password_check,
+            'user_id': user.id,
+            'user_email': user.email,
+            'user_active': user.active,
+            'user_confirmed': bool(user.confirmed_at)
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error: {str(e)}'
+        }), 500
+
 @auth_bp.route('/login', methods=['POST'])
 def login():
     """Endpoint de inicio de sesión simplificado"""
