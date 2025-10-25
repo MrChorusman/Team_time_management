@@ -1,0 +1,7 @@
+---
+alwaysApply: true
+---
+- Todas las pruebas de aplicaciones web deben realizarse mediante ejecución en el browser, en live, operando la web para que la funcionalidad que se está probando se ejecute.
+- Todo lo que se pruebe debe estar funcionando correctamente sin errores en el browser
+- El objetivo principal es la exeperiencia de usaurio y aunque los sistemas estén respondiendo correctamente si la aplicación muestra un error la prueba se debe dar por error y corregirla
+- Nunca realices modificaciones en el código únicamente para que la prueba de ok, siempre tienes que realizar las modificaciones para que sean robustas, escalables y con el fin de que funcionen en producción, nunca hagas algo únicamente para las pruebas.

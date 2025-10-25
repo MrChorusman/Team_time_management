@@ -96,21 +96,62 @@ pip install -r requirements.txt
 cd ../frontend
 npm install
 
-# Configurar variables de entorno
-cp .env.example .env
-# Editar .env con tus credenciales de Supabase
+# Configurar entorno de desarrollo (NUEVO)
+cd ../backend
+python scripts/env_manager.py switch development
+```
+
+### 🆕 Nueva Arquitectura de Configuración
+
+El proyecto ahora utiliza una **arquitectura de configuración centralizada** que simplifica significativamente la gestión de entornos:
+
+#### Gestión de Entornos
+```bash
+# Ver entornos disponibles
+python scripts/env_manager.py list
+
+# Cambiar a desarrollo
+python scripts/env_manager.py switch development
+
+# Cambiar a producción
+python scripts/env_manager.py switch production
+
+# Ver configuración actual
+python scripts/env_manager.py show
+
+# Validar entorno
+python scripts/env_manager.py validate development
+
+# Probar conexiones
+python scripts/env_manager.py test development
+```
+
+#### Diagnóstico del Sistema
+```bash
+# Diagnóstico completo del sistema
+python scripts/system_diagnostic.py
+
+# Pruebas de configuración
+python scripts/test_new_config.py
+
+# Auditar configuración actual
+python scripts/audit_config.py
+```
+
+#### Migración de Configuración
+```bash
+# Migrar configuración existente
+python scripts/migrate_env_config.py
 ```
 
 ### Variables de Entorno
-```env
-# Supabase Configuration
-SUPABASE_URL=https://xmaxohyxgsthligskjvg.supabase.co
-SUPABASE_KEY=your_supabase_key_here
 
-# Flask Configuration
-FLASK_ENV=development
-SECRET_KEY=your_secret_key_here
-```
+La configuración ahora se maneja automáticamente a través de archivos específicos por entorno:
+
+- **Desarrollo**: `backend/config/environments/.env.development`
+- **Producción**: `backend/config/environments/.env.production`
+
+**No es necesario** configurar manualmente variables de entorno. El sistema las gestiona automáticamente.
 
 ## 📱 Uso de la Aplicación
 
@@ -133,22 +174,69 @@ SECRET_KEY=your_secret_key_here
 
 ### Comandos Útiles
 ```bash
-# Ejecutar backend
-cd backend && python app.py
+# Ejecutar backend (con nueva configuración)
+cd backend
+python scripts/env_manager.py switch development
+python main.py
 
 # Ejecutar frontend
 cd frontend && npm run dev
 
 # Ejecutar tests
-cd backend && python -m pytest
+cd backend && python scripts/test_new_config.py
 cd frontend && npm test
 
 # Build para producción
 cd frontend && npm run build
 ```
 
+### 🆕 Comandos de la Nueva Arquitectura
+
+#### Gestión de Entornos
+```bash
+# Listar entornos disponibles
+python scripts/env_manager.py list
+
+# Cambiar entorno
+python scripts/env_manager.py switch <environment>
+
+# Mostrar configuración
+python scripts/env_manager.py show [environment]
+
+# Validar configuración
+python scripts/env_manager.py validate <environment>
+
+# Probar conexiones
+python scripts/env_manager.py test <environment>
+```
+
+#### Diagnóstico y Mantenimiento
+```bash
+# Diagnóstico completo
+python scripts/system_diagnostic.py
+
+# Pruebas de configuración
+python scripts/test_new_config.py
+
+# Auditar configuración
+python scripts/audit_config.py
+
+# Probar conexiones Supabase
+python scripts/test_all_connections.py
+```
+
+#### Migración y Setup
+```bash
+# Migrar configuración existente
+python scripts/migrate_env_config.py
+
+# Crear nuevo entorno
+python scripts/env_manager.py create <env_name> [template]
+```
+
 ## 📚 Documentación
 
+- [Nueva Arquitectura de Configuración](docs/NUEVA_ARQUITECTURA.md) 🆕
 - [Guía de Instalación](docs/installation.md)
 - [API Documentation](docs/api.md)
 - [Guía de Usuario](docs/user-guide.md)

@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useRef } from 'react'
 import { authService } from '../services/authService'
+import googleOAuthService from '../services/googleOAuthService'
 
 const AuthContext = createContext({})
 
@@ -16,21 +17,82 @@ export const AuthProvider = ({ children }) => {
   const [employee, setEmployee] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [hasLoggedIn, setHasLoggedIn] = useState(false) // Flag para evitar verificar sesión después del login
+  const hasInitialized = useRef(false) // Flag para evitar múltiples inicializaciones
 
   // Verificar sesión al cargar la aplicación
   useEffect(() => {
-    checkSession()
+    // Evitar múltiples inicializaciones
+    if (hasInitialized.current) {
+      return
+    }
+    
+    hasInitialized.current = true
+    
+    // Solo verificar sesión si no tenemos usuario logueado y no hemos hecho login recientemente
+    // Esto evita que se resetee el estado después de un login exitoso
+    if (!user && !hasLoggedIn) {
+      checkSession()
+    } else if (hasLoggedIn) {
+      // Si hemos hecho login, no verificar sesión y marcar loading como false
+      setLoading(false)
+    }
+    
+    // Configurar listeners para Google OAuth
+    const handleGoogleLoginSuccess = (event) => {
+      const { user, redirectUrl } = event.detail
+      setUser(user)
+      setEmployee(null) // Los usuarios de Google no tienen employee por defecto
+      setError(null)
+      setLoading(false)
+      
+      // La redirección se manejará en el componente LoginPage
+      // No redirigir aquí para evitar problemas con React Router
+    }
+    
+    const handleGoogleLoginError = (event) => {
+      setError(event.detail.message || 'Error en login con Google')
+      setLoading(false)
+    }
+    
+    window.addEventListener('googleLoginSuccess', handleGoogleLoginSuccess)
+    window.addEventListener('googleLoginError', handleGoogleLoginError)
+    
+    return () => {
+      window.removeEventListener('googleLoginSuccess', handleGoogleLoginSuccess)
+      window.removeEventListener('googleLoginError', handleGoogleLoginError)
+    }
   }, [])
 
   const checkSession = async () => {
     try {
       setLoading(true)
+      
+      // Verificar si hay datos de usuario en localStorage
+      const storedUser = localStorage.getItem('user')
+      const storedEmployee = localStorage.getItem('employee')
+      
+      if (storedUser) {
+        const user = JSON.parse(storedUser)
+        const employee = storedEmployee ? JSON.parse(storedEmployee) : null
+        setUser(user)
+        setEmployee(employee)
+        setLoading(false)
+        return
+      }
+      
+      // Si no hay datos en localStorage, verificar con el backend
       const response = await authService.checkSession()
       
       // El endpoint /auth/me devuelve { success: true, user: {...}, employee: {...} }
       if (response.success && response.user) {
         setUser(response.user)
         setEmployee(response.employee || null)
+        // Guardar en localStorage
+        localStorage.setItem('user', JSON.stringify(response.user))
+        if (response.employee) {
+          localStorage.setItem('employee', JSON.stringify(response.employee))
+        }
       } else {
         setUser(null)
         setEmployee(null)
@@ -54,6 +116,14 @@ export const AuthProvider = ({ children }) => {
       if (response.success) {
         setUser(response.user)
         setEmployee(response.employee)
+        setHasLoggedIn(true) // Marcar que hemos hecho login exitoso
+        
+        // Guardar en localStorage para persistir la sesión
+        localStorage.setItem('user', JSON.stringify(response.user))
+        if (response.employee) {
+          localStorage.setItem('employee', JSON.stringify(response.employee))
+        }
+        
         return { success: true, redirectUrl: response.redirect_url }
       } else {
         setError(response.message)
@@ -65,6 +135,23 @@ export const AuthProvider = ({ children }) => {
       return { success: false, message: errorMessage }
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loginWithGoogle = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      await googleOAuthService.login()
+      
+      // El resultado se manejará a través de los event listeners
+      return { success: true }
+    } catch (error) {
+      const errorMessage = error.message || 'Error iniciando login con Google'
+      setError(errorMessage)
+      setLoading(false)
+      return { success: false, message: errorMessage }
     }
   }
 
@@ -99,7 +186,12 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setUser(null)
       setEmployee(null)
+      setHasLoggedIn(false) // Resetear flag de login
       setLoading(false)
+      
+      // Limpiar localStorage
+      localStorage.removeItem('user')
+      localStorage.removeItem('employee')
     }
   }
 
@@ -142,6 +234,7 @@ export const AuthProvider = ({ children }) => {
     
     // Acciones
     login,
+    loginWithGoogle,
     register,
     logout,
     updateEmployee,
