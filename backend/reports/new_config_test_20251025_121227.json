@@ -1,0 +1,43 @@
+{
+  "timestamp": "2025-10-25T12:12:24.959782",
+  "tests": {
+    "config_loading": {
+      "status": "success",
+      "environment": "development",
+      "debug": true,
+      "port": 5001
+    },
+    "database_manager": {
+      "status": "success",
+      "connection": true,
+      "message": "Conexi\u00f3n exitosa. PostgreSQL 17.4, Base de datos: postgres, Tablas: 13"
+    },
+    "supabase_validator": {
+      "status": "warning",
+      "valid": false,
+      "errors": [
+        "Puerto 5432 no es v\u00e1lido para conexi\u00f3n pooler. Use: 6543, 5432"
+      ]
+    },
+    "environment_switching": {
+      "status": "success",
+      "environments_tested": [
+        "development",
+        "production"
+      ]
+    },
+    "configuration_inheritance": {
+      "status": "success",
+      "app_name": "Team Time Management",
+      "version": "1.0.0",
+      "debug": true,
+      "port": 5001
+    }
+  },
+  "errors": [
+    "Error en entorno production: Configuraci\u00f3n incompleta para production. Faltan: ['debug', 'database_url']"
+  ],
+  "warnings": [
+    "Puerto 5432 no es v\u00e1lido para conexi\u00f3n pooler. Use: 6543, 5432"
+  ]
+}

@@ -4,4 +4,6 @@ alwaysApply: true
 - Antes de realizar cualquier tarea verifica el documento /Users/thelittle/Team_time_management/Team_time_management/PLAN_DESARROLLO_FASES_FUTURAS.md
 1. Crearás una rama nueva para cada desarrollo que vayamos a realizar y no habras ninguna rama nueva hasta que ese desarrollo no sea probado y validado, momento en el que harás commit a la rama main. 
 2 . Quiero que documentes claramente cada nuevo desarrollo o modificación que se va a realizar ANTES de hacerlo editando el documento /Users/thelittle/Team_time_management/Team_time_management/PLAN_DESARROLLO_FASES_FUTURAS.md  con el nombre de la rama que has creado para ese desarrollo, la fecha en la que se comienza y  la fecha en la que se aprueba por mi parte y se da por finalizado.
-3. únicamente tendremos en el proyecto 2 ramas, la rama main y la rama de desarrollo en la que estemos trabajando
+3. únicamente tendremos en el proyecto 2 ramas, la rama main y la rama de desarrollo en la que estemos trabajando.
+4. Crea variables de entorno para diferencia entre Desarrollo y Producción. Nuestro código debe adaptarse para no poder ser ejecutado y probado operativamente correcto en Desarrollo y que sea escalable a Producción.
+

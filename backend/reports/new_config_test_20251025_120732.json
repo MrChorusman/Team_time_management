@@ -1,0 +1,37 @@
+{
+  "timestamp": "2025-10-25T12:07:32.191988",
+  "tests": {
+    "config_loading": {
+      "status": "failed",
+      "error": "Configuraci\u00f3n incompleta para development. Faltan: ['secret_key']"
+    },
+    "database_manager": {
+      "status": "failed",
+      "error": "Configuraci\u00f3n incompleta para development. Faltan: ['secret_key']"
+    },
+    "supabase_validator": {
+      "status": "failed",
+      "error": "Configuraci\u00f3n incompleta para development. Faltan: ['secret_key']"
+    },
+    "environment_switching": {
+      "status": "success",
+      "environments_tested": [
+        "development",
+        "production"
+      ]
+    },
+    "configuration_inheritance": {
+      "status": "failed",
+      "error": "Configuraci\u00f3n incompleta para development. Faltan: ['secret_key']"
+    }
+  },
+  "errors": [
+    "Error cargando configuraci\u00f3n: Configuraci\u00f3n incompleta para development. Faltan: ['secret_key']",
+    "Error en DatabaseManager: Configuraci\u00f3n incompleta para development. Faltan: ['secret_key']",
+    "Error en SupabaseValidator: Configuraci\u00f3n incompleta para development. Faltan: ['secret_key']",
+    "Error en entorno development: Configuraci\u00f3n incompleta para development. Faltan: ['secret_key']",
+    "Error en entorno production: Configuraci\u00f3n incompleta para production. Faltan: ['secret_key', 'debug', 'database_url']",
+    "Error en herencia: Configuraci\u00f3n incompleta para development. Faltan: ['secret_key']"
+  ],
+  "warnings": []
+}

@@ -1,0 +1,67 @@
+{
+  "environment": "development",
+  "debug": true,
+  "testing": false,
+  "port": 5001,
+  
+  "database": {
+    "provider": "supabase",
+    "connection_type": "direct",
+    "pool_size": 5,
+    "max_overflow": 10,
+    "pool_timeout": 30,
+    "pool_recycle": 300,
+    "pool_pre_ping": true
+  },
+  
+  "frontend": {
+    "url": "http://localhost:5173",
+    "port": 5173
+  },
+  
+  "api": {
+    "base_path": "/api",
+    "timeout": 10000
+  },
+  
+  "google_oauth": {
+    "mock_mode": true,
+    "mock_button_text": "Continuar con Google (Demo)",
+    "scopes": [
+      "openid",
+      "email",
+      "profile"
+    ]
+  },
+  
+  "email": {
+    "mock_mode": true,
+    "log_emails": true,
+    "suppress_send": true
+  },
+  
+  "logging": {
+    "level": "DEBUG",
+    "console_output": true,
+    "file_output": true,
+    "sql_echo": false
+  },
+  
+  "security": {
+    "csrf_enabled": false,
+    "session_cookie_secure": false,
+    "session_cookie_httponly": true,
+    "session_cookie_samesite": "Lax"
+  },
+  
+  "cors": {
+    "additional_origins": []
+  },
+  
+  "features": {
+    "enable_debug_toolbar": true,
+    "enable_profiling": false,
+    "enable_sql_logging": false,
+    "enable_request_logging": true
+  }
+}

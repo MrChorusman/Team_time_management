@@ -1,0 +1,676 @@
+{
+  "timestamp": "2025-10-25T11:57:04.211459",
+  "archivos_encontrados": [
+    ".env",
+    ".env.backup",
+    ".env.development",
+    ".env.development-production-like",
+    ".env.development-test",
+    ".env.local",
+    ".env.production"
+  ],
+  "variables_por_archivo": {
+    ".env": {
+      "total_variables": 21,
+      "total_lineas": 35,
+      "variables": [
+        "FLASK_ENV",
+        "DEBUG",
+        "SUPABASE_URL",
+        "SUPABASE_KEY",
+        "SUPABASE_HOST",
+        "SUPABASE_PORT",
+        "SUPABASE_DB",
+        "SUPABASE_USER",
+        "SUPABASE_DB_PASSWORD",
+        "SECRET_KEY",
+        "SECURITY_PASSWORD_SALT",
+        "MOCK_EMAIL_MODE",
+        "MAIL_SERVER",
+        "MAIL_PORT",
+        "MAIL_USE_TLS",
+        "MAIL_USERNAME",
+        "MAIL_PASSWORD",
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET",
+        "GOOGLE_REDIRECT_URI",
+        "LOG_LEVEL"
+      ]
+    },
+    ".env.backup": {
+      "total_variables": 25,
+      "total_lineas": 63,
+      "variables": [
+        "FLASK_ENV",
+        "SECRET_KEY",
+        "SECURITY_PASSWORD_SALT",
+        "SUPABASE_DEV_URL",
+        "SUPABASE_DEV_KEY",
+        "SUPABASE_DEV_DB_PASSWORD",
+        "SUPABASE_DEV_HOST",
+        "SUPABASE_DEV_PORT",
+        "SUPABASE_DEV_DB",
+        "SUPABASE_DEV_USER",
+        "MAIL_SERVER",
+        "MAIL_PORT",
+        "MAIL_USERNAME",
+        "MAIL_PASSWORD",
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET",
+        "GOOGLE_REDIRECT_URI",
+        "LOG_LEVEL",
+        "SUPABASE_URL",
+        "SUPABASE_KEY",
+        "SUPABASE_DB_PASSWORD",
+        "SUPABASE_HOST",
+        "SUPABASE_PORT",
+        "SUPABASE_DB",
+        "SUPABASE_USER"
+      ]
+    },
+    ".env.development": {
+      "total_variables": 21,
+      "total_lineas": 34,
+      "variables": [
+        "FLASK_ENV",
+        "DEBUG",
+        "SUPABASE_URL",
+        "SUPABASE_KEY",
+        "SUPABASE_HOST",
+        "SUPABASE_PORT",
+        "SUPABASE_DB",
+        "SUPABASE_USER",
+        "SUPABASE_DB_PASSWORD",
+        "SECRET_KEY",
+        "SECURITY_PASSWORD_SALT",
+        "MOCK_EMAIL_MODE",
+        "MAIL_SERVER",
+        "MAIL_PORT",
+        "MAIL_USE_TLS",
+        "MAIL_USERNAME",
+        "MAIL_PASSWORD",
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET",
+        "GOOGLE_REDIRECT_URI",
+        "LOG_LEVEL"
+      ]
+    },
+    ".env.development-production-like": {
+      "total_variables": 18,
+      "total_lineas": 54,
+      "variables": [
+        "FLASK_ENV",
+        "SECRET_KEY",
+        "SECURITY_PASSWORD_SALT",
+        "SUPABASE_DEV_URL",
+        "SUPABASE_DEV_KEY",
+        "SUPABASE_DEV_DB_PASSWORD",
+        "SUPABASE_DEV_HOST",
+        "SUPABASE_DEV_PORT",
+        "SUPABASE_DEV_DB",
+        "SUPABASE_DEV_USER",
+        "MAIL_SERVER",
+        "MAIL_PORT",
+        "MAIL_USERNAME",
+        "MAIL_PASSWORD",
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET",
+        "GOOGLE_REDIRECT_URI",
+        "LOG_LEVEL"
+      ]
+    },
+    ".env.development-test": {
+      "total_variables": 21,
+      "total_lineas": 35,
+      "variables": [
+        "FLASK_ENV",
+        "DEBUG",
+        "SUPABASE_URL",
+        "SUPABASE_KEY",
+        "SUPABASE_HOST",
+        "SUPABASE_PORT",
+        "SUPABASE_DB",
+        "SUPABASE_USER",
+        "SUPABASE_DB_PASSWORD",
+        "SECRET_KEY",
+        "SECURITY_PASSWORD_SALT",
+        "MOCK_EMAIL_MODE",
+        "MAIL_SERVER",
+        "MAIL_PORT",
+        "MAIL_USE_TLS",
+        "MAIL_USERNAME",
+        "MAIL_PASSWORD",
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET",
+        "GOOGLE_REDIRECT_URI",
+        "LOG_LEVEL"
+      ]
+    },
+    ".env.local": {
+      "total_variables": 6,
+      "total_lineas": 6,
+      "variables": [
+        "SUPABASE_HOST",
+        "SUPABASE_PORT",
+        "SUPABASE_DB",
+        "SUPABASE_USER",
+        "SUPABASE_DB_PASSWORD",
+        "FLASK_ENV"
+      ]
+    },
+    ".env.production": {
+      "total_variables": 21,
+      "total_lineas": 34,
+      "variables": [
+        "FLASK_ENV",
+        "DEBUG",
+        "SUPABASE_URL",
+        "SUPABASE_KEY",
+        "SUPABASE_HOST",
+        "SUPABASE_PORT",
+        "SUPABASE_DB",
+        "SUPABASE_USER",
+        "SUPABASE_DB_PASSWORD",
+        "SECRET_KEY",
+        "SECURITY_PASSWORD_SALT",
+        "MOCK_EMAIL_MODE",
+        "MAIL_SERVER",
+        "MAIL_PORT",
+        "MAIL_USE_TLS",
+        "MAIL_USERNAME",
+        "MAIL_PASSWORD",
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET",
+        "GOOGLE_REDIRECT_URI",
+        "LOG_LEVEL"
+      ]
+    }
+  },
+  "variables_duplicadas": {
+    "FLASK_ENV": [
+      ".env",
+      ".env.backup",
+      ".env.development",
+      ".env.development-production-like",
+      ".env.development-test",
+      ".env.local",
+      ".env.production"
+    ],
+    "DEBUG": [
+      ".env",
+      ".env.development",
+      ".env.development-test",
+      ".env.production"
+    ],
+    "SUPABASE_URL": [
+      ".env",
+      ".env.backup",
+      ".env.development",
+      ".env.development-test",
+      ".env.production"
+    ],
+    "SUPABASE_KEY": [
+      ".env",
+      ".env.backup",
+      ".env.development",
+      ".env.development-test",
+      ".env.production"
+    ],
+    "SUPABASE_HOST": [
+      ".env",
+      ".env.backup",
+      ".env.development",
+      ".env.development-test",
+      ".env.local",
+      ".env.production"
+    ],
+    "SUPABASE_PORT": [
+      ".env",
+      ".env.backup",
+      ".env.development",
+      ".env.development-test",
+      ".env.local",
+      ".env.production"
+    ],
+    "SUPABASE_DB": [
+      ".env",
+      ".env.backup",
+      ".env.development",
+      ".env.development-test",
+      ".env.local",
+      ".env.production"
+    ],
+    "SUPABASE_USER": [
+      ".env",
+      ".env.backup",
+      ".env.development",
+      ".env.development-test",
+      ".env.local",
+      ".env.production"
+    ],
+    "SUPABASE_DB_PASSWORD": [
+      ".env",
+      ".env.backup",
+      ".env.development",
+      ".env.development-test",
+      ".env.local",
+      ".env.production"
+    ],
+    "SECRET_KEY": [
+      ".env",
+      ".env.backup",
+      ".env.development",
+      ".env.development-production-like",
+      ".env.development-test",
+      ".env.production"
+    ],
+    "SECURITY_PASSWORD_SALT": [
+      ".env",
+      ".env.backup",
+      ".env.development",
+      ".env.development-production-like",
+      ".env.development-test",
+      ".env.production"
+    ],
+    "MOCK_EMAIL_MODE": [
+      ".env",
+      ".env.development",
+      ".env.development-test",
+      ".env.production"
+    ],
+    "MAIL_SERVER": [
+      ".env",
+      ".env.backup",
+      ".env.development",
+      ".env.development-production-like",
+      ".env.development-test",
+      ".env.production"
+    ],
+    "MAIL_PORT": [
+      ".env",
+      ".env.backup",
+      ".env.development",
+      ".env.development-production-like",
+      ".env.development-test",
+      ".env.production"
+    ],
+    "MAIL_USE_TLS": [
+      ".env",
+      ".env.development",
+      ".env.development-test",
+      ".env.production"
+    ],
+    "MAIL_USERNAME": [
+      ".env",
+      ".env.backup",
+      ".env.development",
+      ".env.development-production-like",
+      ".env.development-test",
+      ".env.production"
+    ],
+    "MAIL_PASSWORD": [
+      ".env",
+      ".env.backup",
+      ".env.development",
+      ".env.development-production-like",
+      ".env.development-test",
+      ".env.production"
+    ],
+    "GOOGLE_CLIENT_ID": [
+      ".env",
+      ".env.backup",
+      ".env.development",
+      ".env.development-production-like",
+      ".env.development-test",
+      ".env.production"
+    ],
+    "GOOGLE_CLIENT_SECRET": [
+      ".env",
+      ".env.backup",
+      ".env.development",
+      ".env.development-production-like",
+      ".env.development-test",
+      ".env.production"
+    ],
+    "GOOGLE_REDIRECT_URI": [
+      ".env",
+      ".env.backup",
+      ".env.development",
+      ".env.development-production-like",
+      ".env.development-test",
+      ".env.production"
+    ],
+    "LOG_LEVEL": [
+      ".env",
+      ".env.backup",
+      ".env.development",
+      ".env.development-production-like",
+      ".env.development-test",
+      ".env.production"
+    ],
+    "SUPABASE_DEV_URL": [
+      ".env.backup",
+      ".env.development-production-like"
+    ],
+    "SUPABASE_DEV_KEY": [
+      ".env.backup",
+      ".env.development-production-like"
+    ],
+    "SUPABASE_DEV_DB_PASSWORD": [
+      ".env.backup",
+      ".env.development-production-like"
+    ],
+    "SUPABASE_DEV_HOST": [
+      ".env.backup",
+      ".env.development-production-like"
+    ],
+    "SUPABASE_DEV_PORT": [
+      ".env.backup",
+      ".env.development-production-like"
+    ],
+    "SUPABASE_DEV_DB": [
+      ".env.backup",
+      ".env.development-production-like"
+    ],
+    "SUPABASE_DEV_USER": [
+      ".env.backup",
+      ".env.development-production-like"
+    ]
+  },
+  "puertos_encontrados": "{'SUPABASE_PORT=6543', 'SUPABASE_PORT=5432', 'MAIL_PORT=587', 'SUPABASE_DEV_PORT=5432'}",
+  "problemas_detectados": [
+    {
+      "archivo": ".env",
+      "variable": "MAIL_USERNAME",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env",
+      "variable": "MAIL_PASSWORD",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env",
+      "variable": "GOOGLE_CLIENT_ID",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env",
+      "variable": "GOOGLE_CLIENT_SECRET",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env",
+      "variable": "GOOGLE_REDIRECT_URI",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env.development",
+      "variable": "MAIL_USERNAME",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env.development",
+      "variable": "MAIL_PASSWORD",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env.development",
+      "variable": "GOOGLE_CLIENT_ID",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env.development",
+      "variable": "GOOGLE_CLIENT_SECRET",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env.development",
+      "variable": "GOOGLE_REDIRECT_URI",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env.development-test",
+      "variable": "MAIL_USERNAME",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env.development-test",
+      "variable": "MAIL_PASSWORD",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env.development-test",
+      "variable": "GOOGLE_CLIENT_ID",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env.development-test",
+      "variable": "GOOGLE_CLIENT_SECRET",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env.development-test",
+      "variable": "GOOGLE_REDIRECT_URI",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env",
+      "variable": "MAIL_USERNAME",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env",
+      "variable": "MAIL_PASSWORD",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env",
+      "variable": "GOOGLE_CLIENT_ID",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env",
+      "variable": "GOOGLE_CLIENT_SECRET",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env",
+      "variable": "GOOGLE_REDIRECT_URI",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env.development",
+      "variable": "MAIL_USERNAME",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env.development",
+      "variable": "MAIL_PASSWORD",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env.development",
+      "variable": "GOOGLE_CLIENT_ID",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env.development",
+      "variable": "GOOGLE_CLIENT_SECRET",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env.development",
+      "variable": "GOOGLE_REDIRECT_URI",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env.development-test",
+      "variable": "MAIL_USERNAME",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env.development-test",
+      "variable": "MAIL_PASSWORD",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env.development-test",
+      "variable": "GOOGLE_CLIENT_ID",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env.development-test",
+      "variable": "GOOGLE_CLIENT_SECRET",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env.development-test",
+      "variable": "GOOGLE_REDIRECT_URI",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "tipo": "Inconsistencia de puerto",
+      "variable": "SUPABASE_PORT",
+      "valores": {
+        ".env": "5432",
+        ".env.backup": "6543",
+        ".env.development": "5432",
+        ".env.development-test": "5432",
+        ".env.local": "6543",
+        ".env.production": "5432"
+      }
+    },
+    {
+      "archivo": ".env",
+      "variable": "MAIL_USERNAME",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env",
+      "variable": "MAIL_PASSWORD",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env",
+      "variable": "GOOGLE_CLIENT_ID",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env",
+      "variable": "GOOGLE_CLIENT_SECRET",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env",
+      "variable": "GOOGLE_REDIRECT_URI",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env.backup",
+      "problema": "Mezcla de variables DEV y PROD en el mismo archivo"
+    },
+    {
+      "archivo": ".env.development",
+      "variable": "MAIL_USERNAME",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env.development",
+      "variable": "MAIL_PASSWORD",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env.development",
+      "variable": "GOOGLE_CLIENT_ID",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env.development",
+      "variable": "GOOGLE_CLIENT_SECRET",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env.development",
+      "variable": "GOOGLE_REDIRECT_URI",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env.development-test",
+      "variable": "MAIL_USERNAME",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env.development-test",
+      "variable": "MAIL_PASSWORD",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env.development-test",
+      "variable": "GOOGLE_CLIENT_ID",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env.development-test",
+      "variable": "GOOGLE_CLIENT_SECRET",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    },
+    {
+      "archivo": ".env.development-test",
+      "variable": "GOOGLE_REDIRECT_URI",
+      "problema": "Valor placeholder o vac\u00edo",
+      "valor": ""
+    }
+  ],
+  "estadisticas": {
+    "total_archivos": 7,
+    "total_variables": 133,
+    "variables_unicas": 28,
+    "variables_duplicadas": 28,
+    "archivos_con_problemas": 3
+  }
+}

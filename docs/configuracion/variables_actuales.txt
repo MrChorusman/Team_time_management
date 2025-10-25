@@ -1,0 +1,139 @@
+# DOCUMENTACIÓN DE VARIABLES DE ENTORNO ACTUALES
+# Generado el: 2024-10-25
+# Proyecto: Team Time Management
+
+## ARCHIVOS .ENV ENCONTRADOS:
+- .env
+- .env.backup
+- .env.development
+- .env.development-production-like
+- .env.development-test
+- .env.local
+- .env.production
+
+## ANÁLISIS POR ARCHIVO:
+
+=== .env ===
+DEBUG=true
+FLASK_ENV=development
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_REDIRECT_URI=
+LOG_LEVEL=DEBUG
+MAIL_PASSWORD=
+MAIL_PORT=587
+MAIL_SERVER=smtp.gmail.com
+MAIL_USERNAME=
+MAIL_USE_TLS=true
+MOCK_EMAIL_MODE=true
+SECRET_KEY=dev-secret-key-change-in-production
+SECURITY_PASSWORD_SALT=dev-salt-change-in-production
+SUPABASE_DB=postgres
+SUPABASE_DB_PASSWORD=Littletosti29.
+SUPABASE_HOST=aws-0-eu-west-3.pooler.supabase.com
+SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFzYnZveWpxZnJoYXFuY3F0a252Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEyODc5NTIsImV4cCI6MjA3Njg2Mzk1Mn0.i-ZBx7KFbSlCQl4yiAxcH95m6NZ96eyI4Ldxvyrct0k
+SUPABASE_PORT=5432
+SUPABASE_URL=https://qsbvoyjqfrhaqncqtknv.supabase.co
+SUPABASE_USER=postgres.qsbvoyjqfrhaqncqtknv
+
+
+=== .env.development ===
+DEBUG=true
+FLASK_ENV=development
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_REDIRECT_URI=
+LOG_LEVEL=DEBUG
+MAIL_PASSWORD=
+MAIL_PORT=587
+MAIL_SERVER=smtp.gmail.com
+MAIL_USERNAME=
+MAIL_USE_TLS=true
+MOCK_EMAIL_MODE=true
+SECRET_KEY=dev-secret-key-change-in-production
+SECURITY_PASSWORD_SALT=dev-salt-change-in-production
+SUPABASE_DB=postgres
+SUPABASE_DB_PASSWORD=Littletosti29.
+SUPABASE_HOST=db.qsbvoyjqfrhaqncqtknv.supabase.co
+SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFzYnZveWpxZnJoYXFuY3F0a252Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEyODc5NTIsImV4cCI6MjA3Njg2Mzk1Mn0.i-ZBx7KFbSlCQl4yiAxcH95m6NZ96eyI4Ldxvyrct0k
+SUPABASE_PORT=5432
+SUPABASE_URL=https://qsbvoyjqfrhaqncqtknv.supabase.co
+SUPABASE_USER=postgres
+
+
+=== .env.development-production-like ===
+FLASK_ENV=development
+GOOGLE_CLIENT_ID=985900144787-kmg5juu0il36je358se4ljktnqmpsrip.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=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
+GOOGLE_REDIRECT_URI=http://localhost:5001/api/auth/google/callback
+LOG_LEVEL=DEBUG
+MAIL_PASSWORD=jfhzwfgxcktneovy
+MAIL_PORT=587
+MAIL_SERVER=smtp.gmail.com
+MAIL_USERNAME=miguelchis@gmail.com
+SECRET_KEY=dev-secret-key-team-time-management-2024
+SECURITY_PASSWORD_SALT=dev-salt-team-time-management-2024
+SUPABASE_DEV_DB=postgres
+SUPABASE_DEV_DB_PASSWORD=Littletosti29.
+SUPABASE_DEV_HOST=aws-0-eu-west-3.pooler.supabase.com
+SUPABASE_DEV_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFzYnZveWpxZnJoYXFuY3F0a252Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEyODc5NTIsImV4cCI6MjA3Njg2Mzk1Mn0.i-ZBx7KFbSlCQl4yiAxcH95m6NZ96eyI4Ldxvyrct0k
+SUPABASE_DEV_PORT=5432
+SUPABASE_DEV_URL=https://qsbvoyjqfrhaqncqtknv.supabase.co
+SUPABASE_DEV_USER=postgres.qsbvoyjqfrhaqncqtknv
+
+
+=== .env.development-test ===
+DEBUG=true
+FLASK_ENV=development
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_REDIRECT_URI=
+LOG_LEVEL=DEBUG
+MAIL_PASSWORD=
+MAIL_PORT=587
+MAIL_SERVER=smtp.gmail.com
+MAIL_USERNAME=
+MAIL_USE_TLS=true
+MOCK_EMAIL_MODE=true
+SECRET_KEY=dev-secret-key-change-in-production
+SECURITY_PASSWORD_SALT=dev-salt-change-in-production
+SUPABASE_DB=postgres
+SUPABASE_DB_PASSWORD=Littletosti29.
+SUPABASE_HOST=aws-0-eu-west-3.pooler.supabase.com
+SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFzYnZveWpxZnJoYXFuY3F0a252Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEyODc5NTIsImV4cCI6MjA3Njg2Mzk1Mn0.i-ZBx7KFbSlCQl4yiAxcH95m6NZ96eyI4Ldxvyrct0k
+SUPABASE_PORT=5432
+SUPABASE_URL=https://qsbvoyjqfrhaqncqtknv.supabase.co
+SUPABASE_USER=postgres
+
+
+=== .env.local ===
+FLASK_ENV=development
+SUPABASE_DB=postgres
+SUPABASE_DB_PASSWORD=temp_password
+SUPABASE_HOST=aws-0-eu-west-3.pooler.supabase.com
+SUPABASE_PORT=6543
+SUPABASE_USER=postgres.xmaxohyxgsthligskjvg
+
+
+=== .env.production ===
+DEBUG=false
+FLASK_ENV=production
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_REDIRECT_URI=https://team-time-management.vercel.app/auth/google/callback
+LOG_LEVEL=INFO
+MAIL_PASSWORD=your_app_password
+MAIL_PORT=587
+MAIL_SERVER=smtp.gmail.com
+MAIL_USERNAME=your_email@gmail.com
+MAIL_USE_TLS=true
+MOCK_EMAIL_MODE=false
+SECRET_KEY=production-secret-key-change-me
+SECURITY_PASSWORD_SALT=production-salt-change-me
+SUPABASE_DB=postgres
+SUPABASE_DB_PASSWORD=Littletosti29.
+SUPABASE_HOST=aws-0-eu-west-3.pooler.supabase.com
+SUPABASE_KEY=your_production_key_here
+SUPABASE_PORT=5432
+SUPABASE_URL=https://xmaxohyxgsthligskjvg.supabase.co
+SUPABASE_USER=postgres.xmaxohyxgsthligskjvg

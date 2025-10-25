@@ -47,6 +47,11 @@ def create_app(config_name=None):
     config_name = config_name or os.environ.get('FLASK_ENV', 'development')
     app.config.from_object(config[config_name])
     
+    # Log de configuración cargada
+    logger = get_logger('config')
+    logger.info(f"Configuración cargada: {config_name}")
+    logger.info(f"Base de datos: {app.config.get('SQLALCHEMY_DATABASE_URI', 'No configurada')[:50]}...")
+    
     # Configurar logging estructurado
     setup_logging(app)
     
@@ -490,6 +495,6 @@ app = create_app()
 if __name__ == '__main__':
     app.run(
         host='0.0.0.0',
-        port=5001,
+        port=5020,
         debug=app.config.get('DEBUG', False)
     )
