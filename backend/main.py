@@ -89,6 +89,87 @@ def create_app(config_name=None):
             'timestamp': datetime.utcnow().isoformat()
         })
     
+    @app.route('/api/auth/login-main', methods=['POST'])
+    def login_main():
+        """Endpoint de login directamente en main.py para pruebas"""
+        try:
+            from flask import request
+            from werkzeug.security import check_password_hash
+            from models.user import User
+            
+            data = request.get_json()
+            
+            if not data or not data.get('email') or not data.get('password'):
+                return jsonify({
+                    'success': False,
+                    'message': 'Email y contraseña son requeridos'
+                }), 400
+            
+            email = data['email'].lower().strip()
+            password = data['password']
+            
+            # Buscar usuario usando SQLAlchemy directamente
+            user = User.query.filter_by(email=email).first()
+            
+            if not user:
+                return jsonify({
+                    'success': False,
+                    'message': 'Credenciales inválidas'
+                }), 401
+            
+            # Verificar contraseña
+            if not check_password_hash(user.password, password):
+                return jsonify({
+                    'success': False,
+                    'message': 'Credenciales inválidas'
+                }), 401
+            
+            # Verificar si el usuario está activo
+            if not user.active:
+                return jsonify({
+                    'success': False,
+                    'message': 'Cuenta desactivada. Contacta al administrador.'
+                }), 401
+            
+            # Verificar si el usuario está confirmado
+            if not user.confirmed_at:
+                return jsonify({
+                    'success': False,
+                    'message': 'Debes confirmar tu email antes de iniciar sesión.',
+                    'requires_confirmation': True
+                }), 401
+            
+            # Obtener roles del usuario usando SQLAlchemy
+            roles = []
+            try:
+                roles = [role.name for role in user.roles]
+            except Exception as e:
+                pass
+            
+            # Respuesta exitosa
+            login_response = {
+                "success": True,
+                "message": "Inicio de sesión exitoso",
+                "user": {
+                    "id": user.id,
+                    "email": user.email,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                    "active": user.active,
+                    "confirmed_at": user.confirmed_at.isoformat() if user.confirmed_at else None
+                },
+                "roles": roles,
+                "redirectUrl": "/dashboard"
+            }
+            
+            return jsonify(login_response)
+            
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'message': f'Error interno del servidor: {str(e)}'
+            }), 500
+    
     @app.route('/api/auth-simple/test-main', methods=['GET'])
     def test_auth_simple_main():
         """Endpoint de prueba para auth-simple en main.py"""
