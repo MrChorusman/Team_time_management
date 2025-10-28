@@ -112,7 +112,7 @@ def test_application_config():
     print("\n⚙️  Verificando configuración de la aplicación...")
     
     try:
-        from config import Config, SUPABASE_AVAILABLE
+        from app_config import Config, SUPABASE_AVAILABLE
         
         print(f"   Supabase disponible: {'✅ Sí' if SUPABASE_AVAILABLE else '❌ No'}")
         print(f"   URL de BD: {Config.SQLALCHEMY_DATABASE_URI[:50]}...")

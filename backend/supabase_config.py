@@ -19,10 +19,10 @@ class SupabaseConfig:
     
     # Configuración de base de datos PostgreSQL (PRODUCCIÓN)
     DB_PASSWORD = os.environ.get('SUPABASE_DB_PASSWORD')
-    DB_HOST = os.environ.get('SUPABASE_HOST', 'aws-0-eu-west-3.pooler.supabase.com')
+    DB_HOST = os.environ.get('SUPABASE_HOST', 'aws-1-eu-west-1.pooler.supabase.com')
     DB_PORT = os.environ.get('SUPABASE_PORT', '6543')
     DB_NAME = os.environ.get('SUPABASE_DB', 'postgres')
-    DB_USER = os.environ.get('SUPABASE_USER', 'postgres.xmaxohyxgsthligskjvg')
+    DB_USER = os.environ.get('SUPABASE_USER', 'postgres.qsbvoyjqfrhaqncqtknv')
     
     # Información del proyecto Supabase (DESARROLLO)
     DEV_PROJECT_URL = os.environ.get('SUPABASE_DEV_URL')
@@ -30,10 +30,10 @@ class SupabaseConfig:
     
     # Configuración de base de datos PostgreSQL (DESARROLLO)
     DEV_DB_PASSWORD = os.environ.get('SUPABASE_DEV_DB_PASSWORD')
-    DEV_DB_HOST = os.environ.get('SUPABASE_DEV_HOST', 'aws-0-eu-west-3.pooler.supabase.com')
+    DEV_DB_HOST = os.environ.get('SUPABASE_DEV_HOST', 'aws-1-eu-west-1.pooler.supabase.com')
     DEV_DB_PORT = os.environ.get('SUPABASE_DEV_PORT', '6543')
     DEV_DB_NAME = os.environ.get('SUPABASE_DEV_DB', 'postgres')
-    DEV_DB_USER = os.environ.get('SUPABASE_DEV_USER')
+    DEV_DB_USER = os.environ.get('SUPABASE_DEV_USER', 'postgres.qsbvoyjqfrhaqncqtknv')
     
     @classmethod
     def get_database_url(cls):
