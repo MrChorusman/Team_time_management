@@ -7,8 +7,9 @@ from flask_security import Security, SQLAlchemyUserDatastore
 from datetime import datetime
 import logging
 
-# Importar configuración
-from config import config
+# Importar configuración (evitar ambigüedad entre config.py y config/)
+import config as config_module
+config = config_module.config
 
 # Importar modelos
 from models import db, User, Role
@@ -197,7 +198,8 @@ def create_app(config_name=None):
         import os
         import psycopg2
         import psutil
-        from config import config
+        import config as config_module
+        config = config_module.config
         
         logger = get_logger('health')
         
@@ -210,14 +212,28 @@ def create_app(config_name=None):
             'diagnostics': {}
         }
         
-        # Verificar variables de entorno
-        env_vars = {
-            'SUPABASE_HOST': os.environ.get('SUPABASE_HOST'),
-            'SUPABASE_PORT': os.environ.get('SUPABASE_PORT'),
-            'SUPABASE_DB': os.environ.get('SUPABASE_DB'),
-            'SUPABASE_USER': os.environ.get('SUPABASE_USER'),
-            'SUPABASE_DB_PASSWORD': '***' if os.environ.get('SUPABASE_DB_PASSWORD') else None
-        }
+        # Verificar variables de entorno (detectar desarrollo vs producción)
+        env_mode = os.environ.get('FLASK_ENV', 'unknown')
+        is_dev = env_mode == 'development'
+        
+        if is_dev:
+            # En desarrollo, usar variables SUPABASE_DEV_*
+            env_vars = {
+                'SUPABASE_HOST': os.environ.get('SUPABASE_DEV_HOST'),
+                'SUPABASE_PORT': os.environ.get('SUPABASE_DEV_PORT'),
+                'SUPABASE_DB': os.environ.get('SUPABASE_DEV_DB'),
+                'SUPABASE_USER': os.environ.get('SUPABASE_DEV_USER'),
+                'SUPABASE_DB_PASSWORD': '***' if os.environ.get('SUPABASE_DEV_DB_PASSWORD') else None
+            }
+        else:
+            # En producción, usar variables SUPABASE_*
+            env_vars = {
+                'SUPABASE_HOST': os.environ.get('SUPABASE_HOST'),
+                'SUPABASE_PORT': os.environ.get('SUPABASE_PORT'),
+                'SUPABASE_DB': os.environ.get('SUPABASE_DB'),
+                'SUPABASE_USER': os.environ.get('SUPABASE_USER'),
+                'SUPABASE_DB_PASSWORD': '***' if os.environ.get('SUPABASE_DB_PASSWORD') else None
+            }
         
         health_info['diagnostics']['environment_variables'] = env_vars
         
@@ -230,11 +246,19 @@ def create_app(config_name=None):
         
         # Verificar conexión directa con psycopg2
         try:
-            host = os.environ.get('SUPABASE_HOST')
-            port = os.environ.get('SUPABASE_PORT')
-            db_name = os.environ.get('SUPABASE_DB')
-            user = os.environ.get('SUPABASE_USER')
-            password = os.environ.get('SUPABASE_DB_PASSWORD')
+            # Detectar entorno y leer variables correctas
+            if is_dev:
+                host = os.environ.get('SUPABASE_DEV_HOST')
+                port = os.environ.get('SUPABASE_DEV_PORT')
+                db_name = os.environ.get('SUPABASE_DEV_DB')
+                user = os.environ.get('SUPABASE_DEV_USER')
+                password = os.environ.get('SUPABASE_DEV_DB_PASSWORD')
+            else:
+                host = os.environ.get('SUPABASE_HOST')
+                port = os.environ.get('SUPABASE_PORT')
+                db_name = os.environ.get('SUPABASE_DB')
+                user = os.environ.get('SUPABASE_USER')
+                password = os.environ.get('SUPABASE_DB_PASSWORD')
             
             if all([host, port, db_name, user, password]):
                 connection_url = f"postgresql://{user}:{password}@{host}:{port}/{db_name}"
@@ -493,8 +517,9 @@ def create_app(config_name=None):
 app = create_app()
 
 if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5001))
     app.run(
         host='0.0.0.0',
-        port=5020,
+        port=port,
         debug=app.config.get('DEBUG', False)
     )

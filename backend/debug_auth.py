@@ -23,7 +23,8 @@ def debug_auth_system():
     try:
         # 1. Verificar configuración de base de datos
         print("\n1️⃣ VERIFICANDO CONFIGURACIÓN DE BASE DE DATOS...")
-        from config import Config
+        import config as config_module
+        Config = config_module.Config
         print(f"   DATABASE_URL: {Config.SQLALCHEMY_DATABASE_URI}")
         print(f"   SUPABASE_URL: {Config.SUPABASE_URL}")
         print(f"   SUPABASE_KEY configurado: {'Sí' if Config.SUPABASE_KEY else 'No'}")
@@ -171,6 +172,8 @@ def debug_auth_system():
 
 if __name__ == "__main__":
     debug_auth_system()
+
+
 
 
 

@@ -21,7 +21,8 @@ try:
     from datetime import datetime
     
     # Configurar la base de datos directamente
-    from config import Config
+    import config as config_module
+    Config = config_module.Config
     from flask import Flask
     
     app = Flask(__name__)

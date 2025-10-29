@@ -431,7 +431,8 @@ class RealisticDataGenerator:
 def main():
     """Función principal para ejecutar el script"""
     from flask import Flask
-    from config import config
+    import config as config_module
+    config = config_module.config
     
     # Crear aplicación Flask
     app = Flask(__name__)

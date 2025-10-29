@@ -14,7 +14,8 @@ from sqlalchemy.exc import SQLAlchemyError
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from supabase_config import SupabaseConfig
-from config import Config
+import config as config_module
+Config = config_module.Config
 
 def check_supabase_configuration():
     """Verificar que la configuración de Supabase esté completa"""
