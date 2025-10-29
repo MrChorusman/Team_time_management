@@ -7,8 +7,8 @@ from flask_security import Security, SQLAlchemyUserDatastore
 from datetime import datetime
 import logging
 
-# Importar configuración (evitar ambigüedad entre config.py y config/)
-import config as config_module
+# Importar configuración desde app_config (evita conflicto con directorio config/)
+import app_config as config_module
 config = config_module.config
 
 # Importar modelos
@@ -198,7 +198,7 @@ def create_app(config_name=None):
         import os
         import psycopg2
         import psutil
-        import config as config_module
+        import app_config as config_module
         config = config_module.config
         
         logger = get_logger('health')

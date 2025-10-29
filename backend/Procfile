@@ -1,2 +1,2 @@
-web: cd /opt/render/project/src/backend && gunicorn main:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120
+web: gunicorn main:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120
 
