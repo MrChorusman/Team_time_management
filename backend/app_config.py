@@ -221,10 +221,10 @@ class ProductionConfig(Config):
         }
     }
     
-    # Configuración de seguridad adicional
-    SESSION_COOKIE_SECURE = True
-    SESSION_COOKIE_HTTPONLY = True
-    SESSION_COOKIE_SAMESITE = 'Lax'
+    # Configuración de seguridad adicional para cookies cross-origin
+    SESSION_COOKIE_SECURE = True  # HTTPS requerido
+    SESSION_COOKIE_HTTPONLY = True  # No accesible desde JavaScript
+    SESSION_COOKIE_SAMESITE = 'None'  # CRÍTICO: Permitir cookies cross-origin (Vercel -> Render)
 
 # Diccionario de configuraciones
 config = {
