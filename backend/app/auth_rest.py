@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from werkzeug.security import check_password_hash
-from flask_security import login_user, login_required, current_user
+from flask_security import login_user, current_user
 from models.user import User
 import logging
 
@@ -145,10 +145,11 @@ def login():
         }), 500
 
 @auth_bp.route('/me', methods=['GET'])
-@login_required
 def get_current_user():
     """Obtener información del usuario actual autenticado"""
     try:
+        # IMPORTANTE: NO usar @login_required porque redirige a /login en lugar de retornar 401 JSON
+        # En su lugar, verificar manualmente con current_user.is_authenticated
         if not current_user.is_authenticated:
             logger.warning("❌ Usuario no autenticado intentando acceder a /me")
             return jsonify({
