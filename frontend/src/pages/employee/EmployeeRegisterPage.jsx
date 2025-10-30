@@ -20,6 +20,7 @@ import { Textarea } from '../../components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card'
 import { Alert, AlertDescription } from '../../components/ui/alert'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
+import employeeService from '../../services/employeeService'
 
 const EmployeeRegisterPage = () => {
   const navigate = useNavigate()
@@ -71,7 +72,7 @@ const EmployeeRegisterPage = () => {
     setError(null)
     
     try {
-      // Aquí iría la llamada al API para registrar el empleado
+      // Preparar datos del empleado
       const employeeData = {
         full_name: data.fullName,
         country: data.country,
@@ -83,21 +84,39 @@ const EmployeeRegisterPage = () => {
         notes: data.notes || null
       }
 
-      // Simular llamada API
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      // Llamada real al API para crear el empleado
+      const response = await employeeService.createEmployee(employeeData)
       
-      // Actualizar contexto
-      updateEmployee(employeeData)
-      setSuccess(true)
-      
-      // Redirigir después de 2 segundos
-      setTimeout(() => {
-        navigate('/dashboard')
-      }, 2000)
+      if (response.success) {
+        // Actualizar contexto con los datos del empleado creado
+        updateEmployee(response.employee)
+        setSuccess(true)
+        
+        // Redirigir después de 2 segundos
+        setTimeout(() => {
+          navigate('/dashboard')
+        }, 2000)
+      } else {
+        setError(response.message || 'Error al registrar empleado. Por favor, inténtalo de nuevo.')
+      }
       
     } catch (error) {
-      setError('Error al registrar empleado. Por favor, inténtalo de nuevo.')
       console.error('Error registrando empleado:', error)
+      
+      // Manejar diferentes tipos de errores
+      if (error.response) {
+        // Error de respuesta del servidor
+        const errorMessage = error.response.data?.message || 
+                            error.response.data?.error ||
+                            'Error al registrar empleado. Por favor, inténtalo de nuevo.'
+        setError(errorMessage)
+      } else if (error.request) {
+        // Error de red
+        setError('Error de conexión. Por favor, verifica tu conexión a internet.')
+      } else {
+        // Otro tipo de error
+        setError('Error inesperado. Por favor, inténtalo de nuevo.')
+      }
     } finally {
       setIsSubmitting(false)
     }
