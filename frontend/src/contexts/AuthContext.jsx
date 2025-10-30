@@ -68,39 +68,41 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true)
       
-      // Verificar si hay datos de usuario en localStorage
-      const storedUser = localStorage.getItem('user')
-      const storedEmployee = localStorage.getItem('employee')
-      
-      if (storedUser) {
-        const user = JSON.parse(storedUser)
-        const employee = storedEmployee ? JSON.parse(storedEmployee) : null
-        setUser(user)
-        setEmployee(employee)
-        setLoading(false)
-        return
-      }
-      
-      // Si no hay datos en localStorage, verificar con el backend
-      const response = await authService.checkSession()
-      
-      // El endpoint /auth/me devuelve { success: true, user: {...}, employee: {...} }
-      if (response.success && response.user) {
-        setUser(response.user)
-        setEmployee(response.employee || null)
-        // Guardar en localStorage
-        localStorage.setItem('user', JSON.stringify(response.user))
-        if (response.employee) {
-          localStorage.setItem('employee', JSON.stringify(response.employee))
+      // SIEMPRE verificar con el backend, incluso si hay localStorage
+      // Esto evita usar sesiones expiradas del localStorage
+      try {
+        const response = await authService.checkSession()
+        
+        // El endpoint /auth/me devuelve { success: true, user: {...}, employee: {...} }
+        if (response.success && response.user) {
+          setUser(response.user)
+          setEmployee(response.employee || null)
+          // Guardar en localStorage
+          localStorage.setItem('user', JSON.stringify(response.user))
+          if (response.employee) {
+            localStorage.setItem('employee', JSON.stringify(response.employee))
+          }
+        } else {
+          // No hay sesión válida, limpiar localStorage
+          setUser(null)
+          setEmployee(null)
+          localStorage.removeItem('user')
+          localStorage.removeItem('employee')
         }
-      } else {
+      } catch (error) {
+        // Si el backend falla (401, 404, etc), limpiar localStorage
+        console.error('Error verificando sesión:', error)
         setUser(null)
         setEmployee(null)
+        localStorage.removeItem('user')
+        localStorage.removeItem('employee')
       }
     } catch (error) {
-      console.error('Error verificando sesión:', error)
+      console.error('Error general en checkSession:', error)
       setUser(null)
       setEmployee(null)
+      localStorage.removeItem('user')
+      localStorage.removeItem('employee')
     } finally {
       setLoading(false)
     }
