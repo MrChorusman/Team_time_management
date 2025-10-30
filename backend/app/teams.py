@@ -50,8 +50,21 @@ def list_teams():
         
         teams_data = []
         for team in pagination.items:
-            team_data = team.to_dict(include_employees=include_employees)
-            teams_data.append(team_data)
+            try:
+                if include_employees:
+                    team_data = team.to_dict(include_employees=True)
+                else:
+                    # Respuesta mínima y segura para combos
+                    team_data = {
+                        'id': team.id,
+                        'name': team.name,
+                        'active': team.active
+                    }
+                teams_data.append(team_data)
+            except Exception as e:
+                logger.exception(f"Error serializando equipo id={getattr(team, 'id', None)}: {e}")
+                # Continuar con el resto de equipos sin romper la respuesta
+                continue
         
         return jsonify({
             'success': True,
