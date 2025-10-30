@@ -44,8 +44,14 @@ def create_app(config_name=None):
     # Crear aplicación
     app = Flask(__name__)
     
-    # Configuración
-    config_name = config_name or os.environ.get('FLASK_ENV', 'development')
+    # Configuración - Detectar automáticamente el entorno
+    if config_name is None:
+        # Si hay RENDER o SUPABASE_HOST, asumir producción
+        if os.environ.get('RENDER') or os.environ.get('SUPABASE_HOST'):
+            config_name = 'production'
+        else:
+            config_name = os.environ.get('FLASK_ENV', 'development')
+    
     app.config.from_object(config[config_name])
     
     # Log de configuración cargada
