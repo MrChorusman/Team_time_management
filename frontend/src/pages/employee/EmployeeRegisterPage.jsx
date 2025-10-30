@@ -81,7 +81,12 @@ const EmployeeRegisterPage = () => {
         hours_monday_thursday: parseFloat(data.hoursMonThu),
         hours_friday: parseFloat(data.hoursFriday),
         start_date: data.startDate,
-        notes: data.notes || null
+        notes: data.notes || null,
+        // Valores por defecto requeridos por el backend
+        team_id: null, // Será asignado por un administrador
+        annual_vacation_days: 22, // Valor por defecto estándar en España
+        annual_hld_hours: 0, // Se calculará automáticamente
+        has_summer_schedule: false
       }
 
       // Llamada real al API para crear el empleado

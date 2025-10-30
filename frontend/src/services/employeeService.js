@@ -5,13 +5,13 @@ import { apiClient } from './apiClient'
  */
 class EmployeeService {
   /**
-   * Crear un nuevo empleado
+   * Crear un nuevo empleado (registro)
    * @param {Object} employeeData - Datos del empleado
    * @returns {Promise<Object>} Respuesta del servidor
    */
   async createEmployee(employeeData) {
     try {
-      const response = await apiClient.post('/employees', employeeData)
+      const response = await apiClient.post('/employees/register', employeeData)
       return response.data
     } catch (error) {
       console.error('Error creando empleado:', error)
