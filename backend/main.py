@@ -96,6 +96,17 @@ def create_app(config_name=None):
                     # Fallback genérico
                     engine.execute(text("ALTER TABLE notification ADD COLUMN data JSON"))
                 get_logger('migrations').info("Columna 'notification.data' creada automáticamente")
+
+            # Verificar columna manager_id en team
+            team_columns = [col['name'] for col in inspector.get_columns('team')]
+            if 'manager_id' not in team_columns:
+                engine.execute(text("ALTER TABLE team ADD COLUMN manager_id INTEGER"))
+                # Intentar crear FK si existe tabla employee
+                try:
+                    engine.execute(text("ALTER TABLE team ADD CONSTRAINT fk_team_manager_id FOREIGN KEY (manager_id) REFERENCES employee(id)"))
+                except Exception as _:
+                    pass
+                get_logger('migrations').info("Columna 'team.manager_id' creada automáticamente")
         except Exception as e:
             # No bloquear el arranque si falla; se registrará para diagnóstico
             get_logger('migrations').error(f"Auto-migración fallida: {e}")
