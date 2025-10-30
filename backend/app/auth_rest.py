@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from werkzeug.security import check_password_hash
-from flask_security import login_user
+from flask_security import login_user, login_required, current_user
 from models.user import User
 import logging
 
@@ -139,6 +139,48 @@ def login():
         
     except Exception as e:
         logger.error(f"❌ Error en login: {e}")
+        return jsonify({
+            'success': False,
+            'message': 'Error interno del servidor'
+        }), 500
+
+@auth_bp.route('/me', methods=['GET'])
+@login_required
+def get_current_user():
+    """Obtener información del usuario actual autenticado"""
+    try:
+        if not current_user.is_authenticated:
+            logger.warning("❌ Usuario no autenticado intentando acceder a /me")
+            return jsonify({
+                'success': False,
+                'message': 'No autenticado'
+            }), 401
+        
+        # Obtener roles del usuario
+        roles = []
+        try:
+            roles = [role.name for role in current_user.roles]
+        except Exception as e:
+            logger.warning(f"⚠️  Error obteniendo roles: {e}")
+        
+        user_data = {
+            "success": True,
+            "user": {
+                "id": current_user.id,
+                "email": current_user.email,
+                "first_name": current_user.first_name,
+                "last_name": current_user.last_name,
+                "active": current_user.active,
+                "confirmed_at": current_user.confirmed_at.isoformat() if current_user.confirmed_at else None
+            },
+            "roles": roles
+        }
+        
+        logger.info(f"✅ Información de usuario actual obtenida: {current_user.email}")
+        return jsonify(user_data)
+        
+    except Exception as e:
+        logger.error(f"❌ Error obteniendo usuario actual: {e}")
         return jsonify({
             'success': False,
             'message': 'Error interno del servidor'
