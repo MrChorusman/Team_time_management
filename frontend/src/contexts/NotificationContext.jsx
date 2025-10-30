@@ -26,12 +26,16 @@ export const NotificationProvider = ({ children }) => {
 
   // Cargar notificaciones cuando el usuario esté autenticado Y AuthContext haya terminado de cargar
   useEffect(() => {
+    console.log('[NotificationContext] useEffect triggered:', { user: !!user, authLoading })
+    
     // NO hacer nada si AuthContext todavía está cargando
     if (authLoading) {
+      console.log('[NotificationContext] Auth still loading, skipping')
       return
     }
     
     if (user) {
+      console.log('[NotificationContext] User authenticated, loading notifications')
       loadNotifications()
       loadSummary()
       
@@ -42,8 +46,12 @@ export const NotificationProvider = ({ children }) => {
         }
       }, 30000) // Cada 30 segundos
       
-      return () => clearInterval(interval)
+      return () => {
+        console.log('[NotificationContext] Cleaning up interval')
+        clearInterval(interval)
+      }
     } else {
+      console.log('[NotificationContext] No user, clearing state')
       // Si no hay usuario, limpiar el estado
       setNotifications([])
       setSummary({
@@ -71,7 +79,10 @@ export const NotificationProvider = ({ children }) => {
         }
       }
     } catch (error) {
-      console.error('Error cargando notificaciones:', error)
+      // Silenciar errores 401 (no autenticado) para evitar spam en consola
+      if (error.response?.status !== 401) {
+        console.error('Error cargando notificaciones:', error)
+      }
     } finally {
       setLoading(false)
     }
@@ -87,7 +98,10 @@ export const NotificationProvider = ({ children }) => {
         setSummary(response.summary)
       }
     } catch (error) {
-      console.error('Error cargando resumen de notificaciones:', error)
+      // Silenciar errores 401 (no autenticado) para evitar spam en consola
+      if (error.response?.status !== 401) {
+        console.error('Error cargando resumen de notificaciones:', error)
+      }
     }
   }
 
