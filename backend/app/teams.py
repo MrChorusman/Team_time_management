@@ -4,6 +4,7 @@ from datetime import datetime
 import logging
 
 from models.team import Team
+from sqlalchemy.orm import load_only
 from models.employee import Employee
 from models.user import db
 from services.hours_calculator import HoursCalculator
@@ -43,6 +44,9 @@ def list_teams():
             else:
                 query = query.filter(Team.id == -1)  # No mostrar nada
         
+        # Reducir columnas para evitar tocar campos no existentes en despliegues desincronizados
+        query = query.options(load_only(Team.id, Team.name, Team.active))
+
         # Paginación
         pagination = query.paginate(
             page=page, per_page=per_page, error_out=False
