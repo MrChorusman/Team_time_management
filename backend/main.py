@@ -80,6 +80,26 @@ def create_app(config_name=None):
     # Configurar Flask-Migrate
     migrate = Migrate(app, db)
     
+    # Auto-migraciones mínimas y seguras (idempotentes)
+    with app.app_context():
+        try:
+            from sqlalchemy import inspect, text
+            engine = db.get_engine()
+            inspector = inspect(engine)
+            columns = [col['name'] for col in inspector.get_columns('notification')]
+            if 'data' not in columns:
+                # Crear columna 'data' para notificaciones (JSON/JSONB según dialecto)
+                dialect = engine.url.get_dialect().name
+                if dialect == 'postgresql':
+                    engine.execute(text("ALTER TABLE notification ADD COLUMN data JSONB"))
+                else:
+                    # Fallback genérico
+                    engine.execute(text("ALTER TABLE notification ADD COLUMN data JSON"))
+                get_logger('migrations').info("Columna 'notification.data' creada automáticamente")
+        except Exception as e:
+            # No bloquear el arranque si falla; se registrará para diagnóstico
+            get_logger('migrations').error(f"Auto-migración fallida: {e}")
+
     # Inicializar servicios
     email_service = EmailService()
     email_service.init_app(app)
