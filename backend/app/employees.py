@@ -52,16 +52,16 @@ def register_employee():
                     'message': 'Horas Viernes debe estar entre 0 y 12'
                 }), 400
             
-            if not (1 <= vacation_days <= 40):
+            if not (1 <= vacation_days <= 50):
                 return jsonify({
                     'success': False,
-                    'message': 'Días de vacaciones debe estar entre 1 y 40'
+                    'message': 'Días de vacaciones debe estar entre 1 y 50'
                 }), 400
             
-            if not (0 <= hld_hours <= 200):
+            if not (0 <= hld_hours <= 300):
                 return jsonify({
                     'success': False,
-                    'message': 'Horas de libre disposición debe estar entre 0 y 200'
+                    'message': 'Horas de libre disposición debe estar entre 0 y 300'
                 }), 400
         except (ValueError, TypeError) as e:
             return jsonify({

@@ -476,7 +476,7 @@ const EmployeeRegisterPage = () => {
                       id="vacationDays"
                       type="number"
                       min="1"
-                      max="40"
+                      max="50"
                       placeholder="22"
                       className="pl-10"
                       {...register('vacationDays', {
@@ -486,8 +486,8 @@ const EmployeeRegisterPage = () => {
                           message: 'Mínimo 1 día'
                         },
                         max: {
-                          value: 40,
-                          message: 'Máximo 40 días'
+                          value: 50,
+                          message: 'Máximo 50 días'
                         }
                       })}
                     />
@@ -510,7 +510,7 @@ const EmployeeRegisterPage = () => {
                       id="hldHours"
                       type="number"
                       min="0"
-                      max="200"
+                      max="300"
                       placeholder="40"
                       className="pl-10"
                       {...register('hldHours', {
@@ -520,8 +520,8 @@ const EmployeeRegisterPage = () => {
                           message: 'Mínimo 0 horas'
                         },
                         max: {
-                          value: 200,
-                          message: 'Máximo 200 horas'
+                          value: 300,
+                          message: 'Máximo 300 horas'
                         }
                       })}
                     />
