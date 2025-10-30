@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from werkzeug.security import check_password_hash
+from flask_security import login_user
 from models.user import User
 import logging
 
@@ -112,6 +113,10 @@ def login():
             logger.info(f"✅ Roles obtenidos: {roles}")
         except Exception as e:
             logger.warning(f"⚠️  Error obteniendo roles: {e}")
+        
+        # IMPORTANTE: Establecer la sesión del usuario con Flask-Security
+        login_user(user, remember=True)
+        logger.info(f"✅ Sesión establecida para: {email}")
         
         # Respuesta exitosa
         login_response = {
