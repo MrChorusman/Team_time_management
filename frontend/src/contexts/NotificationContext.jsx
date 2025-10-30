@@ -13,7 +13,7 @@ export const useNotifications = () => {
 }
 
 export const NotificationProvider = ({ children }) => {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const [notifications, setNotifications] = useState([])
   const [summary, setSummary] = useState({
     unread_count: 0,
@@ -24,8 +24,13 @@ export const NotificationProvider = ({ children }) => {
   })
   const [loading, setLoading] = useState(false)
 
-  // Cargar notificaciones cuando el usuario esté autenticado
+  // Cargar notificaciones cuando el usuario esté autenticado Y AuthContext haya terminado de cargar
   useEffect(() => {
+    // NO hacer nada si AuthContext todavía está cargando
+    if (authLoading) {
+      return
+    }
+    
     if (user) {
       loadNotifications()
       loadSummary()
@@ -49,7 +54,7 @@ export const NotificationProvider = ({ children }) => {
         has_high: false
       })
     }
-  }, [user])
+  }, [user, authLoading])
 
   const loadNotifications = async (page = 1, unreadOnly = false) => {
     if (!user) return
