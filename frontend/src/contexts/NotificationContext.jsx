@@ -30,12 +30,24 @@ export const NotificationProvider = ({ children }) => {
       loadNotifications()
       loadSummary()
       
-      // Configurar polling para actualizaciones en tiempo real
+      // Configurar polling para actualizaciones en tiempo real SOLO si hay usuario
       const interval = setInterval(() => {
-        loadSummary()
+        if (user) {
+          loadSummary()
+        }
       }, 30000) // Cada 30 segundos
       
       return () => clearInterval(interval)
+    } else {
+      // Si no hay usuario, limpiar el estado
+      setNotifications([])
+      setSummary({
+        unread_count: 0,
+        priority_counts: { urgent: 0, high: 0, medium: 0, low: 0 },
+        recent_notifications: [],
+        has_urgent: false,
+        has_high: false
+      })
     }
   }, [user])
 
