@@ -56,7 +56,7 @@ class Config:
     PERMANENT_SESSION_LIFETIME = timedelta(hours=24)
     
     # Configuración de CORS
-    CORS_ORIGINS = ['http://localhost:3000', 'http://127.0.0.1:3000']
+    CORS_ORIGINS = os.environ.get('CORS_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000').split(',')
     
     # APIs externas
     NAGER_DATE_API_URL = 'https://date.nager.at/api/v3'
@@ -104,10 +104,10 @@ class ProductionConfig(Config):
     # Usar Supabase en producción
     SQLALCHEMY_DATABASE_URI = f'postgresql://postgres:{os.environ.get("SUPABASE_DB_PASSWORD")}@{os.environ.get("SUPABASE_HOST")}/postgres'
     
-    # Configuración de seguridad adicional
-    SESSION_COOKIE_SECURE = True
-    SESSION_COOKIE_HTTPONLY = True
-    SESSION_COOKIE_SAMESITE = 'Lax'
+    # Configuración de seguridad adicional para cookies cross-origin
+    SESSION_COOKIE_SECURE = True  # HTTPS requerido
+    SESSION_COOKIE_HTTPONLY = True  # No accesible desde JavaScript
+    SESSION_COOKIE_SAMESITE = 'None'  # CRÍTICO: Permitir cookies cross-origin (Vercel -> Render)
 
 # Diccionario de configuraciones
 config = {
