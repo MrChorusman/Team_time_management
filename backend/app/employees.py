@@ -22,7 +22,7 @@ def register_employee():
         
         # Validar datos requeridos
         required_fields = [
-            'full_name', 'hours_monday_thursday', 'hours_friday',
+            'full_name', 'team_id', 'hours_monday_thursday', 'hours_friday',
             'annual_vacation_days', 'annual_hld_hours', 'country'
         ]
         
@@ -33,6 +33,42 @@ def register_employee():
                     'message': f'Campo requerido: {field}'
                 }), 400
         
+        # Validar rangos numéricos
+        try:
+            hours_mon_thu = float(data['hours_monday_thursday'])
+            hours_fri = float(data['hours_friday'])
+            vacation_days = int(data['annual_vacation_days'])
+            hld_hours = int(data['annual_hld_hours'])
+            
+            if not (0 <= hours_mon_thu <= 12):
+                return jsonify({
+                    'success': False,
+                    'message': 'Horas Lunes-Jueves debe estar entre 0 y 12'
+                }), 400
+            
+            if not (0 <= hours_fri <= 12):
+                return jsonify({
+                    'success': False,
+                    'message': 'Horas Viernes debe estar entre 0 y 12'
+                }), 400
+            
+            if not (1 <= vacation_days <= 40):
+                return jsonify({
+                    'success': False,
+                    'message': 'Días de vacaciones debe estar entre 1 y 40'
+                }), 400
+            
+            if not (0 <= hld_hours <= 200):
+                return jsonify({
+                    'success': False,
+                    'message': 'Horas de libre disposición debe estar entre 0 y 200'
+                }), 400
+        except (ValueError, TypeError) as e:
+            return jsonify({
+                'success': False,
+                'message': 'Valores numéricos inválidos'
+            }), 400
+        
         # Verificar si el usuario ya tiene un empleado registrado
         if current_user.employee:
             return jsonify({
@@ -40,27 +76,60 @@ def register_employee():
                 'message': 'Ya tienes un perfil de empleado registrado'
             }), 409
         
-        # Validar equipo si se proporciona
+        # Validar que el equipo existe
         team_id = data.get('team_id')
-        if team_id:
-            team = Team.query.get(team_id)
-            if not team:
+        team = Team.query.get(team_id)
+        if not team:
+            return jsonify({
+                'success': False,
+                'message': 'Equipo no encontrado'
+            }), 404
+        
+        # Validar horario de verano si está habilitado
+        has_summer = bool(data.get('has_summer_schedule', False))
+        hours_summer = None
+        summer_months = []
+        
+        if has_summer:
+            # Si tiene horario de verano, validar campos relacionados
+            if not data.get('hours_summer'):
                 return jsonify({
                     'success': False,
-                    'message': 'Equipo no encontrado'
-                }), 404
+                    'message': 'Horas de verano requeridas cuando tiene horario de verano'
+                }), 400
+            
+            hours_summer = float(data['hours_summer'])
+            if not (0 <= hours_summer <= 12):
+                return jsonify({
+                    'success': False,
+                    'message': 'Horas de verano debe estar entre 0 y 12'
+                }), 400
+            
+            summer_months = data.get('summer_months', [])
+            if not summer_months or len(summer_months) == 0:
+                return jsonify({
+                    'success': False,
+                    'message': 'Debe seleccionar al menos un mes de verano'
+                }), 400
+            
+            # Validar que los meses sean válidos (1-12)
+            if not all(isinstance(m, int) and 1 <= m <= 12 for m in summer_months):
+                return jsonify({
+                    'success': False,
+                    'message': 'Meses de verano inválidos'
+                }), 400
         
         # Crear empleado
         employee = Employee(
             user_id=current_user.id,
             full_name=data['full_name'].strip(),
-            team_id=team_id,  # Puede ser None si no se asigna equipo todavía
-            hours_monday_thursday=float(data['hours_monday_thursday']),
-            hours_friday=float(data['hours_friday']),
-            hours_summer=float(data.get('hours_summer', 0)) if data.get('hours_summer') else None,
-            has_summer_schedule=bool(data.get('has_summer_schedule', False)),
-            annual_vacation_days=int(data['annual_vacation_days']),
-            annual_hld_hours=int(data['annual_hld_hours']),
+            team_id=team_id,
+            hours_monday_thursday=hours_mon_thu,
+            hours_friday=hours_fri,
+            hours_summer=hours_summer,
+            has_summer_schedule=has_summer,
+            annual_vacation_days=vacation_days,
+            annual_hld_hours=hld_hours,
             country=data['country'].strip(),
             region=data.get('region', '').strip() if data.get('region') else None,
             city=data.get('city', '').strip() if data.get('city') else None,
@@ -69,8 +138,8 @@ def register_employee():
         )
         
         # Configurar meses de verano si aplica
-        if employee.has_summer_schedule and data.get('summer_months'):
-            employee.summer_months_list = data['summer_months']
+        if has_summer and summer_months:
+            employee.summer_months_list = summer_months
         
         db.session.add(employee)
         db.session.commit()
@@ -82,12 +151,9 @@ def register_employee():
         if holidays_loaded > 0:
             logger.info(f"Cargados {holidays_loaded} festivos para {employee.country}")
         
-        # Notificar al manager del equipo si hay equipo asignado
-        if team_id and team:
-            NotificationService.notify_employee_registration(employee, current_user)
-            logger.info(f"Empleado registrado: {employee.full_name} en equipo {team.name}")
-        else:
-            logger.info(f"Empleado registrado: {employee.full_name} sin equipo asignado")
+        # Notificar al manager del equipo
+        NotificationService.notify_employee_registration(employee, current_user)
+        logger.info(f"Empleado registrado: {employee.full_name} en equipo {team.name}")
         
         return jsonify({
             'success': True,

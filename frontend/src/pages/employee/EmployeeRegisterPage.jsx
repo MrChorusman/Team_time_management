@@ -9,7 +9,9 @@ import {
   Save,
   ArrowLeft,
   Globe,
-  Calendar
+  Calendar,
+  Users,
+  Sun
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { Button } from '../../components/ui/button'
@@ -21,6 +23,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../..
 import { Alert, AlertDescription } from '../../components/ui/alert'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
 import employeeService from '../../services/employeeService'
+import teamService from '../../services/teamService'
 
 const EmployeeRegisterPage = () => {
   const navigate = useNavigate()
@@ -28,6 +31,10 @@ const EmployeeRegisterPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
+  const [teams, setTeams] = useState([])
+  const [loadingTeams, setLoadingTeams] = useState(true)
+  const [hasSummerSchedule, setHasSummerSchedule] = useState(false)
+  const [selectedSummerMonths, setSelectedSummerMonths] = useState([])
   
   const {
     register,
@@ -35,7 +42,12 @@ const EmployeeRegisterPage = () => {
     setValue,
     watch,
     formState: { errors }
-  } = useForm()
+  } = useForm({
+    defaultValues: {
+      vacationDays: 22, // Valor estándar en España
+      hldHours: 40 // Valor estándar
+    }
+  })
 
   // Datos de países, regiones y ciudades (simplificado)
   const countries = [
@@ -64,29 +76,85 @@ const EmployeeRegisterPage = () => {
     'Bogotá': ['Bogotá', 'Soacha', 'Villavicencio', 'Facatativá']
   }
 
+  // Meses disponibles para horario de verano
+  const months = [
+    { value: 1, label: 'Enero' },
+    { value: 2, label: 'Febrero' },
+    { value: 3, label: 'Marzo' },
+    { value: 4, label: 'Abril' },
+    { value: 5, label: 'Mayo' },
+    { value: 6, label: 'Junio' },
+    { value: 7, label: 'Julio' },
+    { value: 8, label: 'Agosto' },
+    { value: 9, label: 'Septiembre' },
+    { value: 10, label: 'Octubre' },
+    { value: 11, label: 'Noviembre' },
+    { value: 12, label: 'Diciembre' }
+  ]
+
   const selectedCountry = watch('country')
   const selectedRegion = watch('region')
+
+  // Cargar equipos disponibles
+  useEffect(() => {
+    const loadTeams = async () => {
+      try {
+        setLoadingTeams(true)
+        const response = await teamService.getAllTeams()
+        if (response.success && response.teams) {
+          setTeams(response.teams)
+        }
+      } catch (error) {
+        console.error('Error cargando equipos:', error)
+        setError('Error cargando equipos. Por favor, recarga la página.')
+      } finally {
+        setLoadingTeams(false)
+      }
+    }
+    
+    loadTeams()
+  }, [])
 
   const onSubmit = async (data) => {
     setIsSubmitting(true)
     setError(null)
     
     try {
+      // Validar que se haya seleccionado un equipo
+      if (!data.team) {
+        setError('Por favor, selecciona un equipo')
+        setIsSubmitting(false)
+        return
+      }
+
+      // Validar horario de verano si está activado
+      if (hasSummerSchedule) {
+        if (!data.hoursSummer) {
+          setError('Por favor, indica las horas de trabajo en verano')
+          setIsSubmitting(false)
+          return
+        }
+        if (selectedSummerMonths.length === 0) {
+          setError('Por favor, selecciona al menos un mes de verano')
+          setIsSubmitting(false)
+          return
+        }
+      }
+
       // Preparar datos del empleado
       const employeeData = {
         full_name: data.fullName,
+        team_id: parseInt(data.team), // CRÍTICO: Equipo es obligatorio
         country: data.country,
         region: data.region,
         city: data.city,
         hours_monday_thursday: parseFloat(data.hoursMonThu),
         hours_friday: parseFloat(data.hoursFriday),
-        start_date: data.startDate,
-        notes: data.notes || null,
-        // Valores por defecto requeridos por el backend
-        team_id: null, // Será asignado por un administrador
-        annual_vacation_days: 22, // Valor por defecto estándar en España
-        annual_hld_hours: 0, // Se calculará automáticamente
-        has_summer_schedule: false
+        annual_vacation_days: parseInt(data.vacationDays), // Del formulario
+        annual_hld_hours: parseInt(data.hldHours), // Del formulario
+        has_summer_schedule: hasSummerSchedule,
+        hours_summer: hasSummerSchedule ? parseFloat(data.hoursSummer) : null,
+        summer_months: hasSummerSchedule ? selectedSummerMonths : []
       }
 
       // Llamada real al API para crear el empleado
@@ -222,6 +290,35 @@ const EmployeeRegisterPage = () => {
                     {errors.fullName.message}
                   </p>
                 )}
+              </div>
+
+              {/* Equipo */}
+              <div className="space-y-2">
+                <Label htmlFor="team">Equipo *</Label>
+                <Select 
+                  onValueChange={(value) => setValue('team', value)}
+                  disabled={loadingTeams}
+                >
+                  <SelectTrigger>
+                    <Users className="w-4 h-4 mr-2" />
+                    <SelectValue placeholder={loadingTeams ? "Cargando equipos..." : "Selecciona equipo"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {teams.map((team) => (
+                      <SelectItem key={team.id} value={team.id.toString()}>
+                        {team.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.team && (
+                  <p className="text-sm text-red-600 dark:text-red-400">
+                    El equipo es requerido
+                  </p>
+                )}
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Selecciona el equipo al que perteneces
+                </p>
               </div>
 
               {/* Ubicación */}
@@ -369,36 +466,148 @@ const EmployeeRegisterPage = () => {
                 </div>
               </div>
 
-              {/* Fecha de inicio */}
-              <div className="space-y-2">
-                <Label htmlFor="startDate">Fecha de Inicio *</Label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <Input
-                    id="startDate"
-                    type="date"
-                    className="pl-10"
-                    {...register('startDate', {
-                      required: 'La fecha de inicio es requerida'
-                    })}
-                  />
-                </div>
-                {errors.startDate && (
-                  <p className="text-sm text-red-600 dark:text-red-400">
-                    {errors.startDate.message}
+              {/* Beneficios laborales */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="vacationDays">Días de Vacaciones Anuales *</Label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Input
+                      id="vacationDays"
+                      type="number"
+                      min="1"
+                      max="40"
+                      placeholder="22"
+                      className="pl-10"
+                      {...register('vacationDays', {
+                        required: 'Los días de vacaciones son requeridos',
+                        min: {
+                          value: 1,
+                          message: 'Mínimo 1 día'
+                        },
+                        max: {
+                          value: 40,
+                          message: 'Máximo 40 días'
+                        }
+                      })}
+                    />
+                  </div>
+                  {errors.vacationDays && (
+                    <p className="text-sm text-red-600 dark:text-red-400">
+                      {errors.vacationDays.message}
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Estándar en España: 22 días laborables
                   </p>
-                )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="hldHours">Horas Libre Disposición Anuales *</Label>
+                  <div className="relative">
+                    <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Input
+                      id="hldHours"
+                      type="number"
+                      min="0"
+                      max="200"
+                      placeholder="40"
+                      className="pl-10"
+                      {...register('hldHours', {
+                        required: 'Las horas de libre disposición son requeridas',
+                        min: {
+                          value: 0,
+                          message: 'Mínimo 0 horas'
+                        },
+                        max: {
+                          value: 200,
+                          message: 'Máximo 200 horas'
+                        }
+                      })}
+                    />
+                  </div>
+                  {errors.hldHours && (
+                    <p className="text-sm text-red-600 dark:text-red-400">
+                      {errors.hldHours.message}
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Típicamente entre 40-80 horas anuales
+                  </p>
+                </div>
               </div>
 
-              {/* Notas adicionales */}
-              <div className="space-y-2">
-                <Label htmlFor="notes">Notas Adicionales</Label>
-                <Textarea
-                  id="notes"
-                  placeholder="Información adicional relevante (opcional)"
-                  rows={3}
-                  {...register('notes')}
-                />
+              {/* Horario de verano */}
+              <div className="space-y-4 border-t pt-4">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="hasSummer"
+                    checked={hasSummerSchedule}
+                    onChange={(e) => setHasSummerSchedule(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <Label htmlFor="hasSummer" className="flex items-center cursor-pointer">
+                    <Sun className="w-4 h-4 mr-2" />
+                    ¿Tiene horario de verano? (jornada intensiva)
+                  </Label>
+                </div>
+
+                {hasSummerSchedule && (
+                  <div className="space-y-4 pl-6 border-l-2 border-yellow-400">
+                    <div className="space-y-2">
+                      <Label htmlFor="hoursSummer">Horas Verano *</Label>
+                      <div className="relative">
+                        <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                        <Input
+                          id="hoursSummer"
+                          type="number"
+                          step="0.5"
+                          min="1"
+                          max="12"
+                          placeholder="7.0"
+                          className="pl-10"
+                          {...register('hoursSummer', {
+                            required: hasSummerSchedule ? 'Las horas de verano son requeridas' : false
+                          })}
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Horas de trabajo diarias durante el verano
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Meses con horario de verano *</Label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {months.map((month) => (
+                          <div key={month.value} className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              id={`month-${month.value}`}
+                              value={month.value}
+                              checked={selectedSummerMonths.includes(month.value)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedSummerMonths([...selectedSummerMonths, month.value])
+                                } else {
+                                  setSelectedSummerMonths(selectedSummerMonths.filter(m => m !== month.value))
+                                }
+                              }}
+                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            />
+                            <Label htmlFor={`month-${month.value}`} className="text-sm cursor-pointer">
+                              {month.label}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Selecciona los meses en los que aplica el horario de verano
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Botones */}
