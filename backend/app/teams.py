@@ -7,6 +7,7 @@ from models.team import Team
 from models.employee import Employee
 from models.user import db
 from services.hours_calculator import HoursCalculator
+from utils.decorators import admin_required, manager_or_admin_required
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +76,7 @@ def list_teams():
 
 @teams_bp.route('/', methods=['POST'])
 @auth_required()
+@admin_required()
 def create_team():
     """Crea un nuevo equipo (solo admins)"""
     try:
@@ -181,6 +183,7 @@ def get_team(team_id):
 
 @teams_bp.route('/<int:team_id>', methods=['PUT'])
 @auth_required()
+@admin_required()
 def update_team(team_id):
     """Actualiza un equipo (solo admins)"""
     try:
@@ -357,6 +360,7 @@ def get_team_employees(team_id):
 
 @teams_bp.route('/<int:team_id>/assign-manager', methods=['POST'])
 @auth_required()
+@admin_required()
 def assign_manager(team_id):
     """Asigna un manager a un equipo (solo admins)"""
     try:
@@ -423,6 +427,7 @@ def assign_manager(team_id):
 
 @teams_bp.route('/available-managers', methods=['GET'])
 @auth_required()
+@admin_required()
 def get_available_managers():
     """Obtiene empleados que pueden ser managers (solo admins)"""
     try:

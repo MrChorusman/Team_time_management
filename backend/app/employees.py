@@ -8,6 +8,7 @@ from models.employee import Employee
 from models.team import Team
 from services.notification_service import NotificationService
 from services.holiday_service import HolidayService
+from utils.decorators import admin_required, manager_or_admin_required
 
 logger = logging.getLogger(__name__)
 
@@ -300,6 +301,7 @@ def get_employee(employee_id):
 
 @employees_bp.route('/<int:employee_id>/approve', methods=['POST'])
 @auth_required()
+@manager_or_admin_required()
 def approve_employee(employee_id):
     """Aprueba un empleado (solo managers y admins)"""
     try:
@@ -361,6 +363,7 @@ def approve_employee(employee_id):
 
 @employees_bp.route('/<int:employee_id>/deactivate', methods=['POST'])
 @auth_required()
+@admin_required()
 def deactivate_employee(employee_id):
     """Desactiva un empleado (solo admins)"""
     try:
@@ -403,8 +406,9 @@ def deactivate_employee(employee_id):
 
 @employees_bp.route('/pending-approval', methods=['GET'])
 @auth_required()
+@manager_or_admin_required()
 def get_pending_approvals():
-    """Obtiene empleados pendientes de aprobación"""
+    """Obtiene empleados pendientes de aprobación (solo managers y admins)"""
     try:
         # Solo managers y admins pueden ver pendientes
         if not (current_user.is_admin() or current_user.is_manager()):

@@ -14,6 +14,7 @@ from models.employee import Employee
 from models.team import Team
 from models.calendar_activity import CalendarActivity
 from services.hours_calculator import HoursCalculator
+from utils.decorators import employee_or_above_required
 
 logger = logging.getLogger(__name__)
 
@@ -21,8 +22,9 @@ reports_bp = Blueprint('reports', __name__)
 
 @reports_bp.route('/employee/<int:employee_id>', methods=['GET'])
 @auth_required()
+@employee_or_above_required()
 def get_employee_report(employee_id):
-    """Genera reporte de un empleado específico"""
+    """Genera reporte de un empleado específico (solo el empleado, su manager o admin)"""
     try:
         employee = Employee.query.get(employee_id)
         if not employee:
@@ -171,8 +173,9 @@ def get_team_report(team_id):
 
 @reports_bp.route('/dashboard', methods=['GET'])
 @auth_required()
+@employee_or_above_required()
 def get_dashboard_report():
-    """Genera reporte para el dashboard según el rol del usuario"""
+    """Genera reporte para el dashboard según el rol del usuario (employee o superior)"""
     try:
         year = request.args.get('year', datetime.now().year, type=int)
         month = request.args.get('month', datetime.now().month, type=int)
