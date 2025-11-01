@@ -11,7 +11,9 @@ import {
   Globe,
   Calendar,
   Users,
-  Sun
+  Sun,
+  LogOut,
+  AlertCircle
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { Button } from '../../components/ui/button'
@@ -28,7 +30,7 @@ import locationService from '../../services/locationService'
 
 const EmployeeRegisterPage = () => {
   const navigate = useNavigate()
-  const { user, updateEmployee, loading } = useAuth()
+  const { user, employee, updateEmployee, loading, logout } = useAuth()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
@@ -46,6 +48,7 @@ const EmployeeRegisterPage = () => {
     communities: false,
     cities: false
   })
+  const [showDashboardWarning, setShowDashboardWarning] = useState(false)
   
   const {
     register,
@@ -691,16 +694,60 @@ const EmployeeRegisterPage = () => {
                 )}
               </div>
 
+              {/* Alerta si intenta ir al dashboard sin registro/aprobación */}
+              {showDashboardWarning && (
+                <Alert className="border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20 mb-4">
+                  <AlertCircle className="h-4 w-4 text-yellow-600" />
+                  <AlertDescription className="text-yellow-800 dark:text-yellow-200">
+                    {!employee ? (
+                      <>
+                        <strong>No puedes acceder a la aplicación hasta que completes tu registro.</strong>
+                        <br />
+                        Por favor, completa todos los campos y guarda tu perfil.
+                      </>
+                    ) : !employee.approved ? (
+                      <>
+                        <strong>Tu registro está pendiente de aprobación.</strong>
+                        <br />
+                        Un administrador o manager debe aprobar tu perfil antes de que puedas acceder al dashboard.
+                      </>
+                    ) : null}
+                  </AlertDescription>
+                </Alert>
+              )}
+
               {/* Botones */}
               <div className="flex flex-col sm:flex-row gap-4 pt-6">
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => navigate('/dashboard')}
+                  onClick={() => {
+                    // Verificar si puede acceder al dashboard
+                    if (!employee || !employee.approved) {
+                      setShowDashboardWarning(true)
+                      setTimeout(() => setShowDashboardWarning(false), 5000)
+                    } else {
+                      navigate('/dashboard')
+                    }
+                  }}
                   className="flex-1"
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Volver al Dashboard
+                </Button>
+                
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={async () => {
+                    if (confirm('¿Estás seguro de que deseas cerrar sesión? Los cambios no guardados se perderán.')) {
+                      await logout()
+                      navigate('/login')
+                    }
+                  }}
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Cerrar Sesión
                 </Button>
                 
                 <Button
