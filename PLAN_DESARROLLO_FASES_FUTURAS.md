@@ -63,13 +63,15 @@ Este documento establece el plan estratégico de desarrollo para las siguientes 
 | Rama | Propósito | Estado |
 |------|-----------|--------|
 | `main` | Rama principal estable | ✅ Activa |
-| `primera-cursor-3oct` | Documentación inicial | ✅ Activa |
+| `fix-auth-blueprint-regression` | Corrección de regresión en autenticación + Sistema de ubicación geográfica dinámica | 🔄 En Desarrollo |
 
 ### **📊 Registro de Desarrollos**
 
 | Rama | Desarrollo | Fecha Inicio | Fecha Finalización | Estado |
 |------|------------|--------------|-------------------|--------|
-| `primera-cursor-3oct` | Documentación Plan de Desarrollo | 03/10/2025 | - | 🔄 En Progreso |
+| `primera-cursor-3oct` | Documentación Plan de Desarrollo | 03/10/2025 | 03/10/2025 | ✅ Completado |
+| `fix-auth-blueprint-regression` | Corrección de regresión en blueprint de autenticación | 31/10/2025 | - | 🔄 En Desarrollo |
+| `fix-auth-blueprint-regression` | Sistema de ubicación geográfica dinámico y festivos | 01/11/2025 | - | 🔄 En Desarrollo |
 
 ---
 
@@ -1376,6 +1378,126 @@ python scripts/cleanup_env_files.py
 - ✅ Todas las variables de entorno están documentadas
 - ✅ Script de validación verifica configuración correctamente
 - ✅ Documentación de despliegue está completa
+
+---
+
+### **🔧 Desarrollo en Progreso: Corrección de Regresión en Blueprint de Autenticación**
+
+**Rama**: `fix-auth-blueprint-regression`  
+**Fecha Inicio**: 31/10/2025  
+**Fecha Finalización**: -  
+**Estado**: 🔄 En Desarrollo  
+**Responsable**: Equipo de Desarrollo  
+
+**Descripción**:  
+Corrección de una regresión detectada en el sistema de autenticación. Tras un deploy a Render de un commit específico, se identificó que el backend estaba utilizando el blueprint incorrecto (`auth_rest.py`) en lugar del blueprint correcto (`app/auth.py`) que utiliza Flask-Security para la gestión de sesiones.
+
+**Problema Identificado**:
+- `backend/main.py` importaba `auth_bp` desde `app.auth_rest` en lugar de `app.auth`
+- El blueprint `auth_rest.py` no establecía sesiones de Flask-Security correctamente
+- Esto causaba que el frontend no pudiera mantener la sesión después del login exitoso
+- Ambos blueprints tenían el mismo nombre (`auth_bp`), causando conflictos potenciales
+
+**Cambios Realizados**:
+1. ✅ Renombrado el blueprint en `auth_rest.py` de `auth_bp` a `auth_rest_bp` para evitar conflictos
+2. ✅ Actualizadas todas las rutas en `auth_rest.py` para usar `auth_rest_bp`
+3. ✅ Corregida la importación en `backend/main.py` para usar `from app.auth import auth_bp`
+4. ✅ Verificado que el endpoint `/api/auth/login` funciona correctamente con Flask-Security
+5. ✅ Confirmado que el formato de respuesta incluye `redirect_url` y `employee_data` correctamente
+
+**Archivos Modificados**:
+- `backend/main.py`: Cambiada importación de blueprint
+- `backend/app/auth_rest.py`: Renombrado blueprint y actualizadas rutas
+
+**Validaciones Realizadas**:
+- ✅ Importación del módulo funciona sin errores
+- ✅ Endpoint `/api/auth/login` responde correctamente con formato esperado
+- ✅ Servidor backend inicia sin errores
+- ⏳ Pruebas en navegador pendientes de finalizar
+
+**Cambios Adicionales Realizados**:
+- ✅ Restaurado formulario de registro de empleados completo desde commit `814367e`
+- ✅ Restaurados servicios `teamService.js` y `employeeService.js`
+- ✅ Restaurados todos los campos faltantes:
+  - Campo Equipo (obligatorio) con select desplegable
+  - Días de Vacaciones Anuales (1-50)
+  - Horas Libre Disposición Anuales (0-300)
+  - Gestión de horario de verano con checkbox
+  - Horas de verano y selección de meses
+
+---
+
+### **🌍 Desarrollo: Sistema de Ubicación Geográfica Dinámico** (01/11/2025)
+
+**Commit**: `f610890`
+
+**Objetivo**: Reemplazar datos hardcodeados de ubicaciones por carga dinámica desde Supabase
+
+**Implementación Backend**:
+- ✅ Modelos SQLAlchemy: `Country`, `AutonomousCommunity`, `Province`, `City`
+- ✅ Blueprint `/api/locations` con 5 endpoints REST:
+  - `GET /countries` - Lista de 188 países activos
+  - `GET /autonomous-communities?country_code=ES` - Comunidades filtradas por país
+  - `GET /provinces?autonomous_community_id=X` - Provincias por comunidad
+  - `GET /cities?autonomous_community_id=X` - Ciudades por comunidad
+  - `GET /search?q=termino` - Búsqueda unificada
+- ✅ Corregido modelo `Team`: eliminada columna `active` inexistente en Supabase
+- ✅ Actualizados filtros en `teams.py`, `admin.py`, `reports.py`
+- ✅ Comando CLI `flask update-holidays --year YYYY --auto` para actualizar festivos
+
+**Implementación Frontend**:
+- ✅ Servicio `locationService.js` con todos los métodos de API
+- ✅ `EmployeeRegisterPage.jsx` modificado para carga dinámica:
+  - Dropdowns en cascada: País → Comunidad Autónoma → Ciudad
+  - Estados de carga (`loadingLocations`) para mejor UX
+  - Validación y deshabilitación de campos dependientes
+- ✅ **ANTES**: 6 países hardcodeados, 5 regiones
+- ✅ **AHORA**: 188 países, 74 comunidades autónomas, 201 ciudades
+
+**Sistema de Festivos**:
+- ✅ Integración automática de festivos al registrar empleado (ya implementado)
+- ✅ Comando CLI para actualizar festivos de años futuros
+- ✅ Soporte para 104 países vía Nager.Date API
+- ✅ Estructura de festivos soporta múltiples años (2024, 2025, 2026+)
+
+**Archivos Modificados/Creados**:
+```
+backend/models/location.py                    (nuevo)
+backend/app/locations.py                      (nuevo)
+backend/commands/update_holidays.py           (nuevo)
+backend/main.py                               (modificado)
+backend/models/team.py                        (modificado)
+backend/app/teams.py                          (modificado)
+backend/app/admin.py                          (modificado)
+backend/app/reports.py                        (modificado)
+frontend/src/services/locationService.js      (nuevo)
+frontend/src/pages/employee/EmployeeRegisterPage.jsx (modificado)
+ANALISIS_UBICACION_Y_FESTIVOS_COMPLETO.md    (nuevo)
+PROPUESTA_ESTRUCTURA_UBICACION_GEOGRAFICA.md (nuevo)
+```
+
+**Validación**:
+- ✅ Pruebas en navegador: 188 países cargados correctamente
+- ✅ 19 comunidades autónomas de España mostradas desde Supabase
+- ✅ Cascada funcional País → Comunidad → Ciudad
+- ✅ Sin errores en consola del navegador
+- ✅ Datos 100% dinámicos, sin hardcoding
+
+**Uso del Comando CLI**:
+```bash
+# Actualizar festivos para 2026 automáticamente
+flask update-holidays --year 2026 --auto
+
+# Actualizar festivos de un país específico
+flask update-holidays --year 2026 --country ES
+```
+
+**Próximos Pasos**:
+- ⏳ Completar pruebas en navegador del flujo completo de login
+- ⏳ Verificar que la sesión se mantiene correctamente después del login
+- ⏳ Validar que Google OAuth funciona con el blueprint correcto
+- ⏳ Probar formulario de registro con todos los campos restaurados
+- ⏳ Aprobar cambios y merge a `main`
 
 ---
 
