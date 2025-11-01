@@ -190,3 +190,4 @@ def search_locations():
             'message': 'Error en búsqueda de ubicaciones'
         }), 500
 
+

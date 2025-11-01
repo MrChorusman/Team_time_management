@@ -64,46 +64,75 @@ export const AuthProvider = ({ children }) => {
     }
   }, [])
 
+  // Escuchar evento de sesión expirada desde interceptor Axios
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      setUser(null)
+      setEmployee(null)
+      setError('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.')
+    }
+    
+    window.addEventListener('session-expired', handleSessionExpired)
+    
+    return () => {
+      window.removeEventListener('session-expired', handleSessionExpired)
+    }
+  }, [])
+
   const checkSession = async () => {
     try {
       setLoading(true)
+      setError(null)
       
-      // Verificar si hay datos de usuario en localStorage
-      const storedUser = localStorage.getItem('user')
-      const storedEmployee = localStorage.getItem('employee')
-      
-      if (storedUser) {
-        const user = JSON.parse(storedUser)
-        const employee = storedEmployee ? JSON.parse(storedEmployee) : null
-        setUser(user)
-        setEmployee(employee)
-        setLoading(false)
-        return
-      }
-      
-      // Si no hay datos en localStorage, verificar con el backend
+      // SIEMPRE verificar con backend (no confiar ciegamente en localStorage)
       const response = await authService.checkSession()
       
       // El endpoint /auth/me devuelve { success: true, user: {...}, employee: {...} }
       if (response.success && response.user) {
         setUser(response.user)
         setEmployee(response.employee || null)
-        // Guardar en localStorage
+        
+        // Guardar en localStorage solo como caché optimista para mejorar UX de carga
         localStorage.setItem('user', JSON.stringify(response.user))
         if (response.employee) {
           localStorage.setItem('employee', JSON.stringify(response.employee))
+        } else {
+          localStorage.removeItem('employee')
         }
       } else {
-        setUser(null)
-        setEmployee(null)
+        // Sesión inválida → Limpiar todo
+        handleInvalidSession()
       }
     } catch (error) {
       console.error('Error verificando sesión:', error)
-      setUser(null)
-      setEmployee(null)
+      
+      // Si error 401 → Sesión expirada o inválida
+      if (error.response?.status === 401) {
+        handleInvalidSession()
+      } else {
+        // Otros errores (red, servidor) → Intentar usar caché local temporalmente
+        const cachedUser = localStorage.getItem('user')
+        const cachedEmployee = localStorage.getItem('employee')
+        
+        if (cachedUser) {
+          setUser(JSON.parse(cachedUser))
+          setEmployee(cachedEmployee ? JSON.parse(cachedEmployee) : null)
+          setError('No se pudo verificar la sesión con el servidor. Reconecta para continuar.')
+        } else {
+          handleInvalidSession()
+        }
+      }
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleInvalidSession = () => {
+    setUser(null)
+    setEmployee(null)
+    localStorage.removeItem('user')
+    localStorage.removeItem('employee')
+    // NO navegar aquí, dejar que ProtectedRoute maneje la redirección
   }
 
   const login = async (email, password) => {

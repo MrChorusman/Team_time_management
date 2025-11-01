@@ -114,3 +114,4 @@ def init_app(app):
     """Registra el comando en la aplicación Flask"""
     app.cli.add_command(update_holidays_command)
 
+

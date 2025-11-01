@@ -763,3 +763,4 @@ ORDER BY year;
 
 **Próximo paso**: ¿Implementamos los endpoints de locations para que el formulario use datos reales de Supabase?
 
+

@@ -27,10 +27,12 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner'
 import employeeService from '../../services/employeeService'
 import teamService from '../../services/teamService'
 import locationService from '../../services/locationService'
+import { useRoles } from '../../hooks/useRoles'
 
 const EmployeeRegisterPage = () => {
   const navigate = useNavigate()
   const { user, employee, updateEmployee, loading, logout } = useAuth()
+  const { isAdmin } = useRoles()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
@@ -722,7 +724,13 @@ const EmployeeRegisterPage = () => {
                   type="button"
                   variant="outline"
                   onClick={() => {
-                    // Verificar si puede acceder al dashboard
+                    // Los admin pueden acceder al dashboard sin perfil de empleado
+                    if (isAdmin()) {
+                      navigate('/dashboard')
+                      return
+                    }
+                    
+                    // Para no-admin, verificar si puede acceder al dashboard
                     if (!employee || !employee.approved) {
                       setShowDashboardWarning(true)
                       setTimeout(() => setShowDashboardWarning(false), 5000)

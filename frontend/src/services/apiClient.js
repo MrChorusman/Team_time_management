@@ -46,9 +46,11 @@ apiClient.interceptors.response.use(
     return response
   },
   (error) => {
+    const originalRequest = error.config
+    
     // Log de errores
     if (import.meta.env.DEV) {
-      console.error(`❌ ${error.config?.method?.toUpperCase()} ${error.config?.url}`, error.response?.data)
+      console.error(`❌ ${originalRequest?.method?.toUpperCase()} ${originalRequest?.url}`, error.response?.data)
     }
     
     // Manejar errores específicos
@@ -57,10 +59,23 @@ apiClient.interceptors.response.use(
       
       switch (status) {
         case 401:
-          // Token expirado o no válido
-          localStorage.removeItem('auth_token')
-          if (window.location.pathname !== '/login') {
-            window.location.href = '/login'
+          // Sesión expirada o no válida
+          // Evitar loop infinito: NO procesar 401 del endpoint /auth/me
+          if (!originalRequest.url.includes('/auth/me') && !originalRequest.url.includes('/auth/login')) {
+            console.error('❌ Sesión expirada o inválida')
+            
+            // Limpiar estado de autenticación
+            localStorage.removeItem('user')
+            localStorage.removeItem('employee')
+            localStorage.removeItem('auth_token')
+            
+            // Emitir evento personalizado para que AuthContext reaccione
+            window.dispatchEvent(new CustomEvent('session-expired'))
+            
+            // Redirigir a login
+            if (!window.location.pathname.includes('/login')) {
+              window.location.href = '/login?reason=session_expired'
+            }
           }
           break
           
