@@ -1492,10 +1492,27 @@ flask update-holidays --year 2026 --auto
 flask update-holidays --year 2026 --country ES
 ```
 
-**Próximos Pasos**:
-- ⏳ Completar pruebas en navegador del flujo completo de login
-- ⏳ Verificar que la sesión se mantiene correctamente después del login
-- ⏳ Validar que Google OAuth funciona con el blueprint correcto
+**Mejoras de UX Implementadas** (01/11/2025):
+- ✅ Añadido botón "Cerrar Sesión" en formulario de registro
+- ✅ Validación del botón "Volver al Dashboard" con advertencias contextuales
+- ✅ Mensajes claros sobre estados: sin registro vs pendiente de aprobación
+- ✅ Confirmación antes de cerrar sesión para evitar pérdida de datos
+- ✅ Advertencias con auto-desaparición (5 segundos)
+
+**Commits Realizados**:
+1. `f610890` - feat: Sistema de ubicación geográfica dinámico
+2. `381755a` - docs: Actualizar plan de desarrollo
+3. `1375cd5` - docs: Reporte final de pruebas
+4. `3441966` - feat(UX): Mejoras de experiencia de usuario
+5. `ef39b2f` - docs: Reporte de pruebas UX
+
+**Estado de Pruebas**:
+- ✅ Flujo de login validado end-to-end
+- ✅ Flujo de logout validado end-to-end
+- ✅ Sesión se mantiene correctamente
+- ✅ Redirecciones funcionan correctamente
+- ✅ Advertencias UX implementadas
+- ✅ Sistema de ubicación geográfica validado (188 países, 74 comunidades, 201 ciudades)
 - ⏳ Probar formulario de registro con todos los campos restaurados
 - ⏳ Aprobar cambios y merge a `main`
 
