@@ -9,7 +9,9 @@ import {
   Save,
   ArrowLeft,
   Globe,
-  Calendar
+  Calendar,
+  Users,
+  Sun
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { Button } from '../../components/ui/button'
@@ -20,6 +22,9 @@ import { Textarea } from '../../components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card'
 import { Alert, AlertDescription } from '../../components/ui/alert'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
+import employeeService from '../../services/employeeService'
+import teamService from '../../services/teamService'
+import locationService from '../../services/locationService'
 
 const EmployeeRegisterPage = () => {
   const navigate = useNavigate()
@@ -27,6 +32,20 @@ const EmployeeRegisterPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
+  const [teams, setTeams] = useState([])
+  const [loadingTeams, setLoadingTeams] = useState(true)
+  const [hasSummerSchedule, setHasSummerSchedule] = useState(false)
+  const [selectedSummerMonths, setSelectedSummerMonths] = useState([])
+  
+  // Estados para ubicaciones geográficas
+  const [countries, setCountries] = useState([])
+  const [autonomousCommunities, setAutonomousCommunities] = useState([])
+  const [cities, setCities] = useState([])
+  const [loadingLocations, setLoadingLocations] = useState({
+    countries: false,
+    communities: false,
+    cities: false
+  })
   
   const {
     register,
@@ -34,70 +53,202 @@ const EmployeeRegisterPage = () => {
     setValue,
     watch,
     formState: { errors }
-  } = useForm()
+  } = useForm({
+    defaultValues: {
+      vacationDays: 22, // Valor estándar en España
+      hldHours: 40 // Valor estándar
+    }
+  })
 
-  // Datos de países, regiones y ciudades (simplificado)
-  const countries = [
-    { code: 'ES', name: 'España' },
-    { code: 'MX', name: 'México' },
-    { code: 'AR', name: 'Argentina' },
-    { code: 'CO', name: 'Colombia' },
-    { code: 'PE', name: 'Perú' },
-    { code: 'CL', name: 'Chile' }
+  // Meses disponibles para horario de verano
+  const months = [
+    { value: 1, label: 'Enero' },
+    { value: 2, label: 'Febrero' },
+    { value: 3, label: 'Marzo' },
+    { value: 4, label: 'Abril' },
+    { value: 5, label: 'Mayo' },
+    { value: 6, label: 'Junio' },
+    { value: 7, label: 'Julio' },
+    { value: 8, label: 'Agosto' },
+    { value: 9, label: 'Septiembre' },
+    { value: 10, label: 'Octubre' },
+    { value: 11, label: 'Noviembre' },
+    { value: 12, label: 'Diciembre' }
   ]
 
-  const regions = {
-    'ES': ['Madrid', 'Cataluña', 'Andalucía', 'Valencia', 'País Vasco'],
-    'MX': ['Ciudad de México', 'Jalisco', 'Nuevo León', 'Puebla', 'Guanajuato'],
-    'AR': ['Buenos Aires', 'Córdoba', 'Santa Fe', 'Mendoza', 'Tucumán'],
-    'CO': ['Bogotá', 'Antioquia', 'Valle del Cauca', 'Atlántico', 'Santander'],
-    'PE': ['Lima', 'Arequipa', 'La Libertad', 'Piura', 'Lambayeque'],
-    'CL': ['Santiago', 'Valparaíso', 'Biobío', 'Araucanía', 'Los Lagos']
-  }
-
-  const cities = {
-    'Madrid': ['Madrid', 'Alcalá de Henares', 'Móstoles', 'Fuenlabrada'],
-    'Cataluña': ['Barcelona', 'Hospitalet de Llobregat', 'Terrassa', 'Badalona'],
-    'Ciudad de México': ['Ciudad de México', 'Ecatepec', 'Guadalajara', 'Puebla'],
-    'Buenos Aires': ['Buenos Aires', 'La Plata', 'Mar del Plata', 'Bahía Blanca'],
-    'Bogotá': ['Bogotá', 'Soacha', 'Villavicencio', 'Facatativá']
-  }
-
   const selectedCountry = watch('country')
-  const selectedRegion = watch('region')
+  const selectedCommunity = watch('region')
+
+  // Cargar países al montar el componente
+  useEffect(() => {
+    const loadCountries = async () => {
+      setLoadingLocations(prev => ({ ...prev, countries: true }))
+      try {
+        const response = await locationService.getAllCountries()
+        if (response.success) {
+          setCountries(response.countries)
+        }
+      } catch (error) {
+        console.error('Error cargando países:', error)
+        setError('Error cargando lista de países')
+      } finally {
+        setLoadingLocations(prev => ({ ...prev, countries: false }))
+      }
+    }
+    loadCountries()
+  }, [])
+
+  // Cargar comunidades autónomas al seleccionar país
+  useEffect(() => {
+    if (!selectedCountry) {
+      setAutonomousCommunities([])
+      setCities([])
+      setValue('region', '')
+      setValue('city', '')
+      return
+    }
+
+    const loadCommunities = async () => {
+      setLoadingLocations(prev => ({ ...prev, communities: true }))
+      try {
+        const response = await locationService.getAutonomousCommunities(selectedCountry)
+        if (response.success) {
+          setAutonomousCommunities(response.autonomous_communities)
+        }
+      } catch (error) {
+        console.error('Error cargando comunidades:', error)
+        setError('Error cargando comunidades autónomas')
+      } finally {
+        setLoadingLocations(prev => ({ ...prev, communities: false }))
+      }
+    }
+    loadCommunities()
+  }, [selectedCountry, setValue])
+
+  // Cargar ciudades al seleccionar comunidad autónoma
+  useEffect(() => {
+    if (!selectedCommunity) {
+      setCities([])
+      setValue('city', '')
+      return
+    }
+
+    const loadCities = async () => {
+      setLoadingLocations(prev => ({ ...prev, cities: true }))
+      try {
+        const response = await locationService.getCities(selectedCommunity)
+        if (response.success) {
+          setCities(response.cities)
+        }
+      } catch (error) {
+        console.error('Error cargando ciudades:', error)
+        setError('Error cargando ciudades')
+      } finally {
+        setLoadingLocations(prev => ({ ...prev, cities: false }))
+      }
+    }
+    loadCities()
+  }, [selectedCommunity, setValue])
+
+  // Cargar equipos disponibles
+  useEffect(() => {
+    const loadTeams = async () => {
+      try {
+        setLoadingTeams(true)
+        const response = await teamService.getAllTeams()
+        if (response.success && response.teams) {
+          setTeams(response.teams)
+        }
+      } catch (error) {
+        console.error('Error cargando equipos:', error)
+        setError('Error cargando equipos. Por favor, recarga la página.')
+      } finally {
+        setLoadingTeams(false)
+      }
+    }
+    
+    loadTeams()
+  }, [])
 
   const onSubmit = async (data) => {
     setIsSubmitting(true)
     setError(null)
     
     try {
-      // Aquí iría la llamada al API para registrar el empleado
+      // Validar que se haya seleccionado un equipo
+      if (!data.team) {
+        setError('Por favor, selecciona un equipo')
+        setIsSubmitting(false)
+        return
+      }
+
+      // Validar horario de verano si está activado
+      if (hasSummerSchedule) {
+        if (!data.hoursSummer) {
+          setError('Por favor, indica las horas de trabajo en verano')
+          setIsSubmitting(false)
+          return
+        }
+        if (selectedSummerMonths.length === 0) {
+          setError('Por favor, selecciona al menos un mes de verano')
+          setIsSubmitting(false)
+          return
+        }
+      }
+
+      // Obtener nombres de país y comunidad autónoma para enviar al backend
+      const selectedCountryObj = countries.find(c => c.code === data.country)
+      const selectedCommunityObj = autonomousCommunities.find(c => c.id.toString() === data.region)
+      
+      // Preparar datos del empleado
       const employeeData = {
         full_name: data.fullName,
-        country: data.country,
-        region: data.region,
+        team_id: parseInt(data.team), // CRÍTICO: Equipo es obligatorio
+        country: selectedCountryObj?.name || data.country,
+        region: selectedCommunityObj?.name || data.region,
         city: data.city,
         hours_monday_thursday: parseFloat(data.hoursMonThu),
         hours_friday: parseFloat(data.hoursFriday),
-        start_date: data.startDate,
-        notes: data.notes || null
+        annual_vacation_days: parseInt(data.vacationDays), // Del formulario
+        annual_hld_hours: parseInt(data.hldHours), // Del formulario
+        has_summer_schedule: hasSummerSchedule,
+        hours_summer: hasSummerSchedule ? parseFloat(data.hoursSummer) : null,
+        summer_months: hasSummerSchedule ? selectedSummerMonths : []
       }
 
-      // Simular llamada API
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      // Llamada real al API para crear el empleado
+      const response = await employeeService.createEmployee(employeeData)
       
-      // Actualizar contexto
-      updateEmployee(employeeData)
-      setSuccess(true)
-      
-      // Redirigir después de 2 segundos
-      setTimeout(() => {
-        navigate('/dashboard')
-      }, 2000)
+      if (response.success) {
+        // Actualizar contexto con los datos del empleado creado
+        updateEmployee(response.employee)
+        setSuccess(true)
+        
+        // Redirigir después de 2 segundos
+        setTimeout(() => {
+          navigate('/dashboard')
+        }, 2000)
+      } else {
+        setError(response.message || 'Error al registrar empleado. Por favor, inténtalo de nuevo.')
+      }
       
     } catch (error) {
-      setError('Error al registrar empleado. Por favor, inténtalo de nuevo.')
       console.error('Error registrando empleado:', error)
+      
+      // Manejar diferentes tipos de errores
+      if (error.response) {
+        // Error de respuesta del servidor
+        const errorMessage = error.response.data?.message || 
+                            error.response.data?.error ||
+                            'Error al registrar empleado. Por favor, inténtalo de nuevo.'
+        setError(errorMessage)
+      } else if (error.request) {
+        // Error de red
+        setError('Error de conexión. Por favor, verifica tu conexión a internet.')
+      } else {
+        // Otro tipo de error
+        setError('Error inesperado. Por favor, inténtalo de nuevo.')
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -200,15 +351,47 @@ const EmployeeRegisterPage = () => {
                 )}
               </div>
 
+              {/* Equipo */}
+              <div className="space-y-2">
+                <Label htmlFor="team">Equipo *</Label>
+                <Select 
+                  onValueChange={(value) => setValue('team', value)}
+                  disabled={loadingTeams}
+                >
+                  <SelectTrigger>
+                    <Users className="w-4 h-4 mr-2" />
+                    <SelectValue placeholder={loadingTeams ? "Cargando equipos..." : "Selecciona equipo"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {teams.map((team) => (
+                      <SelectItem key={team.id} value={team.id.toString()}>
+                        {team.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.team && (
+                  <p className="text-sm text-red-600 dark:text-red-400">
+                    El equipo es requerido
+                  </p>
+                )}
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Selecciona el equipo al que perteneces
+                </p>
+              </div>
+
               {/* Ubicación */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* País */}
                 <div className="space-y-2">
                   <Label htmlFor="country">País *</Label>
-                  <Select onValueChange={(value) => setValue('country', value)}>
+                  <Select 
+                    onValueChange={(value) => setValue('country', value)}
+                    disabled={loadingLocations.countries}
+                  >
                     <SelectTrigger>
                       <Globe className="w-4 h-4 mr-2" />
-                      <SelectValue placeholder="Selecciona país" />
+                      <SelectValue placeholder={loadingLocations.countries ? "Cargando..." : "Selecciona país"} />
                     </SelectTrigger>
                     <SelectContent>
                       {countries.map((country) => (
@@ -223,31 +406,42 @@ const EmployeeRegisterPage = () => {
                       El país es requerido
                     </p>
                   )}
+                  {loadingLocations.countries && (
+                    <p className="text-xs text-gray-500">Cargando países...</p>
+                  )}
                 </div>
 
-                {/* Región */}
+                {/* Comunidad Autónoma / Región */}
                 <div className="space-y-2">
-                  <Label htmlFor="region">Región/Estado *</Label>
+                  <Label htmlFor="region">Comunidad Autónoma / Región *</Label>
                   <Select 
                     onValueChange={(value) => setValue('region', value)}
-                    disabled={!selectedCountry}
+                    disabled={!selectedCountry || loadingLocations.communities || autonomousCommunities.length === 0}
                   >
                     <SelectTrigger>
                       <MapPin className="w-4 h-4 mr-2" />
-                      <SelectValue placeholder="Selecciona región" />
+                      <SelectValue placeholder={
+                        loadingLocations.communities ? "Cargando..." :
+                        !selectedCountry ? "Selecciona país primero" :
+                        autonomousCommunities.length === 0 ? "No hay comunidades disponibles" :
+                        "Selecciona comunidad"
+                      } />
                     </SelectTrigger>
                     <SelectContent>
-                      {selectedCountry && regions[selectedCountry]?.map((region) => (
-                        <SelectItem key={region} value={region}>
-                          {region}
+                      {autonomousCommunities.map((community) => (
+                        <SelectItem key={community.id} value={community.id.toString()}>
+                          {community.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                   {errors.region && (
                     <p className="text-sm text-red-600 dark:text-red-400">
-                      La región es requerida
+                      La comunidad autónoma es requerida
                     </p>
+                  )}
+                  {loadingLocations.communities && (
+                    <p className="text-xs text-gray-500">Cargando comunidades...</p>
                   )}
                 </div>
 
@@ -256,16 +450,21 @@ const EmployeeRegisterPage = () => {
                   <Label htmlFor="city">Ciudad *</Label>
                   <Select 
                     onValueChange={(value) => setValue('city', value)}
-                    disabled={!selectedRegion}
+                    disabled={!selectedCommunity || loadingLocations.cities || cities.length === 0}
                   >
                     <SelectTrigger>
                       <Building className="w-4 h-4 mr-2" />
-                      <SelectValue placeholder="Selecciona ciudad" />
+                      <SelectValue placeholder={
+                        loadingLocations.cities ? "Cargando..." :
+                        !selectedCommunity ? "Selecciona comunidad primero" :
+                        cities.length === 0 ? "No hay ciudades disponibles" :
+                        "Selecciona ciudad"
+                      } />
                     </SelectTrigger>
                     <SelectContent>
-                      {selectedRegion && cities[selectedRegion]?.map((city) => (
-                        <SelectItem key={city} value={city}>
-                          {city}
+                      {cities.map((city) => (
+                        <SelectItem key={city.id} value={city.name}>
+                          {city.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -274,6 +473,9 @@ const EmployeeRegisterPage = () => {
                     <p className="text-sm text-red-600 dark:text-red-400">
                       La ciudad es requerida
                     </p>
+                  )}
+                  {loadingLocations.cities && (
+                    <p className="text-xs text-gray-500">Cargando ciudades...</p>
                   )}
                 </div>
               </div>
@@ -345,36 +547,148 @@ const EmployeeRegisterPage = () => {
                 </div>
               </div>
 
-              {/* Fecha de inicio */}
-              <div className="space-y-2">
-                <Label htmlFor="startDate">Fecha de Inicio *</Label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <Input
-                    id="startDate"
-                    type="date"
-                    className="pl-10"
-                    {...register('startDate', {
-                      required: 'La fecha de inicio es requerida'
-                    })}
-                  />
-                </div>
-                {errors.startDate && (
-                  <p className="text-sm text-red-600 dark:text-red-400">
-                    {errors.startDate.message}
+              {/* Beneficios laborales */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="vacationDays">Días de Vacaciones Anuales *</Label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Input
+                      id="vacationDays"
+                      type="number"
+                      min="1"
+                      max="40"
+                      placeholder="22"
+                      className="pl-10"
+                      {...register('vacationDays', {
+                        required: 'Los días de vacaciones son requeridos',
+                        min: {
+                          value: 1,
+                          message: 'Mínimo 1 día'
+                        },
+                        max: {
+                          value: 40,
+                          message: 'Máximo 40 días'
+                        }
+                      })}
+                    />
+                  </div>
+                  {errors.vacationDays && (
+                    <p className="text-sm text-red-600 dark:text-red-400">
+                      {errors.vacationDays.message}
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Estándar en España: 22 días laborables
                   </p>
-                )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="hldHours">Horas Libre Disposición Anuales *</Label>
+                  <div className="relative">
+                    <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Input
+                      id="hldHours"
+                      type="number"
+                      min="0"
+                      max="200"
+                      placeholder="40"
+                      className="pl-10"
+                      {...register('hldHours', {
+                        required: 'Las horas de libre disposición son requeridas',
+                        min: {
+                          value: 0,
+                          message: 'Mínimo 0 horas'
+                        },
+                        max: {
+                          value: 200,
+                          message: 'Máximo 200 horas'
+                        }
+                      })}
+                    />
+                  </div>
+                  {errors.hldHours && (
+                    <p className="text-sm text-red-600 dark:text-red-400">
+                      {errors.hldHours.message}
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Típicamente entre 40-80 horas anuales
+                  </p>
+                </div>
               </div>
 
-              {/* Notas adicionales */}
-              <div className="space-y-2">
-                <Label htmlFor="notes">Notas Adicionales</Label>
-                <Textarea
-                  id="notes"
-                  placeholder="Información adicional relevante (opcional)"
-                  rows={3}
-                  {...register('notes')}
-                />
+              {/* Horario de verano */}
+              <div className="space-y-4 border-t pt-4">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="hasSummer"
+                    checked={hasSummerSchedule}
+                    onChange={(e) => setHasSummerSchedule(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <Label htmlFor="hasSummer" className="flex items-center cursor-pointer">
+                    <Sun className="w-4 h-4 mr-2" />
+                    ¿Tiene horario de verano? (jornada intensiva)
+                  </Label>
+                </div>
+
+                {hasSummerSchedule && (
+                  <div className="space-y-4 pl-6 border-l-2 border-yellow-400">
+                    <div className="space-y-2">
+                      <Label htmlFor="hoursSummer">Horas Verano *</Label>
+                      <div className="relative">
+                        <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                        <Input
+                          id="hoursSummer"
+                          type="number"
+                          step="0.5"
+                          min="1"
+                          max="12"
+                          placeholder="7.0"
+                          className="pl-10"
+                          {...register('hoursSummer', {
+                            required: hasSummerSchedule ? 'Las horas de verano son requeridas' : false
+                          })}
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Horas de trabajo diarias durante el verano
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Meses con horario de verano *</Label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {months.map((month) => (
+                          <div key={month.value} className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              id={`month-${month.value}`}
+                              value={month.value}
+                              checked={selectedSummerMonths.includes(month.value)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedSummerMonths([...selectedSummerMonths, month.value])
+                                } else {
+                                  setSelectedSummerMonths(selectedSummerMonths.filter(m => m !== month.value))
+                                }
+                              }}
+                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            />
+                            <Label htmlFor={`month-${month.value}`} className="text-sm cursor-pointer">
+                              {month.label}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Selecciona los meses en los que aplica el horario de verano
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Botones */}

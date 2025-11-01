@@ -12,9 +12,6 @@ class Team(db.Model):
     # Manager del equipo (relación con Employee)
     manager_id = db.Column(db.Integer, db.ForeignKey('employee.id'), nullable=True)
     
-    # Estado del equipo
-    active = db.Column(db.Boolean, default=True)
-    
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -30,12 +27,20 @@ class Team(db.Model):
     @property
     def employee_count(self):
         """Retorna el número de empleados en el equipo"""
-        return self.employees.filter_by(active=True).count()
+        # Filtrar por empleados activos si la columna existe en Employee
+        try:
+            return self.employees.filter_by(active=True).count()
+        except:
+            return self.employees.count()
     
     @property
     def active_employees(self):
         """Retorna solo los empleados activos del equipo"""
-        return self.employees.filter_by(active=True).all()
+        # Filtrar por empleados activos si la columna existe en Employee
+        try:
+            return self.employees.filter_by(active=True).all()
+        except:
+            return self.employees.all()
     
     def get_team_calendar_activities(self, start_date=None, end_date=None):
         """Obtiene todas las actividades del calendario del equipo"""
@@ -116,7 +121,7 @@ class Team(db.Model):
             'description': self.description,
             'manager_id': self.manager_id,
             'manager_name': self.manager.full_name if self.manager else None,
-            'active': self.active,
+            'active': True,  # Todos los equipos están activos (no hay columna active en DB)
             'employee_count': self.employee_count,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None

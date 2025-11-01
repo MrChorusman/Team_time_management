@@ -56,7 +56,7 @@ def get_admin_dashboard():
             },
             'teams': {
                 'total': Team.query.count(),
-                'active': Team.query.filter(Team.active == True).count(),
+                'active': Team.query.count(),  # Todos los equipos están activos (no hay columna active)
                 'with_manager': Team.query.filter(Team.manager_id.isnot(None)).count()
             },
             'holidays': {
@@ -460,7 +460,7 @@ def get_system_stats():
         
         # Eficiencia promedio por equipo
         team_efficiency = []
-        teams = Team.query.filter(Team.active == True).all()
+        teams = Team.query.all()  # Todos los equipos (no hay columna active)
         
         for team in teams:
             if team.active_employees:
@@ -725,7 +725,7 @@ def get_system_metrics():
         app_metrics = {
             'active_users': User.query.filter(User.active == True).count(),
             'total_employees': Employee.query.count(),
-            'active_teams': Team.query.filter(Team.active == True).count(),
+            'active_teams': Team.query.count(),  # Todos los equipos (no hay columna active)
             'pending_notifications': Notification.query.filter(
                 Notification.read == False
             ).count(),

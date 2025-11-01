@@ -25,8 +25,8 @@ def list_teams():
         # Construir query
         query = Team.query
         
-        if active_only:
-            query = query.filter(Team.active == True)
+        # Nota: La tabla team en Supabase no tiene columna 'active'
+        # Todos los equipos se consideran activos por defecto
         
         # Filtros según permisos
         if current_user.is_manager() and not current_user.is_admin():

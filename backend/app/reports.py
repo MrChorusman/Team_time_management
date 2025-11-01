@@ -191,14 +191,14 @@ def get_dashboard_report():
             
             # Estadísticas generales
             total_employees = Employee.query.filter(Employee.active == True).count()
-            total_teams = Team.query.filter(Team.active == True).count()
+            total_teams = Team.query.count()  # Todos los equipos (no hay columna active)
             pending_approvals = Employee.query.filter(
                 Employee.active == True,
                 Employee.approved == False
             ).count()
             
             # Eficiencia global
-            all_teams = Team.query.filter(Team.active == True).all()
+            all_teams = Team.query.all()  # Todos los equipos (no hay columna active)
             global_efficiency = 0
             team_summaries = []
             
