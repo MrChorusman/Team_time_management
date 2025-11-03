@@ -42,7 +42,10 @@ def list_teams():
             if current_user.employee and current_user.employee.team_id:
                 query = query.filter(Team.id == current_user.employee.team_id)
             else:
-                query = query.filter(Team.id == -1)  # No mostrar nada
+                # Si el empleado no tiene perfil registrado aún, mostrar todos los equipos
+                # para que pueda seleccionar uno durante el registro
+                # No aplicar ningún filtro (mostrar todos los equipos)
+                pass
         
         # Paginación
         pagination = query.paginate(
