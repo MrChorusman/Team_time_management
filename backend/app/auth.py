@@ -63,7 +63,9 @@ def login():
             'message': 'Inicio de sesión exitoso',
             'user': user.to_dict(),
             'employee': employee_data,
-            'redirect_url': '/dashboard' if user.employee and user.employee.approved else '/employee/register'
+            # Si tiene employee (aprobado o no) → dashboard
+            # Si no tiene employee → registro
+            'redirect_url': '/dashboard' if user.employee else '/employee/register'
         })
         
     except Exception as e:
@@ -382,7 +384,9 @@ def google_callback():
                     'message': 'Autenticación con Google exitosa',
                     'user': user.to_dict(),
                     'employee': employee_data,
-                    'redirect_url': '/dashboard' if user.employee and user.employee.approved else '/employee/register'
+                    # Si tiene employee (aprobado o no) → dashboard
+                    # Si no tiene employee → registro
+                    'redirect_url': '/dashboard' if user.employee else '/employee/register'
                 })
             else:
                 return jsonify({

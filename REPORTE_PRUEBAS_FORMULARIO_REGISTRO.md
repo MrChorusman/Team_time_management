@@ -37,7 +37,56 @@
 #### **1b. Usuario NO Admin sin Registro**
 **Resultado esperado**: Debe mostrar advertencia indicando que debe completar registro
 
-**Pasos**: ⏳ En progreso...
+**Pasos**:
+1. Logout como admin
+2. Login como employee (`employee.test@example.com`)
+3. En `/employee/register`, click en "Volver al Dashboard"
+4. Verificar advertencia y permanencia en `/employee/register`
+
+**Resultado**: ✅ **PASADA**
+- ✅ Advertencia mostrada correctamente:
+  > "No puedes acceder a la aplicación hasta que completes tu registro."
+- ✅ Permaneció en `/employee/register`
+- ✅ Advertencia desaparece después de 5 segundos (timeout)
+
+---
+
+### **🐛 PROBLEMA ENCONTRADO Y RESUELTO: Dropdown de Equipos Vacío**
+
+**Síntoma**: Al intentar seleccionar un equipo en el formulario de registro, el dropdown aparecía vacío.
+
+**Diagnóstico**:
+1. Console del navegador mostraba: `✅ GET /teams {teams: Array(0)}`
+2. Base de datos tenía 18 equipos, pero el endpoint devolvía 0
+3. Backend tenía código que filtraba por `Team.id == -1` para empleados sin perfil
+
+**Causa Raíz**:
+El endpoint `/api/teams` en `backend/app/teams.py` aplicaba un filtro restrictivo cuando un usuario con rol `employee` sin perfil registrado intentaba cargar equipos. El código original:
+```python
+elif current_user.is_employee() and not current_user.is_manager():
+    if current_user.employee and current_user.employee.team_id:
+        query = query.filter(Team.id == current_user.employee.team_id)
+    else:
+        query = query.filter(Team.id == -1)  # ❌ Devolvía 0 equipos
+```
+
+**Solución**:
+Modificado líneas 40-48 de `backend/app/teams.py` para que empleados **sin perfil registrado** vean **todos los equipos**:
+```python
+elif current_user.is_employee() and not current_user.is_manager():
+    if current_user.employee and current_user.employee.team_id:
+        query = query.filter(Team.id == current_user.employee.team_id)
+    else:
+        # No aplicar filtro → mostrar todos los equipos para registro
+        pass  # ✅ Devuelve todos los equipos
+```
+
+**Verificación**:
+- ✅ Console: `✅ GET /teams {teams: Array(18)}`
+- ✅ Dropdown muestra 18 equipos: Marketing, Monitorización, Desarrollo, etc.
+- ✅ Commit: `18e9243` - "fix: Permitir a empleados sin perfil ver todos los equipos"
+
+**Nota Técnica**: El backend no se reinició automáticamente después de la modificación porque el puerto 5001 estaba ocupado. Fue necesario reiniciar manualmente
 
 ---
 
@@ -57,12 +106,14 @@
 | Prueba | Estado | Resultado |
 |--------|--------|-----------|
 | 1a. Admin → Dashboard | ✅ **PASADA** | Acceso permitido correctamente |
-| 1b. No-Admin → Dashboard | ⏳ **En Progreso** | - |
-| 2. Rellenar y Guardar | ⏳ **Pendiente** | - |
+| 1b. No-Admin → Dashboard | ✅ **PASADA** | Advertencia mostrada correctamente |
+| 2. Rellenar y Guardar | ⏳ **En Progreso** | Dropdown de equipos funcionando (18 items) |
 
-**Tests Ejecutados**: 1/3  
-**Tests Pasados**: 1/1  
+**Tests Ejecutados**: 2/3  
+**Tests Pasados**: 2/2  
 **Tasa de Éxito**: 100%
+
+**Problemas Resueltos**: 1 (Dropdown de equipos vacío)
 
 ---
 
