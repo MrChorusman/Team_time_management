@@ -8,6 +8,7 @@ from sqlalchemy.orm import load_only
 from models.employee import Employee
 from models.user import db
 from services.hours_calculator import HoursCalculator
+from utils.decorators import admin_required, manager_or_admin_required
 
 logger = logging.getLogger(__name__)
 
@@ -26,8 +27,8 @@ def list_teams():
         # Construir query
         query = Team.query
         
-        if active_only:
-            query = query.filter(Team.active == True)
+        # Nota: La tabla team en Supabase no tiene columna 'active'
+        # Todos los equipos se consideran activos por defecto
         
         # Filtros según permisos
         if current_user.is_manager() and not current_user.is_admin():
@@ -42,7 +43,10 @@ def list_teams():
             if current_user.employee and current_user.employee.team_id:
                 query = query.filter(Team.id == current_user.employee.team_id)
             else:
-                query = query.filter(Team.id == -1)  # No mostrar nada
+                # Si el empleado no tiene perfil registrado aún, mostrar todos los equipos
+                # para que pueda seleccionar uno durante el registro
+                # No aplicar ningún filtro (mostrar todos los equipos)
+                pass
         
         # Reducir columnas para evitar tocar campos no existentes en despliegues desincronizados
         query = query.options(load_only(Team.id, Team.name, Team.active))
@@ -92,6 +96,7 @@ def list_teams():
 
 @teams_bp.route('/', methods=['POST'])
 @auth_required()
+@admin_required()
 def create_team():
     """Crea un nuevo equipo (solo admins)"""
     try:
@@ -198,6 +203,7 @@ def get_team(team_id):
 
 @teams_bp.route('/<int:team_id>', methods=['PUT'])
 @auth_required()
+@admin_required()
 def update_team(team_id):
     """Actualiza un equipo (solo admins)"""
     try:
@@ -374,6 +380,7 @@ def get_team_employees(team_id):
 
 @teams_bp.route('/<int:team_id>/assign-manager', methods=['POST'])
 @auth_required()
+@admin_required()
 def assign_manager(team_id):
     """Asigna un manager a un equipo (solo admins)"""
     try:
@@ -440,6 +447,7 @@ def assign_manager(team_id):
 
 @teams_bp.route('/available-managers', methods=['GET'])
 @auth_required()
+@admin_required()
 def get_available_managers():
     """Obtiene empleados que pueden ser managers (solo admins)"""
     try:

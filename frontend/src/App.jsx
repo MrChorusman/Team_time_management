@@ -27,7 +27,7 @@ import './App.css'
 
 // Componente de rutas protegidas
 function ProtectedRoute({ children, requiredRole = null }) {
-  const { user, employee, loading, isAdmin, isManager } = useAuth()
+  const { user, employee, loading } = useAuth()
   
   if (loading) {
     return <LoadingSpinner />
@@ -40,17 +40,20 @@ function ProtectedRoute({ children, requiredRole = null }) {
   // Si el usuario no tiene empleado registrado, redirigir al registro
   // EXCEPTO para administradores y managers que pueden acceder directamente
   if (user && !employee && window.location.pathname !== '/employee/register') {
-    // Verificar si es admin o manager
-    const isAdminOrManager = isAdmin() || isManager()
+    // Verificar si es admin o manager (roles son strings)
+    const userRoles = user.roles || []
+    const isAdminOrManager = userRoles.includes('admin') || userRoles.includes('manager')
     
     if (!isAdminOrManager) {
       return <Navigate to="/employee/register" replace />
     }
   }
   
-  // Verificar rol requerido
-  if (requiredRole && user.roles && !user.roles.some(role => role.name === requiredRole)) {
-    return <Navigate to="/dashboard" replace />
+  // Verificar rol requerido (roles son strings, no objetos)
+  if (requiredRole && user.roles) {
+    if (!user.roles.includes(requiredRole)) {
+      return <Navigate to="/dashboard" replace />
+    }
   }
   
   return children

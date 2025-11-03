@@ -266,6 +266,9 @@ export const NotificationProvider = ({ children }) => {
     }
   }
 
+  // Función para obtener el contador de no leídas (para compatibilidad)
+  const getUnreadCount = () => summary.unread_count
+  
   const value = {
     // Estado
     notifications,
@@ -284,6 +287,7 @@ export const NotificationProvider = ({ children }) => {
     getPriorityColor,
     getPriorityText,
     getRelativeTime,
+    getUnreadCount,
     
     // Computed values
     hasUnread: summary.unread_count > 0,

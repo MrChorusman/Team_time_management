@@ -18,6 +18,7 @@ from models.team import Team
 from models.holiday import Holiday
 from models.calendar_activity import CalendarActivity
 from models.notification import Notification
+from models.location import Country, AutonomousCommunity, Province, City
 
 # Importar servicios
 from services.email_service import EmailService
@@ -28,7 +29,7 @@ from services.notification_service import NotificationService
 from logging_config import setup_logging, get_logger
 
 # Importar blueprints (rutas)
-from app.auth_rest import auth_bp
+from app.auth import auth_bp
 from auth_simple import auth_simple_bp
 from app.employees import employees_bp
 from app.teams import teams_bp
@@ -37,6 +38,7 @@ from app.holidays import holidays_bp
 from app.notifications import notifications_bp
 from app.reports import reports_bp
 from app.admin import admin_bp
+from app.locations import locations_bp
 
 def create_app(config_name=None):
     """Factory para crear la aplicación Flask"""
@@ -125,6 +127,7 @@ def create_app(config_name=None):
     app.register_blueprint(notifications_bp, url_prefix='/api/notifications')
     app.register_blueprint(reports_bp, url_prefix='/api/reports')
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
+    app.register_blueprint(locations_bp, url_prefix='/api/locations')
     
     # Rutas principales
     @app.route('/')
@@ -510,7 +513,7 @@ def create_app(config_name=None):
     
     @app.cli.command()
     def load_holidays():
-        """Carga festivos automáticamente"""
+        """Carga festivos automáticamente (deprecated - usar update-holidays)"""
         holiday_service = HolidayService()
         results = holiday_service.auto_load_missing_holidays()
         
@@ -521,6 +524,10 @@ def create_app(config_name=None):
             print("Errores encontrados:")
             for error in results['errors'][:5]:  # Mostrar solo los primeros 5
                 print(f"  - {error}")
+    
+    # Registrar comando de actualización de festivos
+    from commands.update_holidays import init_app as init_update_holidays_cmd
+    init_update_holidays_cmd(app)
     
     @app.cli.command()
     def process_notifications():

@@ -13,28 +13,15 @@ from services.notification_service import NotificationService
 from services.holiday_service import HolidayService
 from services.email_service import EmailService
 from services.google_oauth_service import GoogleOAuthService
+from utils.decorators import admin_required
 
 logger = logging.getLogger(__name__)
 
 admin_bp = Blueprint('admin', __name__)
 
-def admin_required(f):
-    """Decorador para requerir permisos de administrador"""
-    from functools import wraps
-    
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if not current_user.is_admin():
-            return jsonify({
-                'success': False,
-                'message': 'Acceso denegado. Se requieren permisos de administrador.'
-            }), 403
-        return f(*args, **kwargs)
-    return decorated_function
-
 @admin_bp.route('/dashboard', methods=['GET'])
 @auth_required()
-@admin_required
+@admin_required()
 def get_admin_dashboard():
     """Obtiene el dashboard de administración"""
     try:
@@ -56,7 +43,7 @@ def get_admin_dashboard():
             },
             'teams': {
                 'total': Team.query.count(),
-                'active': Team.query.filter(Team.active == True).count(),
+                'active': Team.query.count(),  # Todos los equipos están activos (no hay columna active)
                 'with_manager': Team.query.filter(Team.manager_id.isnot(None)).count()
             },
             'holidays': {
@@ -166,7 +153,7 @@ def get_admin_dashboard():
 
 @admin_bp.route('/users', methods=['GET'])
 @auth_required()
-@admin_required
+@admin_required()
 def list_all_users():
     """Lista todos los usuarios del sistema"""
     try:
@@ -225,7 +212,7 @@ def list_all_users():
 
 @admin_bp.route('/users/<int:user_id>/toggle-active', methods=['POST'])
 @auth_required()
-@admin_required
+@admin_required()
 def toggle_user_active(user_id):
     """Activa/desactiva un usuario"""
     try:
@@ -270,7 +257,7 @@ def toggle_user_active(user_id):
 
 @admin_bp.route('/users/<int:user_id>/roles', methods=['PUT'])
 @auth_required()
-@admin_required
+@admin_required()
 def update_user_roles(user_id):
     """Actualiza los roles de un usuario"""
     try:
@@ -334,7 +321,7 @@ def update_user_roles(user_id):
 
 @admin_bp.route('/system/maintenance', methods=['POST'])
 @auth_required()
-@admin_required
+@admin_required()
 def run_system_maintenance():
     """Ejecuta tareas de mantenimiento del sistema"""
     try:
@@ -413,7 +400,7 @@ def run_system_maintenance():
 
 @admin_bp.route('/system/stats', methods=['GET'])
 @auth_required()
-@admin_required
+@admin_required()
 def get_system_stats():
     """Obtiene estadísticas detalladas del sistema"""
     try:
@@ -460,7 +447,7 @@ def get_system_stats():
         
         # Eficiencia promedio por equipo
         team_efficiency = []
-        teams = Team.query.filter(Team.active == True).all()
+        teams = Team.query.all()  # Todos los equipos (no hay columna active)
         
         for team in teams:
             if team.active_employees:
@@ -516,7 +503,7 @@ def get_system_stats():
 
 @admin_bp.route('/system/backup-info', methods=['GET'])
 @auth_required()
-@admin_required
+@admin_required()
 def get_backup_info():
     """Obtiene información sobre respaldos del sistema"""
     try:
@@ -552,7 +539,7 @@ def get_backup_info():
 
 @admin_bp.route('/logs', methods=['GET'])
 @auth_required()
-@admin_required
+@admin_required()
 def get_system_logs():
     """Obtiene logs del sistema"""
     try:
@@ -659,7 +646,7 @@ def get_system_logs():
 
 @admin_bp.route('/logs/email', methods=['GET'])
 @auth_required()
-@admin_required
+@admin_required()
 def get_email_logs():
     """Obtiene logs específicos de email"""
     try:
@@ -699,7 +686,7 @@ def get_email_logs():
 
 @admin_bp.route('/metrics', methods=['GET'])
 @auth_required()
-@admin_required
+@admin_required()
 def get_system_metrics():
     """Obtiene métricas del sistema"""
     try:
@@ -725,7 +712,7 @@ def get_system_metrics():
         app_metrics = {
             'active_users': User.query.filter(User.active == True).count(),
             'total_employees': Employee.query.count(),
-            'active_teams': Team.query.filter(Team.active == True).count(),
+            'active_teams': Team.query.count(),  # Todos los equipos (no hay columna active)
             'pending_notifications': Notification.query.filter(
                 Notification.read == False
             ).count(),
@@ -777,7 +764,7 @@ def get_system_metrics():
 
 @admin_bp.route('/test-smtp', methods=['POST'])
 @auth_required()
-@admin_required
+@admin_required()
 def test_smtp_configuration():
     """Prueba la configuración SMTP"""
     try:
@@ -815,7 +802,7 @@ def test_smtp_configuration():
 
 @admin_bp.route('/email-config', methods=['GET'])
 @auth_required()
-@admin_required
+@admin_required()
 def get_email_configuration():
     """Obtiene la configuración actual de email (sin mostrar credenciales)"""
     try:
@@ -846,7 +833,7 @@ def get_email_configuration():
 
 @admin_bp.route('/google-oauth-config', methods=['GET'])
 @auth_required()
-@admin_required
+@admin_required()
 def get_google_oauth_configuration():
     """Obtiene la configuración actual de Google OAuth (sin mostrar credenciales)"""
     try:
@@ -878,7 +865,7 @@ def get_google_oauth_configuration():
 
 @admin_bp.route('/test-google-oauth', methods=['POST'])
 @auth_required()
-@admin_required
+@admin_required()
 def test_google_oauth_configuration():
     """Prueba la configuración de Google OAuth"""
     try:

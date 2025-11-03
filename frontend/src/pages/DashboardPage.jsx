@@ -142,9 +142,18 @@ const DashboardPage = () => {
       }
     }
     
+    // Usuario sin employee o con employee no aprobado
+    if (!employee) {
+      return {
+        type: 'viewer',
+        message: 'Completa tu registro de empleado para acceder al dashboard completo'
+      }
+    }
+    
+    // Employee registrado pero pendiente de aprobación
     return {
-      type: 'viewer',
-      message: 'Completa tu registro de empleado para acceder al dashboard completo'
+      type: 'pending',
+      message: 'Tu registro está pendiente de aprobación. Podrás acceder a todas las funcionalidades una vez que tu manager lo apruebe.'
     }
   }
 
@@ -647,9 +656,12 @@ const DashboardPage = () => {
         <p className="text-gray-600 dark:text-gray-400 mb-6">
           {dashboardData.message}
         </p>
-        <Button onClick={() => navigate('/employee/register')}>
-          Completar Registro de Empleado
-        </Button>
+        {/* Solo mostrar el botón si NO tiene employee (viewer) */}
+        {dashboardData.type === 'viewer' && (
+          <Button onClick={() => navigate('/employee/register')}>
+            Completar Registro de Empleado
+          </Button>
+        )}
       </div>
     </div>
   )

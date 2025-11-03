@@ -7,9 +7,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Crear blueprint
-auth_bp = Blueprint('auth', __name__)
+auth_rest_bp = Blueprint('auth_rest', __name__)
 
-@auth_bp.route('/test', methods=['GET'])
+@auth_rest_bp.route('/test', methods=['GET'])
 def test():
     """Endpoint de prueba simple"""
     return jsonify({
@@ -17,7 +17,7 @@ def test():
         'message': 'Auth blueprint funcionando'
     })
 
-@auth_bp.route('/test-password', methods=['POST'])
+@auth_rest_bp.route('/test-password', methods=['POST'])
 def test_password():
     """Endpoint de prueba para verificar contraseña"""
     try:
@@ -50,7 +50,7 @@ def test_password():
             'message': f'Error: {str(e)}'
         }), 500
 
-@auth_bp.route('/login', methods=['POST'])
+@auth_rest_bp.route('/login', methods=['POST'])
 def login():
     """Endpoint de inicio de sesión simplificado"""
     try:

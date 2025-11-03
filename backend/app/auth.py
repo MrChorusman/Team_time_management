@@ -63,7 +63,9 @@ def login():
             'message': 'Inicio de sesión exitoso',
             'user': user.to_dict(),
             'employee': employee_data,
-            'redirect_url': '/dashboard' if user.employee and user.employee.approved else '/employee/register'
+            # Si tiene employee (aprobado o no) → dashboard
+            # Si no tiene employee → registro
+            'redirect_url': '/dashboard' if user.employee else '/employee/register'
         })
         
     except Exception as e:
@@ -168,25 +170,35 @@ def logout():
         }), 500
 
 @auth_bp.route('/me', methods=['GET'])
-@auth_required()
 def get_current_user():
-    """Obtiene información del usuario actual"""
+    """
+    Obtiene información del usuario actual.
+    NO requiere @auth_required() para poder devolver respuesta apropiada cuando no hay sesión.
+    """
     try:
-        employee_data = None
-        if current_user.employee:
-            employee_data = current_user.employee.to_dict(include_summary=True)
-        
-        return jsonify({
-            'success': True,
-            'user': current_user.to_dict(),
-            'employee': employee_data
-        })
-        
+        if current_user.is_authenticated:
+            employee_data = None
+            if hasattr(current_user, 'employee') and current_user.employee:
+                employee_data = current_user.employee.to_dict(include_summary=True)
+            
+            user_dict = current_user.to_dict()
+            
+            return jsonify({
+                'success': True,
+                'user': user_dict,
+                'employee': employee_data
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'No hay sesión activa'
+            }), 401
+            
     except Exception as e:
         logger.error(f"Error obteniendo usuario actual: {e}")
         return jsonify({
             'success': False,
-            'message': 'Error obteniendo información del usuario'
+            'message': 'Error verificando sesión'
         }), 500
 
 @auth_bp.route('/change-password', methods=['POST'])
@@ -240,7 +252,10 @@ def change_password():
 
 @auth_bp.route('/check-session', methods=['GET'])
 def check_session():
-    """Verifica si hay una sesión activa"""
+    """
+    DEPRECATED: Usar /auth/me en su lugar.
+    Verifica si hay una sesión activa (mantenido por compatibilidad)
+    """
     try:
         if current_user.is_authenticated:
             employee_data = None
@@ -248,18 +263,22 @@ def check_session():
                 employee_data = current_user.employee.to_dict()
             
             return jsonify({
+                'success': True,
                 'authenticated': True,
                 'user': current_user.to_dict(),
                 'employee': employee_data
             })
         else:
             return jsonify({
-                'authenticated': False
-            })
+                'success': False,
+                'authenticated': False,
+                'message': 'No hay sesión activa'
+            }), 401
             
     except Exception as e:
         logger.error(f"Error verificando sesión: {e}")
         return jsonify({
+            'success': False,
             'authenticated': False,
             'error': 'Error verificando sesión'
         }), 500
@@ -365,7 +384,9 @@ def google_callback():
                     'message': 'Autenticación con Google exitosa',
                     'user': user.to_dict(),
                     'employee': employee_data,
-                    'redirect_url': '/dashboard' if user.employee and user.employee.approved else '/employee/register'
+                    # Si tiene employee (aprobado o no) → dashboard
+                    # Si no tiene employee → registro
+                    'redirect_url': '/dashboard' if user.employee else '/employee/register'
                 })
             else:
                 return jsonify({

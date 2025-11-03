@@ -33,12 +33,13 @@ class Notification(db.Model):
     notification_type = db.Column(db.Enum(NotificationType), nullable=False)
     priority = db.Column(db.Enum(NotificationPriority), default=NotificationPriority.MEDIUM)
     
-    # Datos adicionales (JSON)
-    data = db.Column(db.JSON)
     
     # Estado de la notificación
     read = db.Column(db.Boolean, default=False)
     read_at = db.Column(db.DateTime, nullable=True)
+    
+    # Datos adicionales (JSON)
+    data = db.Column(db.JSON)
     
     # Configuración de envío
     send_email = db.Column(db.Boolean, default=False)
