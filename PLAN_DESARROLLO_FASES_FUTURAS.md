@@ -70,8 +70,10 @@ Este documento establece el plan estratégico de desarrollo para las siguientes 
 | Rama | Desarrollo | Fecha Inicio | Fecha Finalización | Estado |
 |------|------------|--------------|-------------------|--------|
 | `primera-cursor-3oct` | Documentación Plan de Desarrollo | 03/10/2025 | 03/10/2025 | ✅ Completado |
-| `fix-auth-blueprint-regression` | Corrección de regresión en blueprint de autenticación | 31/10/2025 | - | 🔄 En Desarrollo |
-| `fix-auth-blueprint-regression` | Sistema de ubicación geográfica dinámico y festivos | 01/11/2025 | - | 🔄 En Desarrollo |
+| `fix-auth-blueprint-regression` | Corrección de regresión en blueprint de autenticación | 31/10/2025 | 03/11/2025 | ✅ Completado |
+| `fix-auth-blueprint-regression` | Sistema de ubicación geográfica dinámico y festivos | 01/11/2025 | 01/11/2025 | ✅ Completado |
+| `fix-auth-blueprint-regression` | Sistema de notificaciones completo (6 columnas restauradas) | 03/11/2025 | 03/11/2025 | ✅ Completado |
+| `fix-auth-blueprint-regression` | Pruebas end-to-end flujo de notificaciones | 03/11/2025 | 03/11/2025 | ✅ Completado |
 
 ---
 
