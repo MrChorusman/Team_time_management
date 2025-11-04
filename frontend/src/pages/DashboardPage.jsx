@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { 
   Users, 
   Clock, 
@@ -23,6 +24,7 @@ import { Alert, AlertDescription } from '../components/ui/alert'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 
 const DashboardPage = () => {
+  const navigate = useNavigate()
   const { user, employee, isAdmin, isManager, isEmployee } = useAuth()
   const { summary: notificationSummary } = useNotifications()
   const [dashboardData, setDashboardData] = useState(null)
