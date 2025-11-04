@@ -241,7 +241,11 @@ def create_app(config_name=None):
         """Endpoint de salud del sistema con diagnóstico detallado"""
         import os
         import psycopg2
-        import psutil
+        try:
+            import psutil
+            HAS_PSUTIL = True
+        except ImportError:
+            HAS_PSUTIL = False
         import app_config as config_module
         config = config_module.config
         
@@ -346,16 +350,19 @@ def create_app(config_name=None):
         
         # Verificar recursos del sistema
         try:
-            # Uso de memoria
-            memory = psutil.virtual_memory()
-            health_info['diagnostics']['system_resources'] = {
-                'memory': {
-                    'total': memory.total,
-                    'available': memory.available,
-                    'percent_used': memory.percent
-                },
-                'cpu_percent': psutil.cpu_percent(interval=1)
-            }
+            if HAS_PSUTIL:
+                # Uso de memoria
+                memory = psutil.virtual_memory()
+                health_info['diagnostics']['system_resources'] = {
+                    'memory': {
+                        'total': memory.total,
+                        'available': memory.available,
+                        'percent_used': memory.percent
+                    },
+                    'cpu_percent': psutil.cpu_percent(interval=1)
+                }
+            else:
+                health_info['diagnostics']['system_resources'] = 'not available (psutil not installed)'
         except Exception as e:
             health_info['diagnostics']['system_resources'] = f'error: {str(e)}'
         
