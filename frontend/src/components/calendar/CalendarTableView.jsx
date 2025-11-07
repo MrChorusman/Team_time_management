@@ -57,10 +57,34 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
   const days = getDaysInMonth(currentMonth)
   const months = viewMode === 'annual' ? getMonthsInYear(currentMonth) : [{ date: currentMonth, name: currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }), days }]
 
-  // Verificar si un día es festivo
+  // Verificar si un día es festivo para un empleado específico según su ubicación
   const isHoliday = (dateString, employeeLocation) => {
-    if (!holidays) return false
-    return holidays.some(holiday => holiday.date === dateString)
+    if (!holidays || !employeeLocation) return false
+    
+    return holidays.some(holiday => {
+      // Verificar que la fecha coincida
+      if (holiday.date !== dateString) return false
+      
+      // Festivos nacionales se aplican a todos del mismo país
+      if (holiday.type === 'national') {
+        return holiday.country === employeeLocation.country
+      }
+      
+      // Festivos regionales solo para la misma región
+      if (holiday.type === 'regional') {
+        return holiday.country === employeeLocation.country && 
+               holiday.region === employeeLocation.region
+      }
+      
+      // Festivos locales solo para la misma ciudad
+      if (holiday.type === 'local') {
+        return holiday.country === employeeLocation.country && 
+               holiday.region === employeeLocation.region &&
+               holiday.city === employeeLocation.city
+      }
+      
+      return false
+    })
   }
 
   // Obtener actividades para un empleado en un día específico
@@ -193,22 +217,22 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
     return (
       <tr key={`${employee.id}-${monthDate.toISOString()}`} className="hover:bg-gray-50">
         {/* Equipo */}
-        <td className="sticky left-0 z-10 px-4 py-3 bg-white border-r border-gray-300 font-medium text-sm whitespace-nowrap">
+        <td className="sticky left-0 z-10 px-4 py-3 bg-white border-r border-b border-gray-300 font-medium text-sm whitespace-nowrap">
           {employee.team_name || 'Sin equipo'}
         </td>
         
         {/* Empleado */}
-        <td className="sticky left-[140px] z-10 px-4 py-3 bg-white border-r border-gray-300 font-medium text-sm whitespace-nowrap">
+        <td className="sticky left-[140px] z-10 px-4 py-3 bg-white border-r border-b border-gray-300 font-medium text-sm whitespace-nowrap">
           {employee.full_name}
         </td>
         
         {/* Vac (Vacaciones) */}
-        <td className="sticky left-[280px] z-10 px-3 py-3 bg-blue-50 border-r border-gray-300 text-center font-semibold text-sm">
+        <td className="sticky left-[280px] z-10 px-3 py-3 bg-blue-50 border-r border-b border-gray-300 text-center font-semibold text-sm">
           {summary.vacation}
         </td>
         
         {/* Aus (Ausencias) */}
-        <td className="sticky left-[330px] z-10 px-3 py-3 bg-yellow-50 border-r border-gray-300 text-center font-semibold text-sm">
+        <td className="sticky left-[330px] z-10 px-3 py-3 bg-yellow-50 border-r border-b border-gray-300 text-center font-semibold text-sm">
           {summary.absence}
         </td>
         
@@ -223,7 +247,7 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
           return (
             <td
               key={dayInfo.day}
-              className={`px-2 py-3 border-r border-gray-200 text-center text-xs font-medium ${bgColor} ${textColor} cursor-pointer hover:opacity-80 transition-opacity`}
+              className={`px-2 py-3 border-r border-b border-gray-200 text-center text-xs font-medium ${bgColor} ${textColor} cursor-pointer hover:opacity-80 transition-opacity`}
               onMouseEnter={() => setHoveredDay(dayInfo.dateString)}
               onMouseLeave={() => setHoveredDay(null)}
               title={activity ? `${activity.type}: ${activity.notes || ''}` : (isHolidayDay ? 'Festivo' : (dayInfo.isWeekend ? 'Fin de semana' : 'Día laborable'))}
@@ -339,10 +363,27 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
             </div>
           )}
           
+          {/* Navegación anual (solo en vista anual) */}
           {viewMode === 'annual' && (
-            <span className="text-sm font-semibold">
-              Año {currentMonth.getFullYear()}
-            </span>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onMonthChange(new Date(currentMonth.getFullYear() - 1, 0, 1))}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <span className="text-sm font-semibold min-w-[120px] text-center">
+                Año {currentMonth.getFullYear()}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onMonthChange(new Date(currentMonth.getFullYear() + 1, 0, 1))}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
           )}
         </div>
       </div>
@@ -374,26 +415,24 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
                   </tbody>
                 </table>
                 
-                {/* Leyenda de festivos del mes */}
-                {viewMode === 'monthly' && (
-                  <div className="px-4 py-3 bg-gray-50 border-t border-gray-300">
-                    <h4 className="text-xs font-semibold text-gray-700 uppercase mb-2">Festivos del mes</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {getMonthHolidays(month.date).length > 0 ? (
-                        getMonthHolidays(month.date).map((holiday) => {
-                          const day = new Date(holiday.date).getDate()
-                          return (
-                            <Badge key={holiday.id} variant="outline" className="bg-red-50 text-red-700 border-red-300">
-                              Día {day}: {holiday.name} ({holiday.type === 'national' ? 'Nacional' : holiday.type === 'regional' ? 'Regional' : 'Local'})
-                            </Badge>
-                          )
-                        })
-                      ) : (
-                        <span className="text-xs text-gray-500">No hay festivos este mes</span>
-                      )}
-                    </div>
+                {/* Leyenda de festivos del mes (en ambas vistas) */}
+                <div className="px-4 py-3 bg-gray-50 border-t border-gray-300">
+                  <h4 className="text-xs font-semibold text-gray-700 uppercase mb-2">Festivos del mes</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {getMonthHolidays(month.date).length > 0 ? (
+                      getMonthHolidays(month.date).map((holiday) => {
+                        const day = new Date(holiday.date).getDate()
+                        return (
+                          <Badge key={holiday.id} variant="outline" className="bg-red-50 text-red-700 border-red-300">
+                            Día {day}: {holiday.name} ({holiday.type === 'national' ? 'Nacional' : holiday.type === 'regional' ? 'Regional' : 'Local'})
+                          </Badge>
+                        )
+                      })
+                    ) : (
+                      <span className="text-xs text-gray-500">No hay festivos este mes</span>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
             ))}
           </div>

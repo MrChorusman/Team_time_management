@@ -185,36 +185,6 @@ const CalendarDemoPage = () => {
           </div>
         </div>
 
-        {/* Info Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
-            <h3 className="font-semibold text-gray-900 mb-2">✅ Implementado</h3>
-            <ul className="text-sm text-gray-600 space-y-1">
-              <li>• Vista tabla tipo Excel</li>
-              <li>• Empleados en filas</li>
-              <li>• Días (1-31) en columnas</li>
-              <li>• Códigos: V, A, HLD, G, F, C</li>
-            </ul>
-          </div>
-          <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
-            <h3 className="font-semibold text-gray-900 mb-2">🎨 Características</h3>
-            <ul className="text-sm text-gray-600 space-y-1">
-              <li>• Colores por tipo</li>
-              <li>• Resumen Vac y Aus</li>
-              <li>• Leyenda de festivos</li>
-              <li>• Toggle mensual/anual</li>
-            </ul>
-          </div>
-          <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
-            <h3 className="font-semibold text-gray-900 mb-2">📱 UX</h3>
-            <ul className="text-sm text-gray-600 space-y-1">
-              <li>• Columnas sticky</li>
-              <li>• Scroll horizontal</li>
-              <li>• Tooltips informativos</li>
-              <li>• Responsive design</li>
-            </ul>
-          </div>
-        </div>
 
         {/* Calendario */}
         <CalendarTableView
