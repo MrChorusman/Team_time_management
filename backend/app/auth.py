@@ -179,6 +179,8 @@ def get_current_user():
         if current_user.is_authenticated:
             # Cargar el usuario completo desde la base de datos para evitar problemas con lazy loading
             from models.employee import Employee
+            from models.team import Team
+            
             user = User.query.filter_by(id=current_user.id).first()
             
             if not user:
@@ -188,8 +190,8 @@ def get_current_user():
                 }), 404
             
             employee_data = None
-            # Cargar explícitamente el employee desde la BD
-            employee = Employee.query.filter_by(user_id=user.id).first()
+            # Cargar explícitamente el employee con su team desde la BD
+            employee = Employee.query.options(db.joinedload(Employee.team)).filter_by(user_id=user.id).first()
             if employee:
                 employee_data = employee.to_dict(include_summary=True)
             
