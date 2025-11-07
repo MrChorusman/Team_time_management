@@ -619,7 +619,7 @@ const EmployeeRegisterPage = () => {
                   className="flex-1"
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
-                  Volver al Dashboard
+                  Ir a Dashboard
                 </Button>
                 
                 <Button

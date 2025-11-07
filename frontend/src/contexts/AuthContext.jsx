@@ -215,7 +215,8 @@ export const AuthProvider = ({ children }) => {
 
   // Funciones de utilidad para verificar roles
   const hasRole = (roleName) => {
-    return user?.roles?.some(role => role.name === roleName) || false
+    // Los roles vienen como array de strings ['admin', 'manager'], no objetos
+    return user?.roles?.includes(roleName) || false
   }
 
   const isAdmin = () => hasRole('admin')
