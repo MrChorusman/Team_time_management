@@ -1,0 +1,58 @@
+═══════════════════════════════════════════════════════════════
+    TEAM TIME MANAGEMENT - CREDENCIALES DE ACCESO INICIAL
+═══════════════════════════════════════════════════════════════
+
+🌐 URL PRODUCCIÓN
+   https://team-time-management.vercel.app
+
+═══════════════════════════════════════════════════════════════
+
+👤 USUARIO ADMINISTRADOR INICIAL
+
+   📧 Email:      admin@teamtime.com
+   🔐 Contraseña: Admin2025!
+
+═══════════════════════════════════════════════════════════════
+
+⚠️  ACCIÓN REQUERIDA AL PRIMER ACCESO:
+
+   1. Iniciar sesión con las credenciales arriba
+   2. Ir a "Mi Perfil" (menú lateral izquierdo)
+   3. Cambiar contraseña inmediatamente
+   4. Guardar nueva contraseña de forma segura
+
+═══════════════════════════════════════════════════════════════
+
+✅ PERMISOS DEL ADMINISTRADOR:
+
+   - Gestionar todos los usuarios del sistema
+   - Crear y editar equipos/departamentos
+   - Aprobar/rechazar nuevos empleados
+   - Ver todos los calendarios y reportes
+   - Configurar parámetros del sistema
+   - Acceso completo a todas las funcionalidades
+
+═══════════════════════════════════════════════════════════════
+
+📋 PRÓXIMOS PASOS:
+
+   1. Cambiar contraseña ⚠️
+   2. Crear equipos de su organización
+   3. Invitar empleados a registrarse
+   4. Aprobar registros de empleados
+   5. Asignar managers a equipos
+   6. Empezar a usar el calendario
+
+═══════════════════════════════════════════════════════════════
+
+📖 DOCUMENTACIÓN COMPLETA:
+   
+   Ver: 01_DOCUMENTO_ENTREGA_CLIENTE.md
+
+═══════════════════════════════════════════════════════════════
+
+Fecha de entrega: 07/11/2025
+Versión: 1.0.0
+Estado: ✅ PRODUCCIÓN - LISTA PARA USO
+
+═══════════════════════════════════════════════════════════════
