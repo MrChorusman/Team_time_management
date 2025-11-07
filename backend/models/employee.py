@@ -238,12 +238,25 @@ class Employee(db.Model):
     
     def to_dict(self, include_summary=False, year=None):
         """Convierte el empleado a diccionario para JSON"""
+        # Obtener team_name de forma segura sin lazy loading
+        team_name = None
+        try:
+            # Solo acceder a team si ya está cargado en la sesión
+            from sqlalchemy import inspect
+            if inspect(self).attrs.team.loaded_value is not None:
+                team_name = self.team.name
+        except:
+            # Si falla, obtener directamente desde la BD
+            from .team import Team
+            team = Team.query.filter_by(id=self.team_id).first()
+            team_name = team.name if team else None
+        
         data = {
             'id': self.id,
             'user_id': self.user_id,
             'full_name': self.full_name,
             'team_id': self.team_id,
-            'team_name': self.team.name if self.team else None,
+            'team_name': team_name,
             'hours_monday_thursday': self.hours_monday_thursday,
             'hours_friday': self.hours_friday,
             'hours_summer': self.hours_summer,
