@@ -143,6 +143,8 @@ def create_activity():
         activity_date = datetime.strptime(data['date'], '%Y-%m-%d').date()
         activity_type = data['activity_type']
         hours = data.get('hours')
+        start_time = data.get('start_time')  # Para guardias
+        end_time = data.get('end_time')      # Para guardias
         description = data.get('description', '')
         
         # Verificar que el empleado existe
@@ -174,6 +176,8 @@ def create_activity():
             activity_date=activity_date,
             activity_type=activity_type,
             hours=hours,
+            start_time=start_time,
+            end_time=end_time,
             description=description,
             created_by_user_id=current_user.id
         )

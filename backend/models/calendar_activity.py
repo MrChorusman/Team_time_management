@@ -15,6 +15,10 @@ class CalendarActivity(db.Model):
     activity_type = db.Column(db.String(10), nullable=False)  # V, A, HLD, G, F, C
     hours = db.Column(db.Float, nullable=True)  # Para HLD, G, F (actividades con horas específicas)
     
+    # Horarios para guardias (solo para activity_type = 'G')
+    start_time = db.Column(db.Time, nullable=True)  # Horario de inicio (ej: 18:00)
+    end_time = db.Column(db.Time, nullable=True)    # Horario de fin (ej: 22:00)
+    
     # Información adicional
     description = db.Column(db.Text)
     notes = db.Column(db.Text)
@@ -207,6 +211,8 @@ class CalendarActivity(db.Model):
             'activity_type': self.activity_type,
             'activity_name': activity_info.get('name', ''),
             'hours': self.hours,
+            'start_time': self.start_time.isoformat() if self.start_time else None,
+            'end_time': self.end_time.isoformat() if self.end_time else None,
             'description': self.description,
             'notes': self.notes,
             'display_text': self.get_display_text(),

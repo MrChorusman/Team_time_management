@@ -58,6 +58,86 @@ const CalendarPage = () => {
     }
   }
 
+  // Crear actividad (actualización optimista)
+  const handleCreateActivity = async (activityData) => {
+    // Actualización optimista: actualizar UI inmediatamente
+    const tempId = `temp-${Date.now()}`
+    const newActivity = {
+      id: tempId,
+      employee_id: activityData.employee_id,
+      type: activityData.activity_type,
+      start_date: activityData.date,
+      end_date: activityData.date,
+      hours: activityData.hours,
+      start_time: activityData.start_time,
+      end_time: activityData.end_time,
+      notes: activityData.description,
+      status: 'approved'
+    }
+
+    // Actualizar estado inmediatamente
+    setCalendarData(prev => ({
+      ...prev,
+      activities: [...(prev.activities || []), newActivity]
+    }))
+
+    try {
+      // TODO: Enviar al backend cuando esté conectado
+      // const response = await api.post('/calendar/activities', activityData)
+      
+      // Simular respuesta del backend
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      console.log('✅ Actividad creada:', activityData)
+      
+      // En producción: reemplazar actividad temporal con la real del backend
+      // setCalendarData(prev => ({
+      //   ...prev,
+      //   activities: prev.activities.map(a => 
+      //     a.id === tempId ? { ...newActivity, id: response.data.id } : a
+      //   )
+      // }))
+    } catch (error) {
+      // Si falla, revertir el cambio optimista
+      setCalendarData(prev => ({
+        ...prev,
+        activities: prev.activities.filter(a => a.id !== tempId)
+      }))
+      throw error
+    }
+  }
+
+  // Eliminar actividad (actualización optimista)
+  const handleDeleteActivity = async (activityId) => {
+    // Guardar actividad para poder revertir si falla
+    const activityToDelete = calendarData.activities.find(a => a.id === activityId)
+    
+    // Actualización optimista: remover de UI inmediatamente
+    setCalendarData(prev => ({
+      ...prev,
+      activities: prev.activities.filter(a => a.id !== activityId)
+    }))
+
+    try {
+      // TODO: Enviar al backend cuando esté conectado
+      // await api.delete(`/calendar/activities/${activityId}`)
+      
+      // Simular respuesta del backend
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      console.log('🗑️ Actividad eliminada:', activityId)
+    } catch (error) {
+      // Si falla, restaurar la actividad
+      if (activityToDelete) {
+        setCalendarData(prev => ({
+          ...prev,
+          activities: [...prev.activities, activityToDelete]
+        }))
+      }
+      throw error
+    }
+  }
+
   const generateMockCalendarData = () => {
     // Generar fechas del mes actual
     const year = currentMonth.getFullYear()
@@ -416,6 +496,8 @@ const CalendarPage = () => {
           holidays={calendarData?.holidays || []}
           currentMonth={currentMonth}
           onMonthChange={setCurrentMonth}
+          onActivityCreate={handleCreateActivity}
+          onActivityDelete={handleDeleteActivity}
         />
       )}
 

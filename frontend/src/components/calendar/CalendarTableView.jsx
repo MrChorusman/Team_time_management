@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { ChevronLeft, ChevronRight, CalendarDays, List } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { useToast } from '@/components/ui/use-toast'
+import ContextMenu from './ContextMenu'
+import ActivityModal from './ActivityModal'
 
 /**
  * CalendarTableView - Calendario tipo tabla/spreadsheet
@@ -12,9 +15,13 @@ import { Badge } from '@/components/ui/badge'
  * - Columnas: Equipo | Empleado | Vac | Aus | 1 | 2 | 3 | ... | 31
  * - Vista mensual o anual
  */
-const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMonthChange }) => {
+const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMonthChange, onActivityCreate, onActivityDelete }) => {
   const [viewMode, setViewMode] = useState('monthly') // 'monthly' o 'annual'
   const [hoveredDay, setHoveredDay] = useState(null)
+  const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, employeeId: null, date: null, activity: null })
+  const [activityModal, setActivityModal] = useState({ visible: false, type: null, date: null, employeeId: null, employeeName: null })
+  const longPressTimer = useRef(null)
+  const { toast } = useToast()
 
   // Obtener días del mes
   const getDaysInMonth = (date) => {
@@ -56,6 +63,145 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
 
   const days = getDaysInMonth(currentMonth)
   const months = viewMode === 'annual' ? getMonthsInYear(currentMonth) : [{ date: currentMonth, name: currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }), days }]
+
+  // Manejo de menú contextual (click derecho)
+  const handleContextMenu = (e, employeeId, employeeName, dateString, dayInfo) => {
+    e.preventDefault()
+
+    // Validar que sea día laborable
+    if (dayInfo.isWeekend) {
+      toast({
+        title: "⚠️ Día no laborable",
+        description: "No puedes marcar actividades en fines de semana",
+        variant: "destructive"
+      })
+      return
+    }
+
+    const employee = employees.find(emp => emp.id === employeeId)
+    if (isHoliday(dateString, employee?.location)) {
+      toast({
+        title: "⚠️ Día festivo",
+        description: "No puedes marcar actividades en días festivos",
+        variant: "destructive"
+      })
+      return
+    }
+
+    // Buscar si ya hay actividad en este día
+    const existingActivity = getActivityForDay(employeeId, dateString)
+
+    setContextMenu({
+      visible: true,
+      x: e.clientX,
+      y: e.clientY,
+      employeeId,
+      employeeName,
+      date: dateString,
+      activity: existingActivity
+    })
+  }
+
+  // Manejo de long press para móvil
+  const handleTouchStart = (e, employeeId, employeeName, dateString, dayInfo) => {
+    longPressTimer.current = setTimeout(() => {
+      // Simular click derecho después de 500ms
+      const touch = e.touches[0]
+      const fakeEvent = {
+        preventDefault: () => {},
+        clientX: touch.clientX,
+        clientY: touch.clientY
+      }
+      handleContextMenu(fakeEvent, employeeId, employeeName, dateString, dayInfo)
+      
+      // Feedback háptico si está disponible
+      if (navigator.vibrate) {
+        navigator.vibrate(50)
+      }
+    }, 500)
+  }
+
+  const handleTouchEnd = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current)
+    }
+  }
+
+  // Manejo de selección en menú contextual
+  const handleMenuSelect = (option) => {
+    if (option === 'delete') {
+      handleDeleteActivity()
+      return
+    }
+
+    // Abrir modal para crear actividad
+    setActivityModal({
+      visible: true,
+      type: option,
+      date: contextMenu.date,
+      employeeId: contextMenu.employeeId,
+      employeeName: contextMenu.employeeName
+    })
+  }
+
+  // Guardar actividad desde el modal
+  const handleSaveActivity = async (activityData) => {
+    try {
+      // Callback al componente padre para guardar en backend
+      if (onActivityCreate) {
+        await onActivityCreate({
+          employee_id: activityModal.employeeId,
+          date: activityModal.date,
+          activity_type: activityData.activityType,
+          hours: activityData.hours || null,
+          start_time: activityData.startTime || null,
+          end_time: activityData.endTime || null,
+          description: activityData.notes
+        })
+      }
+
+      toast({
+        title: "✅ Actividad guardada",
+        description: `${activityData.activityType.toUpperCase()} marcado correctamente`,
+      })
+
+      setActivityModal({ visible: false, type: null, date: null, employeeId: null, employeeName: null })
+    } catch (error) {
+      toast({
+        title: "❌ Error",
+        description: error.message || "No se pudo guardar la actividad",
+        variant: "destructive"
+      })
+    }
+  }
+
+  // Eliminar actividad
+  const handleDeleteActivity = async () => {
+    if (!contextMenu.activity) return
+
+    // Confirmación
+    if (!window.confirm(`¿Eliminar ${contextMenu.activity.type.toUpperCase()} del ${new Date(contextMenu.date).toLocaleDateString('es-ES')}?`)) {
+      return
+    }
+
+    try {
+      // Callback al componente padre para eliminar en backend
+      if (onActivityDelete) {
+        await onActivityDelete(contextMenu.activity.id)
+      }
+
+      toast({
+        title: "🗑️ Actividad eliminada",
+        description: "La actividad ha sido eliminada correctamente",
+      })
+    } catch (error) {
+      toast({
+        title: "❌ Error",
+        description: error.message || "No se pudo eliminar la actividad",
+        variant: "destructive"
+      })
+    }
+  }
 
   // Verificar si un día es festivo para un empleado específico según su ubicación
   const isHoliday = (dateString, employeeLocation) => {
@@ -247,10 +393,13 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
           return (
             <td
               key={dayInfo.day}
-              className={`px-2 py-3 border-r border-b border-gray-200 text-center text-xs font-medium ${bgColor} ${textColor} cursor-pointer hover:opacity-80 transition-opacity`}
+              className={`px-2 py-3 border-r border-b border-gray-200 text-center text-xs font-medium ${bgColor} ${textColor} cursor-pointer hover:opacity-80 transition-opacity select-none`}
               onMouseEnter={() => setHoveredDay(dayInfo.dateString)}
               onMouseLeave={() => setHoveredDay(null)}
-              title={activity ? `${activity.type}: ${activity.notes || ''}` : (isHolidayDay ? 'Festivo' : (dayInfo.isWeekend ? 'Fin de semana' : 'Día laborable'))}
+              onContextMenu={(e) => handleContextMenu(e, employee.id, employee.full_name, dayInfo.dateString, dayInfo)}
+              onTouchStart={(e) => handleTouchStart(e, employee.id, employee.full_name, dayInfo.dateString, dayInfo)}
+              onTouchEnd={handleTouchEnd}
+              title={activity ? `${activity.type}: ${activity.notes || ''}` : (isHolidayDay ? 'Festivo' : (dayInfo.isWeekend ? 'Fin de semana' : 'Click derecho para marcar'))}
             >
               {code}
             </td>
@@ -497,6 +646,26 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
           </div>
         </CardContent>
       </Card>
+
+      {/* Menú contextual */}
+      <ContextMenu
+        visible={contextMenu.visible}
+        x={contextMenu.x}
+        y={contextMenu.y}
+        hasActivity={!!contextMenu.activity}
+        onSelect={handleMenuSelect}
+        onClose={() => setContextMenu({ ...contextMenu, visible: false })}
+      />
+
+      {/* Modal de actividad */}
+      <ActivityModal
+        visible={activityModal.visible}
+        activityType={activityModal.type}
+        date={activityModal.date}
+        employeeName={activityModal.employeeName}
+        onSave={handleSaveActivity}
+        onCancel={() => setActivityModal({ visible: false, type: null, date: null, employeeId: null, employeeName: null })}
+      />
     </div>
   )
 }
