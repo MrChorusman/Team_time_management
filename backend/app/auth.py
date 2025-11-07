@@ -177,10 +177,9 @@ def get_current_user():
     """
     try:
         if current_user.is_authenticated:
-            # Cargar el usuario completo desde la base de datos para evitar problemas con lazy loading
+            # Cargar el usuario completo desde la base de datos
             from models.employee import Employee
             from models.team import Team
-            from models.base import db  # Importar db desde models.base
 
             user = User.query.filter_by(id=current_user.id).first()
 
@@ -191,10 +190,34 @@ def get_current_user():
                 }), 404
 
             employee_data = None
-            # Cargar explícitamente el employee con su team desde la BD
-            employee = Employee.query.options(db.joinedload(Employee.team)).filter_by(user_id=user.id).first()
+            # Cargar employee sin incluir summary para evitar problemas de lazy loading
+            employee = Employee.query.filter_by(user_id=user.id).first()
             if employee:
-                employee_data = employee.to_dict(include_summary=True)
+                # Cargar team_name directamente con un query separado
+                team = Team.query.filter_by(id=employee.team_id).first() if employee.team_id else None
+                
+                # Construir employee_data manualmente sin llamar a to_dict con include_summary
+                employee_data = {
+                    'id': employee.id,
+                    'user_id': employee.user_id,
+                    'full_name': employee.full_name,
+                    'team_id': employee.team_id,
+                    'team_name': team.name if team else None,
+                    'hours_monday_thursday': employee.hours_monday_thursday,
+                    'hours_friday': employee.hours_friday,
+                    'hours_summer': employee.hours_summer,
+                    'has_summer_schedule': employee.has_summer_schedule,
+                    'summer_months': employee.summer_months_list,
+                    'annual_vacation_days': employee.annual_vacation_days,
+                    'annual_hld_hours': employee.annual_hld_hours,
+                    'country': employee.country,
+                    'region': employee.region,
+                    'city': employee.city,
+                    'active': employee.active,
+                    'approved': employee.approved,
+                    'created_at': employee.created_at.isoformat() if employee.created_at else None,
+                    'approved_at': employee.approved_at.isoformat() if employee.approved_at else None
+                }
 
             user_dict = user.to_dict()
 
