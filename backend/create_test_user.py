@@ -1,76 +1,77 @@
 #!/usr/bin/env python3
-"""
-Script para crear un usuario de prueba
-"""
+"""Script para crear usuario de prueba"""
+from flask_security.utils import hash_password
+from models import db, User, Role
+from models.employee import Employee
+from models.team import Team
+from main import create_app
+from datetime import datetime
 
-import os
-import sys
-from dotenv import load_dotenv
-
-# Cargar variables de entorno
-load_dotenv()
-
-# Agregar el directorio actual al path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
-try:
-    # Importar directamente los modelos
-    from models.user import db, User, Role
-    from models.employee import Employee  # Importar para resolver relaciones
-    from flask_security.utils import hash_password
-    from datetime import datetime
-    
-    # Configurar la base de datos directamente
-    import config as config_module
-    Config = config_module.Config
-    from flask import Flask
-    
-    app = Flask(__name__)
-    app.config.from_object(Config)
-    db.init_app(app)
+def create_test_user():
+    """Crear usuario de prueba"""
+    app = create_app()
     
     with app.app_context():
-        print("🔍 Creando usuario de prueba...")
+        # Crear roles si no existen
+        admin_role = Role.query.filter_by(name='admin').first()
+        if not admin_role:
+            admin_role = Role(name='admin', description='Administrator')
+            db.session.add(admin_role)
         
-        # Crear el usuario de prueba
-        test_email = "test@test.com"
-        test_password = "123456"
+        manager_role = Role.query.filter_by(name='manager').first()
+        if not manager_role:
+            manager_role = Role(name='manager', description='Gestor de equipos')
+            db.session.add(manager_role)
         
-        # Verificar si ya existe
-        existing_user = User.query.filter_by(email=test_email).first()
-        if existing_user:
-            print(f"⚠️ Usuario {test_email} ya existe")
-            print(f"   ID: {existing_user.id}")
-            print(f"   Activo: {existing_user.active}")
-            print(f"   Confirmado: {existing_user.confirmed_at is not None}")
-        else:
-            # Crear nuevo usuario
-            user = User(
-                email=test_email,
-                password=hash_password(test_password),
-                first_name="Test",
-                last_name="User",
+        employee_role = Role.query.filter_by(name='employee').first()
+        if not employee_role:
+            employee_role = Role(name='employee', description='Empleado básico')
+            db.session.add(employee_role)
+        
+        db.session.commit()
+        
+        # Crear equipo si no existe
+        team = Team.query.filter_by(name='Frontend').first()
+        if not team:
+            team = Team(name='Frontend', description='Equipo de desarrollo frontend')
+            db.session.add(team)
+            db.session.commit()
+        
+        # Crear usuario admin si no existe
+        admin_user = User.query.filter_by(email='admin@test.com').first()
+        if not admin_user:
+            admin_user = User(
+                email='admin@test.com',
+                password=hash_password('admin123'),
                 active=True,
-                confirmed_at=datetime.now()
+                confirmed_at=datetime.utcnow()
             )
-            
-            # Asignar rol de viewer por defecto
-            viewer_role = Role.query.filter_by(name='viewer').first()
-            if viewer_role:
-                user.roles.append(viewer_role)
-            
-            db.session.add(user)
+            admin_user.roles.append(admin_role)
+            admin_user.roles.append(manager_role)
+            db.session.add(admin_user)
             db.session.commit()
             
-            print(f"✅ Usuario creado: {test_email}")
-            print(f"   Contraseña: {test_password}")
-            print(f"   ID: {user.id}")
+            # Crear empleado para el admin
+            employee = Employee(
+                user_id=admin_user.id,
+                full_name='Admin Test',
+                team_id=team.id,
+                country='ES',
+                region='Madrid',
+                approved=True,
+                active=True
+            )
+            db.session.add(employee)
+            db.session.commit()
+            
+            print(f"✅ Usuario admin creado: admin@test.com / admin123")
+        else:
+            print(f"ℹ️  Usuario admin ya existe: admin@test.com")
         
-        print("🎯 Ahora puedes probar el login con:")
-        print(f"   Email: {test_email}")
-        print(f"   Contraseña: {test_password}")
-        
-except Exception as e:
-    print(f"❌ Error: {e}")
-    import traceback
-    traceback.print_exc()
+        print(f"\n✅ Setup completado!")
+        print(f"   - Roles creados: admin, manager, employee")
+        print(f"   - Equipo: Frontend")
+        print(f"   - Usuario: admin@test.com / admin123")
+
+if __name__ == '__main__':
+    create_test_user()
