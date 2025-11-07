@@ -1,0 +1,53 @@
+=============================================================================
+VARIABLES DE ENTORNO PARA RENDER - RECUPERACIÓN DE SERVICIO
+=============================================================================
+
+⚠️ IMPORTANTE: Start Command debe estar VACÍO (usa Procfile automáticamente)
+
+Copia y pega estas variables en Render Dashboard > Environment:
+
+--- FLASK BÁSICO ---
+FLASK_ENV=production
+FLASK_DEBUG=false
+SECRET_KEY=team-time-mgmt-prod-secret-key-2025-super-secure-minimum-32-chars
+SECURITY_PASSWORD_SALT=team-time-salt-2025-secure
+
+--- SUPABASE DATABASE ---
+SUPABASE_HOST=aws-0-eu-west-3.pooler.supabase.com
+SUPABASE_PORT=6543
+SUPABASE_DB=postgres
+SUPABASE_USER=postgres.xmaxohyxgsthligskjvg
+SUPABASE_DB_PASSWORD=Littletosti29.
+
+--- CORS ---
+CORS_ORIGINS=https://team-time-management.vercel.app
+
+--- LOGGING ---
+LOG_LEVEL=INFO
+
+--- EMAIL (MOCK MODE - No funcional hasta configurar Gmail) ---
+MOCK_EMAIL_MODE=true
+MAIL_SERVER=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USE_TLS=true
+
+--- OAUTH (OPCIONAL - Dejar vacío por ahora) ---
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_REDIRECT_URI=https://team-time-management.onrender.com/api/auth/google/callback
+
+=============================================================================
+NOTAS IMPORTANTES:
+=============================================================================
+
+1. El puerto (PORT) se configura automáticamente por Render, NO lo añadas
+
+2. Después de añadir las variables, el servicio se redesplegarán automáticamente
+
+3. Una vez desplegado, la URL será:
+   https://team-time-management.onrender.com
+
+4. Verifica el deployment en la pestaña "Logs"
+
+=============================================================================
+
