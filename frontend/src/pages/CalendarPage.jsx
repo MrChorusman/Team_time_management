@@ -26,6 +26,7 @@ import { Textarea } from '../components/ui/textarea'
 import { Alert, AlertDescription } from '../components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
+import CalendarTableView from '../components/calendar/CalendarTableView'
 
 const CalendarPage = () => {
   const { user, employee, isManager, isEmployee } = useAuth()
@@ -33,7 +34,7 @@ const CalendarPage = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [calendarData, setCalendarData] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [selectedView, setSelectedView] = useState('month')
+  const [selectedView, setSelectedView] = useState('table') // 'table' o 'calendar'
   const [selectedActivity, setSelectedActivity] = useState(null)
   const [showNewActivityDialog, setShowNewActivityDialog] = useState(false)
   const [activityFilter, setActivityFilter] = useState('all')
@@ -58,56 +59,113 @@ const CalendarPage = () => {
   }
 
   const generateMockCalendarData = () => {
+    // Generar fechas del mes actual
+    const year = currentMonth.getFullYear()
+    const month = currentMonth.getMonth()
+    
+    const employees = [
+      {
+        id: 1,
+        full_name: 'Juan Pérez',
+        team_name: 'Frontend',
+        location: { country: 'ES', region: 'Madrid' }
+      },
+      {
+        id: 2,
+        full_name: 'María García',
+        team_name: 'Frontend',
+        location: { country: 'ES', region: 'Madrid' }
+      },
+      {
+        id: 3,
+        full_name: 'Carlos López',
+        team_name: 'Backend',
+        location: { country: 'ES', region: 'Cataluña' }
+      },
+      {
+        id: 4,
+        full_name: 'Ana Martín',
+        team_name: 'Backend',
+        location: { country: 'ES', region: 'Madrid' }
+      },
+      {
+        id: 5,
+        full_name: 'Luis Rodríguez',
+        team_name: 'Marketing',
+        location: { country: 'ES', region: 'Andalucía' }
+      }
+    ]
+    
     const activities = [
       {
         id: 1,
+        employee_id: 1,
         type: 'vacation',
         title: 'Vacaciones de Verano',
-        start_date: '2024-01-20',
-        end_date: '2024-01-25',
+        start_date: `${year}-${String(month + 1).padStart(2, '0')}-20`,
+        end_date: `${year}-${String(month + 1).padStart(2, '0')}-25`,
         status: 'approved',
         employee: { full_name: 'Juan Pérez', id: 1 },
         notes: 'Vacaciones familiares planificadas'
       },
       {
         id: 2,
+        employee_id: 2,
         type: 'hld',
-        title: 'Día de Libre Disposición',
-        start_date: '2024-01-18',
-        end_date: '2024-01-18',
-        status: 'pending',
+        title: 'Horas Libre Disposición',
+        start_date: `${year}-${String(month + 1).padStart(2, '0')}-18`,
+        end_date: `${year}-${String(month + 1).padStart(2, '0')}-18`,
+        status: 'approved',
+        hours: 2,
         employee: { full_name: 'María García', id: 2 },
         notes: 'Asuntos personales'
       },
       {
         id: 3,
+        employee_id: 3,
         type: 'sick_leave',
         title: 'Baja Médica',
-        start_date: '2024-01-15',
-        end_date: '2024-01-17',
+        start_date: `${year}-${String(month + 1).padStart(2, '0')}-15`,
+        end_date: `${year}-${String(month + 1).padStart(2, '0')}-17`,
         status: 'approved',
         employee: { full_name: 'Carlos López', id: 3 },
         notes: 'Gripe estacional'
       },
       {
         id: 4,
+        employee_id: 4,
         type: 'guard',
         title: 'Guardia de Fin de Semana',
-        start_date: '2024-01-27',
-        end_date: '2024-01-28',
+        start_date: `${year}-${String(month + 1).padStart(2, '0')}-27`,
+        end_date: `${year}-${String(month + 1).padStart(2, '0')}-28`,
         status: 'approved',
+        hours: 4,
         employee: { full_name: 'Ana Martín', id: 4 },
         notes: 'Guardia programada'
       },
       {
         id: 5,
+        employee_id: 5,
         type: 'training',
         title: 'Curso de Formación React',
-        start_date: '2024-01-22',
-        end_date: '2024-01-24',
+        start_date: `${year}-${String(month + 1).padStart(2, '0')}-22`,
+        end_date: `${year}-${String(month + 1).padStart(2, '0')}-24`,
         status: 'approved',
+        hours: 3,
         employee: { full_name: 'Luis Rodríguez', id: 5 },
         notes: 'Formación técnica avanzada'
+      },
+      {
+        id: 6,
+        employee_id: 1,
+        type: 'hld',
+        title: 'HLD Tarde',
+        start_date: `${year}-${String(month + 1).padStart(2, '0')}-10`,
+        end_date: `${year}-${String(month + 1).padStart(2, '0')}-10`,
+        status: 'approved',
+        hours: 2,
+        employee: { full_name: 'Juan Pérez', id: 1 },
+        notes: 'Salir antes'
       }
     ]
 
@@ -115,20 +173,21 @@ const CalendarPage = () => {
       {
         id: 1,
         name: 'Día de Reyes',
-        date: '2024-01-06',
+        date: `${year}-${String(month + 1).padStart(2, '0')}-06`,
         type: 'national',
         country: 'ES'
       },
       {
         id: 2,
-        name: 'Día de Andalucía',
-        date: '2024-02-28',
-        type: 'regional',
-        region: 'Andalucía'
+        name: 'Año Nuevo',
+        date: `${year}-${String(month + 1).padStart(2, '0')}-01`,
+        type: 'national',
+        country: 'ES'
       }
     ]
 
     return {
+      employees,
       activities: activities.filter(activity => {
         if (activityFilter === 'all') return true
         return activity.type === activityFilter
@@ -313,7 +372,7 @@ const CalendarPage = () => {
         </div>
       )}
 
-      {/* Filtros */}
+      {/* Filtros y Toggle de Vista */}
       <div className="flex flex-wrap items-center gap-4">
         <Select value={activityFilter} onValueChange={setActivityFilter}>
           <SelectTrigger className="w-48">
@@ -330,19 +389,38 @@ const CalendarPage = () => {
           </SelectContent>
         </Select>
         
-        <Select value={selectedView} onValueChange={setSelectedView}>
-          <SelectTrigger className="w-32">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="month">Mes</SelectItem>
-            <SelectItem value="week">Semana</SelectItem>
-            <SelectItem value="list">Lista</SelectItem>
-          </SelectContent>
-        </Select>
+        {/* Toggle entre vista Tabla y Calendario */}
+        <div className="flex bg-gray-100 rounded-lg p-1">
+          <Button
+            variant={selectedView === 'table' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setSelectedView('table')}
+          >
+            Vista Tabla
+          </Button>
+          <Button
+            variant={selectedView === 'calendar' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setSelectedView('calendar')}
+          >
+            Vista Calendario
+          </Button>
+        </div>
       </div>
 
-      {/* Contenido principal */}
+      {/* Contenido principal - Vista Tabla */}
+      {selectedView === 'table' && (
+        <CalendarTableView
+          employees={calendarData?.employees || []}
+          activities={calendarData?.activities || []}
+          holidays={calendarData?.holidays || []}
+          currentMonth={currentMonth}
+          onMonthChange={setCurrentMonth}
+        />
+      )}
+
+      {/* Contenido principal - Vista Calendario Tradicional */}
+      {selectedView === 'calendar' && (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Calendario */}
         <div className="lg:col-span-2">
@@ -496,9 +574,10 @@ const CalendarPage = () => {
           </Card>
         </div>
       </div>
+      )}
 
       {/* Dialog de detalle de actividad */}
-      {selectedActivity && (
+      {selectedActivity && selectedView === 'calendar' && (
         <Dialog open={!!selectedActivity} onOpenChange={() => setSelectedActivity(null)}>
           <DialogContent>
             <DialogHeader>

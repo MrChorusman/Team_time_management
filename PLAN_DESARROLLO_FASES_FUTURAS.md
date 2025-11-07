@@ -63,7 +63,7 @@ Este documento establece el plan estratégico de desarrollo para las siguientes 
 | Rama | Propósito | Estado |
 |------|-----------|--------|
 | `main` | Rama principal estable | ✅ Activa |
-| `fix-auth-blueprint-regression` | Corrección de regresión en autenticación + Sistema de ubicación geográfica dinámica | 🔄 En Desarrollo |
+| `Formatear-Calendario` | Reimplementación del calendario como tabla tipo spreadsheet según requisitos originales | 🔄 En Desarrollo |
 
 ### **📊 Registro de Desarrollos**
 
@@ -74,6 +74,7 @@ Este documento establece el plan estratégico de desarrollo para las siguientes 
 | `fix-auth-blueprint-regression` | Sistema de ubicación geográfica dinámico y festivos | 01/11/2025 | 01/11/2025 | ✅ Completado |
 | `fix-auth-blueprint-regression` | Sistema de notificaciones completo (6 columnas restauradas) | 03/11/2025 | 03/11/2025 | ✅ Completado |
 | `fix-auth-blueprint-regression` | Pruebas end-to-end flujo de notificaciones | 03/11/2025 | 03/11/2025 | ✅ Completado |
+| `Formatear-Calendario` | Reimplementación del calendario como tabla tipo spreadsheet según ANALISIS_COMPLETO_CONTROL_HORARIO: vista tabla con empleados en filas, días (1-31) en columnas, códigos de actividad (V, A, HLD, G, F, C), columnas resumen (Vac, Aus), leyenda de festivos, toggle vista mensual/anual | 07/11/2025 | - | 🔄 En Desarrollo |
 
 ---
 
