@@ -144,8 +144,17 @@ const DashboardPage = () => {
       }
     }
     
-    // Usuario sin employee o con employee no aprobado
+    // Usuario sin employee
     if (!employee) {
+      // Admins pueden acceder al dashboard completo sin employee
+      if (isAdmin()) {
+        return {
+          type: 'admin',
+          message: 'Panel de administración - Gestiona el sistema sin necesidad de perfil de empleado'
+        }
+      }
+      
+      // Otros usuarios sin employee son viewers
       return {
         type: 'viewer',
         message: 'Completa tu registro de empleado para acceder al dashboard completo'
