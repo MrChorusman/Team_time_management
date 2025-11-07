@@ -7,6 +7,7 @@ import CalendarTableView from '../components/calendar/CalendarTableView'
  */
 const CalendarDemoPage = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date())
+  const [activities, setActivities] = useState([])
 
   // Generar empleados mock
   const mockEmployees = [
@@ -47,6 +48,29 @@ const CalendarDemoPage = () => {
       location: { country: 'ES', region: 'Madrid' }
     }
   ]
+
+  // Crear actividad (demo con actualización en tiempo real)
+  const handleCreateActivity = async (activityData) => {
+    const newActivity = {
+      id: Date.now(),
+      employee_id: activityData.employee_id,
+      type: activityData.activity_type,
+      start_date: activityData.date,
+      end_date: activityData.date,
+      hours: activityData.hours,
+      start_time: activityData.start_time,
+      end_time: activityData.end_time,
+      notes: activityData.description,
+      status: 'approved'
+    }
+    
+    setActivities(prev => [...(prev || []), newActivity])
+  }
+
+  // Eliminar actividad (demo con actualización en tiempo real)
+  const handleDeleteActivity = async (activityId) => {
+    setActivities(prev => (prev || []).filter(a => a.id !== activityId))
+  }
 
   // Generar actividades mock para el mes actual
   const generateMockActivities = () => {
@@ -189,10 +213,12 @@ const CalendarDemoPage = () => {
         {/* Calendario */}
         <CalendarTableView
           employees={mockEmployees}
-          activities={generateMockActivities()}
+          activities={activities.length > 0 ? activities : generateMockActivities()}
           holidays={generateMockHolidays()}
           currentMonth={currentMonth}
           onMonthChange={setCurrentMonth}
+          onActivityCreate={handleCreateActivity}
+          onActivityDelete={handleDeleteActivity}
         />
       </div>
     </div>

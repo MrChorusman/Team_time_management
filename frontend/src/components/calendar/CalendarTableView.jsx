@@ -68,29 +68,14 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
   const handleContextMenu = (e, employeeId, employeeName, dateString, dayInfo) => {
     e.preventDefault()
 
-    // Validar que sea día laborable
-    if (dayInfo.isWeekend) {
-      toast({
-        title: "⚠️ Día no laborable",
-        description: "No puedes marcar actividades en fines de semana",
-        variant: "destructive"
-      })
-      return
-    }
-
     const employee = employees.find(emp => emp.id === employeeId)
-    if (isHoliday(dateString, employee?.location)) {
-      toast({
-        title: "⚠️ Día festivo",
-        description: "No puedes marcar actividades en días festivos",
-        variant: "destructive"
-      })
-      return
-    }
+    const isHolidayDay = isHoliday(dateString, employee?.location)
+    const isWeekendDay = dayInfo.isWeekend
 
     // Buscar si ya hay actividad en este día
     const existingActivity = getActivityForDay(employeeId, dateString)
 
+    // Abrir menú contextual con información del día
     setContextMenu({
       visible: true,
       x: e.clientX,
@@ -98,7 +83,9 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
       employeeId,
       employeeName,
       date: dateString,
-      activity: existingActivity
+      activity: existingActivity,
+      isHoliday: isHolidayDay,
+      isWeekend: isWeekendDay
     })
   }
 
@@ -131,6 +118,19 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
   const handleMenuSelect = (option) => {
     if (option === 'delete') {
       handleDeleteActivity()
+      return
+    }
+
+    // Validar si el tipo de actividad está permitido en este día
+    const isGuard = option === 'guard'
+    
+    // Solo guardias se permiten en festivos/fines de semana
+    if ((contextMenu.isHoliday || contextMenu.isWeekend) && !isGuard) {
+      toast({
+        title: "⚠️ Día no laborable",
+        description: "Solo puedes marcar Guardias en festivos o fines de semana",
+        variant: "destructive"
+      })
       return
     }
 
