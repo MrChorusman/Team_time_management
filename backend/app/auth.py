@@ -177,11 +177,23 @@ def get_current_user():
     """
     try:
         if current_user.is_authenticated:
-            employee_data = None
-            if hasattr(current_user, 'employee') and current_user.employee:
-                employee_data = current_user.employee.to_dict(include_summary=True)
+            # Cargar el usuario completo desde la base de datos para evitar problemas con lazy loading
+            from models.employee import Employee
+            user = User.query.filter_by(id=current_user.id).first()
             
-            user_dict = current_user.to_dict()
+            if not user:
+                return jsonify({
+                    'success': False,
+                    'message': 'Usuario no encontrado'
+                }), 404
+            
+            employee_data = None
+            # Cargar explícitamente el employee desde la BD
+            employee = Employee.query.filter_by(user_id=user.id).first()
+            if employee:
+                employee_data = employee.to_dict(include_summary=True)
+            
+            user_dict = user.to_dict()
             
             return jsonify({
                 'success': True,
