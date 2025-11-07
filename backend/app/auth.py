@@ -180,7 +180,7 @@ def get_current_user():
             # Cargar el usuario completo desde la base de datos para evitar problemas con lazy loading
             from models.employee import Employee
             from models.team import Team
-            from .base import db  # Importar db desde base para asegurar disponibilidad
+            from models.base import db  # Importar db desde models.base
 
             user = User.query.filter_by(id=current_user.id).first()
 
