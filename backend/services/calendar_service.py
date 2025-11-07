@@ -196,9 +196,12 @@ class CalendarService:
     @staticmethod
     def create_calendar_activity(employee_id: int, activity_date: date, 
                                activity_type: str, hours: float = None,
+                               start_time: str = None, end_time: str = None,
                                description: str = None, created_by_user_id: int = None) -> Tuple[bool, str, Optional[CalendarActivity]]:
         """Crea una nueva actividad en el calendario"""
         try:
+            from datetime import time as time_type
+            
             employee = Employee.query.get(employee_id)
             if not employee:
                 return False, "Empleado no encontrado", None
@@ -212,12 +215,30 @@ class CalendarService:
             if existing:
                 return False, "Ya existe una actividad para esta fecha", None
             
+            # Convertir start_time y end_time a objetos time si son strings
+            start_time_obj = None
+            end_time_obj = None
+            if start_time:
+                if isinstance(start_time, str):
+                    hour, minute = start_time.split(':')
+                    start_time_obj = time_type(int(hour), int(minute))
+                else:
+                    start_time_obj = start_time
+            if end_time:
+                if isinstance(end_time, str):
+                    hour, minute = end_time.split(':')
+                    end_time_obj = time_type(int(hour), int(minute))
+                else:
+                    end_time_obj = end_time
+            
             # Crear nueva actividad
             activity = CalendarActivity(
                 employee_id=employee_id,
                 date=activity_date,
                 activity_type=activity_type,
                 hours=hours,
+                start_time=start_time_obj,
+                end_time=end_time_obj,
                 description=description,
                 created_by=created_by_user_id
             )

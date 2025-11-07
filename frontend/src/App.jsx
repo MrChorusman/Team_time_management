@@ -22,6 +22,7 @@ import NotificationsPage from './pages/NotificationsPage'
 import ProfilePage from './pages/ProfilePage'
 import AdminPage from './pages/AdminPage'
 import EmployeeRegisterPage from './pages/employee/EmployeeRegisterPage'
+import CalendarDemoPage from './pages/CalendarDemoPage'
 
 import './App.css'
 
@@ -105,6 +106,9 @@ function AppContent() {
         path="/forgot-password" 
         element={user ? <Navigate to="/dashboard" replace /> : <ForgotPasswordPage />} 
       />
+      
+      {/* Ruta de demostración del calendario (sin autenticación) */}
+      <Route path="/calendar-demo" element={<CalendarDemoPage />} />
       
       {/* Rutas protegidas */}
       <Route path="/" element={
