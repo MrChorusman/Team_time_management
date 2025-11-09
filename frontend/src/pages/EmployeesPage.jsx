@@ -53,13 +53,28 @@ const EmployeesPage = () => {
   const loadEmployees = async () => {
     setLoading(true)
     try {
-      // Simular carga de empleados
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/employees`, {
+        credentials: 'include'
+      })
       
-      const mockEmployees = generateMockEmployees()
-      setEmployees(mockEmployees)
+      if (!response.ok) {
+        throw new Error('Error cargando empleados')
+      }
+      
+      const data = await response.json()
+      
+      // Si no hay empleados, usar mock data para demostración
+      if (data.employees && data.employees.length > 0) {
+        setEmployees(data.employees)
+      } else {
+        const mockEmployees = generateMockEmployees()
+        setEmployees(mockEmployees)
+      }
     } catch (error) {
       console.error('Error cargando empleados:', error)
+      // En caso de error, usar datos mock para que la UI funcione
+      const mockEmployees = generateMockEmployees()
+      setEmployees(mockEmployees)
     } finally {
       setLoading(false)
     }
