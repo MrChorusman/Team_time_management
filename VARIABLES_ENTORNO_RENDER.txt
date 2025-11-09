@@ -2,7 +2,13 @@
 VARIABLES DE ENTORNO PARA RENDER - RECUPERACIÓN DE SERVICIO
 =============================================================================
 
-⚠️ IMPORTANTE: Start Command debe estar VACÍO (usa Procfile automáticamente)
+✅ CONFIGURACIÓN VERIFICADA Y FUNCIONANDO (8 Nov 2025)
+
+⚠️ IMPORTANTE: 
+- Root Directory: backend
+- Build Command: pip install -r requirements.txt
+- Start Command: gunicorn main:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120
+  (NO dejar vacío - Render no lo permite con Root Directory configurado)
 
 Copia y pega estas variables en Render Dashboard > Environment:
 
