@@ -47,38 +47,28 @@ const TeamsPage = () => {
   const loadTeams = async () => {
     setLoading(true)
     try {
-      const response = await fetch('http://localhost:5001/api/auth-simple/teams')
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/teams`, {
+        credentials: 'include'
+      })
+      
+      if (!response.ok) {
+        throw new Error('Error cargando equipos')
+      }
+      
       const data = await response.json()
       
-      if (data.success) {
-        // Convertir equipos de la BD al formato esperado
-        const teamsFromDB = data.teams.map((teamName, index) => ({
-          id: index + 1,
-          name: teamName,
-          description: `Equipo de ${teamName}`,
-          manager: 'Por asignar',
-          members: 0,
-          performance: 85 + Math.random() * 15,
-          status: 'active'
-        }))
-        
-        setTeams(teamsFromDB)
-      } else {
-        // Fallback a datos mock si hay error
-        const mockTeams = generateMockTeams()
-        setTeams(mockTeams)
-      }
+      // Usar datos reales del backend (vacío si no hay equipos)
+      setTeams(data.teams || [])
     } catch (error) {
       console.error('Error cargando equipos:', error)
-      // Fallback a datos mock
-      const mockTeams = generateMockTeams()
-      setTeams(mockTeams)
+      // En caso de error, mostrar lista vacía
+      setTeams([])
     } finally {
       setLoading(false)
     }
   }
 
-  const generateMockTeams = () => {
+  const _generateMockTeams_REMOVED = () => {
     const managers = [
       { id: 1, name: 'Carlos Rodríguez', email: 'carlos@empresa.com' },
       { id: 2, name: 'Ana García', email: 'ana@empresa.com' },

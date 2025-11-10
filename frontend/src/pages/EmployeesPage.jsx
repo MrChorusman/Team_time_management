@@ -63,73 +63,17 @@ const EmployeesPage = () => {
       
       const data = await response.json()
       
-      // Si no hay empleados, usar mock data para demostración
-      if (data.employees && data.employees.length > 0) {
-        setEmployees(data.employees)
-      } else {
-        const mockEmployees = generateMockEmployees()
-        setEmployees(mockEmployees)
-      }
+      // Usar datos reales del backend (vacío si no hay empleados)
+      setEmployees(data.employees || [])
     } catch (error) {
       console.error('Error cargando empleados:', error)
-      // En caso de error, usar datos mock para que la UI funcione
-      const mockEmployees = generateMockEmployees()
-      setEmployees(mockEmployees)
+      // En caso de error, mostrar lista vacía
+      setEmployees([])
     } finally {
       setLoading(false)
     }
   }
 
-  const generateMockEmployees = () => {
-    const teams = ['Frontend Development', 'Backend Development', 'QA Testing', 'UI/UX Design', 'DevOps']
-    const countries = ['ES', 'MX', 'AR', 'CO']
-    const statuses = ['approved', 'pending', 'rejected']
-    
-    return Array.from({ length: 25 }, (_, i) => ({
-      id: i + 1,
-      user_id: i + 1,
-      full_name: [
-        'Juan Pérez García', 'María López Martín', 'Carlos Rodríguez Silva', 'Ana García López',
-        'Luis Martín Ruiz', 'Carmen Sánchez Torres', 'David González Moreno', 'Laura Fernández Castro',
-        'Miguel Jiménez Ramos', 'Isabel Morales Vega', 'Antonio Herrera Díaz', 'Cristina Vargas Ortiz',
-        'Francisco Romero Gil', 'Pilar Navarro Serrano', 'José Guerrero Peña', 'Rocío Medina Campos',
-        'Manuel Cortés Aguilar', 'Beatriz Iglesias Rubio', 'Alejandro Garrido Molina', 'Natalia Cruz Herrero',
-        'Roberto Cabrera Prieto', 'Silvia Mendoza Flores', 'Andrés Vázquez Reyes', 'Mónica Delgado Santos',
-        'Fernando Castillo Morales'
-      ][i],
-      email: `empleado${i + 1}@empresa.com`,
-      country: countries[Math.floor(Math.random() * countries.length)],
-      region: 'Madrid',
-      city: 'Madrid',
-      team: {
-        id: Math.floor(Math.random() * teams.length) + 1,
-        name: teams[Math.floor(Math.random() * teams.length)]
-      },
-      hours_monday_thursday: 8.0,
-      hours_friday: 6.0,
-      start_date: new Date(2023, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1).toISOString().split('T')[0],
-      approved: statuses[Math.floor(Math.random() * statuses.length)],
-      created_at: new Date(2023, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1).toISOString(),
-      last_activity: new Date(2024, 0, Math.floor(Math.random() * 15) + 1).toISOString(),
-      // Estadísticas simuladas
-      monthly_stats: {
-        theoretical_hours: 160,
-        actual_hours: 145 + Math.floor(Math.random() * 30),
-        efficiency: 85 + Math.floor(Math.random() * 15),
-        vacation_days: Math.floor(Math.random() * 5),
-        hld_hours: Math.floor(Math.random() * 16)
-      },
-      annual_stats: {
-        total_theoretical_hours: 1920,
-        total_actual_hours: 1650 + Math.floor(Math.random() * 400),
-        total_efficiency: 80 + Math.floor(Math.random() * 20),
-        total_vacation_days: 15 + Math.floor(Math.random() * 10),
-        remaining_vacation_days: Math.floor(Math.random() * 15),
-        total_hld_hours: 40 + Math.floor(Math.random() * 40),
-        remaining_hld_hours: Math.floor(Math.random() * 40)
-      }
-    }))
-  }
 
   const getStatusColor = (status) => {
     const colors = {

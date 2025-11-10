@@ -38,20 +38,82 @@ const DashboardPage = () => {
   const loadDashboardData = async () => {
     setLoading(true)
     try {
-      // Simular carga de datos del dashboard
-      await new Promise(resolve => setTimeout(resolve, 1500))
+      // Obtener datos reales del backend
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/dashboard/stats`, {
+        credentials: 'include'
+      })
       
-      // Datos simulados según el rol del usuario
-      const mockData = generateMockDashboardData()
-      setDashboardData(mockData)
+      if (response.ok) {
+        const data = await response.json()
+        setDashboardData(data)
+      } else {
+        // Si el endpoint no existe o hay error, mostrar dashboard vacío
+        setDashboardData(getEmptyDashboardData())
+      }
     } catch (error) {
       console.error('Error cargando datos del dashboard:', error)
+      // Mostrar dashboard vacío con mensaje apropiado
+      setDashboardData(getEmptyDashboardData())
     } finally {
       setLoading(false)
     }
   }
 
-  const generateMockDashboardData = () => {
+  const getEmptyDashboardData = () => {
+    // Datos vacíos reales según el rol del usuario
+    if (isAdmin()) {
+      return {
+        type: 'admin',
+        statistics: {
+          total_employees: 0,
+          total_teams: 0,
+          pending_approvals: 0,
+          global_efficiency: 0
+        },
+        recent_activity: [],
+        team_performance: [],
+        alerts: []
+      }
+    }
+    
+    if (isManager()) {
+      return {
+        type: 'manager',
+        statistics: {
+          team_members: 0,
+          pending_approvals: 0,
+          team_efficiency: 0,
+          projects: 0
+        },
+        team_stats: {
+          members: 0,
+          efficiency: 0
+        },
+        recent_activity: [],
+        alerts: []
+      }
+    }
+    
+    return {
+      type: 'employee',
+      statistics: {
+        hours_this_month: 0,
+        efficiency: 0,
+        vacation_days_left: 0,
+        hld_hours_left: 0
+      },
+      monthly_summary: {
+        theoretical_hours: 0,
+        actual_hours: 0,
+        efficiency: 0,
+        days_worked: 0
+      },
+      recent_activity: [],
+      alerts: []
+    }
+  }
+
+  const _generateMockDashboardData_REMOVED = () => {
     if (isAdmin()) {
       return {
         type: 'admin',
