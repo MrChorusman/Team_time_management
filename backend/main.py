@@ -118,6 +118,9 @@ def create_app(config_name=None):
     email_service = EmailService()
     email_service.init_app(app)
     
+    # Guardar email_service en app para acceso global
+    app.email_service = email_service
+    
     # Registrar blueprints
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(auth_simple_bp, url_prefix='/api/auth-simple')

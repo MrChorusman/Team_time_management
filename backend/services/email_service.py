@@ -320,3 +320,44 @@ Si tienes preguntas, contacta con tu administrador del sistema.
         """Limpia la lista de emails mock (solo disponible en modo mock)"""
         if self.use_mock_mode:
             self.mock_service.clear_sent_emails()
+    
+    def send_custom_email(self, to_email: str, subject: str, body: str, html_body: str = None) -> bool:
+        """
+        Envía un email genérico
+        
+        Args:
+            to_email: Email destino
+            subject: Asunto del email
+            body: Cuerpo del email en texto plano
+            html_body: Cuerpo del email en HTML (opcional)
+        
+        Returns:
+            bool: True si se envió correctamente
+        """
+        try:
+            # Usar modo mock si está configurado
+            if self.use_mock_mode:
+                return self.mock_service.send_custom_email(to_email, subject, body, html_body)
+            
+            # Modo real - enviar por SMTP
+            if not self.mail:
+                logger.error("Servicio de email no inicializado")
+                return False
+            
+            # Crear mensaje
+            msg = Message(
+                subject=subject,
+                recipients=[to_email],
+                body=body,
+                html=html_body
+            )
+            
+            # Enviar email
+            self.mail.send(msg)
+            logger.info(f"Email genérico enviado exitosamente a {to_email}")
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error enviando email genérico a {to_email}: {e}")
+            return False

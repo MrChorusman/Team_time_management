@@ -6,10 +6,10 @@ Maneja la lógica de negocio para invitaciones de empleados
 
 import os
 from datetime import datetime
+from flask import current_app
 from models.base import db
 from models.employee_invitation import EmployeeInvitation
 from models.user import User
-from services.email_service import send_email
 import logging
 
 logger = logging.getLogger(__name__)
@@ -77,16 +77,23 @@ class InvitationService:
             
             # Enviar email
             try:
-                email_sent = InvitationService._send_invitation_email(
-                    to_email=email,
-                    invitation_link=invitation_link,
-                    inviter_name=inviter_name,
-                    custom_message=custom_message,
-                    expires_hours=48
-                )
+                # Obtener el servicio de email desde current_app
+                email_service = getattr(current_app, 'email_service', None)
                 
-                if not email_sent:
-                    logger.warning(f"Email no pudo ser enviado a {email}, pero invitación creada")
+                if email_service:
+                    email_sent = InvitationService._send_invitation_email(
+                        email_service=email_service,
+                        to_email=email,
+                        invitation_link=invitation_link,
+                        inviter_name=inviter_name,
+                        custom_message=custom_message,
+                        expires_hours=48
+                    )
+                    
+                    if not email_sent:
+                        logger.warning(f"Email no pudo ser enviado a {email}, pero invitación creada")
+                else:
+                    logger.warning("EmailService no disponible, invitación creada sin enviar email")
                     
             except Exception as e:
                 logger.error(f"Error enviando email de invitación: {e}")
@@ -107,11 +114,12 @@ class InvitationService:
             }
     
     @staticmethod
-    def _send_invitation_email(to_email, invitation_link, inviter_name, custom_message, expires_hours):
+    def _send_invitation_email(email_service, to_email, invitation_link, inviter_name, custom_message, expires_hours):
         """
         Envía el email de invitación
         
         Args:
+            email_service: Instancia de EmailService
             to_email: Email destino
             invitation_link: Link de invitación
             inviter_name: Nombre de quien invita
@@ -307,7 +315,7 @@ class InvitationService:
         Team Time Management
         """
         
-        return send_email(
+        return email_service.send_custom_email(
             to_email=to_email,
             subject=subject,
             body=text_body,

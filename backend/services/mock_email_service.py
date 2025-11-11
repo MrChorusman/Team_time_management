@@ -207,6 +207,40 @@ Si tienes preguntas, contacta con tu administrador del sistema.
         self.sent_emails.clear()
         logger.info("Lista de emails mock limpiada")
     
+    def send_custom_email(self, to_email: str, subject: str, body: str, html_body: str = None) -> bool:
+        """
+        Simula el envío de un email genérico
+        
+        Args:
+            to_email: Email destino
+            subject: Asunto del email
+            body: Cuerpo en texto plano
+            html_body: Cuerpo en HTML (opcional)
+        
+        Returns:
+            bool: True si se "envió" correctamente
+        """
+        try:
+            email_data = {
+                'timestamp': datetime.now().isoformat(),
+                'to': to_email,
+                'subject': subject,
+                'text_body': body,
+                'html_body': html_body,
+                'email_type': 'custom'
+            }
+            
+            self.sent_emails.append(email_data)
+            
+            logger.info(f"[MOCK EMAIL] Email genérico enviado a {to_email} - {subject}")
+            logger.debug(f"[MOCK EMAIL CONTENT] {subject}\nTo: {to_email}\n\n{body}")
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error simulando email genérico a {to_email}: {e}")
+            return False
+    
     def get_email_stats(self) -> Dict:
         """Obtiene estadísticas de emails enviados"""
         if not self.sent_emails:
