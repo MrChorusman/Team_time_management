@@ -1,5 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from './card'
 import { Badge } from './badge'
+import { Tooltip } from './tooltip'
+import { HelpCircle } from 'lucide-react'
 import { cn } from '@/lib/utils.js'
 
 const StatsCard = ({ 
@@ -11,7 +13,8 @@ const StatsCard = ({
   trendValue, 
   className,
   variant = 'default',
-  loading = false 
+  loading = false,
+  tooltip = null
 }) => {
   const getVariantStyles = () => {
     // Diseño profesional y limpio - sin colores de fondo
@@ -48,9 +51,16 @@ const StatsCard = ({
   return (
     <Card className={cn(getVariantStyles(), className)}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-        <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-          {title}
-        </CardTitle>
+        <div className="flex items-center gap-2">
+          <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+            {title}
+          </CardTitle>
+          {tooltip && (
+            <Tooltip content={tooltip}>
+              <HelpCircle className="w-4 h-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-help" />
+            </Tooltip>
+          )}
+        </div>
         {Icon && (
           <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
             <Icon className="h-5 w-5 text-blue-600 dark:text-blue-400" />

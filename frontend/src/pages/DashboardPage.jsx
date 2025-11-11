@@ -333,6 +333,7 @@ const DashboardPage = () => {
             icon={TrendingUp}
             trend="up"
             trendValue="+2.3%"
+            tooltip="Se calcula como: (Horas trabajadas / Horas esperadas) × 100. Incluye horas regulares, guardias y descuenta ausencias."
           />
         </div>
 
