@@ -129,6 +129,10 @@ def create_app(config_name=None):
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
     app.register_blueprint(locations_bp, url_prefix='/api/locations')
     
+    # Dashboard stats endpoint
+    from app.dashboard import dashboard_bp
+    app.register_blueprint(dashboard_bp)
+    
     # Rutas principales
     @app.route('/')
     def index():
