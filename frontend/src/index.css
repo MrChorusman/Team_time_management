@@ -74,3 +74,41 @@
     color: hsl(var(--foreground));
   }
 }
+
+/* Scrollbar overlay que no ocupa espacio físico */
+@layer utilities {
+  .scrollbar-overlay {
+    /* Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+  }
+  
+  /* Webkit (Chrome, Safari, Edge) */
+  .scrollbar-overlay::-webkit-scrollbar {
+    width: 10px;
+  }
+  
+  .scrollbar-overlay::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .scrollbar-overlay::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.4);
+    border-radius: 5px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  
+  .scrollbar-overlay::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(156, 163, 175, 0.7);
+  }
+  
+  /* Dark mode */
+  .dark .scrollbar-overlay::-webkit-scrollbar-thumb {
+    background-color: rgba(75, 85, 99, 0.5);
+  }
+  
+  .dark .scrollbar-overlay::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(75, 85, 99, 0.8);
+  }
+}
