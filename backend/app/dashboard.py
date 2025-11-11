@@ -77,11 +77,18 @@ def _get_admin_stats():
         # Total de equipos
         total_teams = Team.query.count()
         
-        # Aprobaciones pendientes
-        pending_approvals = Employee.query.filter_by(approved='pending').count()
+        # Aprobaciones pendientes (approved es boolean: False = pendiente, True = aprobado)
+        pending_approvals = Employee.query.filter_by(
+            active=True,
+            approved=False
+        ).count()
         
         # Eficiencia global (promedio de empleados aprobados con horas registradas)
-        approved_employees = Employee.query.filter_by(approved='approved').all()
+        # approved es boolean: True = aprobado
+        approved_employees = Employee.query.filter_by(
+            active=True,
+            approved=True
+        ).all()
         
         if approved_employees:
             # Calcular eficiencia basada en horas teóricas vs reales
@@ -109,7 +116,8 @@ def _get_admin_stats():
         for team in teams:
             team_employees = Employee.query.filter_by(
                 team_id=team.id,
-                approved='approved'
+                active=True,
+                approved=True
             ).count()
             
             team_performance.append({
@@ -156,16 +164,18 @@ def _get_admin_stats():
 def _get_manager_stats(team_id):
     """Estadísticas para managers"""
     try:
-        # Miembros del equipo
+        # Miembros del equipo (approved es boolean: True = aprobado)
         team_members = Employee.query.filter_by(
             team_id=team_id,
-            approved='approved'
+            active=True,
+            approved=True
         ).count()
         
-        # Aprobaciones pendientes en el equipo
+        # Aprobaciones pendientes en el equipo (approved es boolean)
         pending_approvals = Employee.query.filter_by(
             team_id=team_id,
-            approved='pending'
+            active=True,
+            approved=False
         ).count()
         
         # Eficiencia del equipo
@@ -261,18 +271,18 @@ def _get_employee_stats(employee_id):
             'timestamp': notif.created_at.isoformat() if notif.created_at else None
         } for notif in recent_notifications]
         
-        # Alertas
+        # Alertas (approved es boolean: False = pendiente, True = aprobado)
         alerts = []
-        if employee.approved == 'pending':
+        if not employee.approved:
             alerts.append({
                 'type': 'info',
                 'message': 'Tu perfil está pendiente de aprobación',
                 'action': 'wait_approval'
             })
-        elif employee.approved == 'rejected':
+        if not employee.active:
             alerts.append({
-                'type': 'error',
-                'message': 'Tu perfil fue rechazado. Contacta con tu manager.',
+                'type': 'warning',
+                'message': 'Tu perfil está inactivo. Contacta con tu manager.',
                 'action': 'contact_manager'
             })
         
