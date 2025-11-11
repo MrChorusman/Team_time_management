@@ -69,7 +69,7 @@ function AppLayout({ children }) {
       <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
       <div 
         className="flex-1 flex flex-col overflow-hidden transition-all duration-300"
-        style={{ paddingLeft: sidebarOpen ? '256px' : '0' }}
+        style={{ marginLeft: sidebarOpen ? '256px' : '0' }}
       >
         <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 dark:bg-gray-900 px-6 py-8">
