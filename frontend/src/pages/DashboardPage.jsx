@@ -287,7 +287,7 @@ const DashboardPage = () => {
   // Dashboard para Administradores
   if (dashboardData.type === 'admin') {
     return (
-      <div className="w-full space-y-8">
+      <div className="w-full space-y-8 px-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
