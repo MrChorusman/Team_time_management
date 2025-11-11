@@ -73,6 +73,13 @@ def create_app(config_name=None):
          allow_headers=['Content-Type', 'Authorization'],
          methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
     
+    # Configuración de sesiones para cross-domain (Vercel → Render)
+    is_production = os.environ.get('FLASK_ENV') == 'production' or os.environ.get('RENDER')
+    app.config['SESSION_COOKIE_SECURE'] = is_production  # Solo HTTPS en producción
+    app.config['SESSION_COOKIE_HTTPONLY'] = True  # No accesible desde JavaScript
+    app.config['SESSION_COOKIE_SAMESITE'] = 'None' if is_production else 'Lax'  # Cross-domain en producción
+    app.config['SESSION_COOKIE_DOMAIN'] = None  # Permitir cross-domain
+    
     # Configurar Flask-Mail
     mail = Mail(app)
     
