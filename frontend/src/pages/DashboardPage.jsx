@@ -21,6 +21,7 @@ import { Button } from '../components/ui/button'
 import { Progress } from '../components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Alert, AlertDescription } from '../components/ui/alert'
+import { Tooltip } from '../components/ui/tooltip'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 
 const DashboardPage = () => {
@@ -286,18 +287,18 @@ const DashboardPage = () => {
   // Dashboard para Administradores
   if (dashboardData.type === 'admin') {
     return (
-      <div className="space-y-6">
+      <div className="space-y-8">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
               {getGreeting()}, {getUserDisplayName()}
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Panel de administración - Vista global del sistema
+            <p className="text-lg text-gray-700 dark:text-gray-300">
+              Vista general del sistema
             </p>
           </div>
-          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 px-4 py-2">
             Administrador
           </Badge>
         </div>
@@ -328,15 +329,47 @@ const DashboardPage = () => {
           <StatsCard
             title="Eficiencia Global"
             value={`${dashboardData.statistics.global_efficiency}%`}
-            subtitle="Promedio general"
+            subtitle="Promedio del mes actual"
             icon={TrendingUp}
             trend="up"
             trendValue="+2.3%"
           />
         </div>
 
+        {/* Quick Actions para sistema vacío */}
+        {dashboardData.statistics.total_employees === 0 && (
+          <Alert className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800">
+            <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <AlertDescription className="text-blue-900 dark:text-blue-100">
+              <p className="font-bold text-lg mb-2">¡Comienza configurando tu sistema!</p>
+              <p className="text-sm mb-4 text-blue-700 dark:text-blue-300">
+                Añade empleados y crea equipos para empezar a gestionar el tiempo de tu organización
+              </p>
+              <div className="flex gap-3">
+                <Button 
+                  size="sm" 
+                  onClick={() => navigate('/employees')}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                >
+                  <Users className="w-4 h-4 mr-2" />
+                  Añadir Primer Empleado
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => navigate('/teams')}
+                  className="border-blue-600 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30"
+                >
+                  <Target className="w-4 h-4 mr-2" />
+                  Crear Equipo
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Contenido principal */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Actividad reciente */}
           <Card>
             <CardHeader>
@@ -365,8 +398,14 @@ const DashboardPage = () => {
                     </div>
                   ))
                 ) : (
-                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                    <p className="text-sm">No hay actividad reciente</p>
+                  <div className="text-center py-12">
+                    <Activity className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                    <p className="text-base font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      Sin actividad reciente
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Las acciones del sistema aparecerán aquí
+                    </p>
                   </div>
                 )}
               </div>
@@ -404,8 +443,21 @@ const DashboardPage = () => {
                     </div>
                   ))
                 ) : (
-                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                    <p className="text-sm">No hay equipos creados</p>
+                  <div className="text-center py-12">
+                    <BarChart3 className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                    <p className="text-base font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      No hay equipos creados
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                      Crea tu primer equipo para comenzar a organizar empleados
+                    </p>
+                    <Button 
+                      size="sm" 
+                      onClick={() => navigate('/teams')}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      Crear Equipo
+                    </Button>
                   </div>
                 )}
               </div>

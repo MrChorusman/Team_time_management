@@ -1,53 +1,31 @@
-import * as React from "react"
-import * as TooltipPrimitive from "@radix-ui/react-tooltip"
+import { useState } from 'react'
+import { cn } from '@/lib/utils.js'
 
-import { cn } from "@/lib/utils.js"
+const Tooltip = ({ children, content, className }) => {
+  const [show, setShow] = useState(false)
 
-function TooltipProvider({
-  delayDuration = 0,
-  ...props
-}) {
-  return (<TooltipPrimitive.Provider data-slot="tooltip-provider" delayDuration={delayDuration} {...props} />);
-}
-
-function Tooltip({
-  ...props
-}) {
   return (
-    <TooltipProvider>
-      <TooltipPrimitive.Root data-slot="tooltip" {...props} />
-    </TooltipProvider>
-  );
-}
-
-function TooltipTrigger({
-  ...props
-}) {
-  return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />;
-}
-
-function TooltipContent({
-  className,
-  sideOffset = 0,
-  children,
-  ...props
-}) {
-  return (
-    <TooltipPrimitive.Portal>
-      <TooltipPrimitive.Content
-        data-slot="tooltip-content"
-        sideOffset={sideOffset}
-        className={cn(
-          "bg-primary text-primary-foreground animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 w-fit origin-(--radix-tooltip-content-transform-origin) rounded-md px-3 py-1.5 text-xs text-balance",
-          className
-        )}
-        {...props}>
+    <div className="relative inline-block">
+      <div
+        onMouseEnter={() => setShow(true)}
+        onMouseLeave={() => setShow(false)}
+      >
         {children}
-        <TooltipPrimitive.Arrow
-          className="bg-primary fill-primary z-50 size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-[2px]" />
-      </TooltipPrimitive.Content>
-    </TooltipPrimitive.Portal>
-  );
+      </div>
+      {show && (
+        <div className={cn(
+          "absolute z-50 px-3 py-2 text-sm font-medium text-white bg-gray-900 dark:bg-gray-700 rounded-lg shadow-lg",
+          "bottom-full left-1/2 transform -translate-x-1/2 mb-2",
+          "whitespace-nowrap",
+          "before:content-[''] before:absolute before:top-full before:left-1/2 before:transform before:-translate-x-1/2",
+          "before:border-4 before:border-transparent before:border-t-gray-900 dark:before:border-t-gray-700",
+          className
+        )}>
+          {content}
+        </div>
+      )}
+    </div>
+  )
 }
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }
+export { Tooltip }

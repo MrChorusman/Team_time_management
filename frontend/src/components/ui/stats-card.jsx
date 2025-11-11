@@ -14,18 +14,8 @@ const StatsCard = ({
   loading = false 
 }) => {
   const getVariantStyles = () => {
-    switch (variant) {
-      case 'success':
-        return 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20'
-      case 'warning':
-        return 'border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-900/20'
-      case 'danger':
-        return 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20'
-      case 'info':
-        return 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20'
-      default:
-        return ''
-    }
+    // Diseño profesional y limpio - sin colores de fondo
+    return 'hover:shadow-md transition-shadow duration-200'
   }
 
   const getTrendColor = () => {
@@ -57,28 +47,30 @@ const StatsCard = ({
 
   return (
     <Card className={cn(getVariantStyles(), className)}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+        <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">
           {title}
         </CardTitle>
         {Icon && (
-          <Icon className="h-4 w-4 text-muted-foreground" />
+          <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <Icon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+          </div>
         )}
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold text-foreground">
+        <div className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
           {value}
         </div>
-        <div className="flex items-center justify-between mt-2">
+        <div className="flex items-center justify-between">
           {subtitle && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
               {subtitle}
             </p>
           )}
           {trend && trendValue && (
             <Badge 
               variant="outline" 
-              className={cn('text-xs', getTrendColor())}
+              className={cn('text-xs font-semibold', getTrendColor())}
             >
               {getTrendIcon()} {trendValue}
             </Badge>

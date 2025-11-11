@@ -130,14 +130,14 @@ const Sidebar = ({ isOpen, onToggle }) => {
         {/* Información del usuario */}
         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
-              <User className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+              <User className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
                 {employee?.full_name || user?.email}
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+              <p className="text-xs text-gray-600 dark:text-gray-300 truncate font-medium">
                 {employee?.team?.name || 'Sin equipo asignado'}
               </p>
             </div>
@@ -169,13 +169,13 @@ const Sidebar = ({ isOpen, onToggle }) => {
                   key={item.path}
                   to={item.path}
                   className={cn(
-                    'flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200',
+                    'flex items-center px-4 py-3 text-sm font-semibold rounded-lg transition-all duration-200',
                     isActive(item.path)
-                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
-                      : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800 hover:shadow-sm'
                   )}
                 >
-                  <Icon className="w-5 h-5 mr-3" />
+                  <Icon className="w-6 h-6 mr-3" />
                   <span className="flex-1">{item.title}</span>
                   {item.badge && (
                     <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
