@@ -49,7 +49,7 @@ def list_teams():
                 pass
         
         # Reducir columnas para evitar tocar campos no existentes en despliegues desincronizados
-        query = query.options(load_only(Team.id, Team.name))
+        query = query.options(load_only(Team.id, Team.name, Team.description))
 
         # Paginación
         pagination = query.paginate(
@@ -66,6 +66,7 @@ def list_teams():
                     team_data = {
                         'id': team.id,
                         'name': team.name,
+                        'description': team.description,
                         'active': True  # Hardcoded porque no existe columna active en team
                     }
                 teams_data.append(team_data)
