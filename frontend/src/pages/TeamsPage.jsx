@@ -222,11 +222,11 @@ const TeamsPage = () => {
 
   const getTeamStats = () => {
     const totalTeams = teams.length
-    const totalEmployees = teams.reduce((sum, team) => sum + team.employee_count, 0)
+    const totalEmployees = teams.reduce((sum, team) => sum + (team.employee_count || 0), 0)
     const averageEfficiency = teams.length > 0 
-      ? (teams.reduce((sum, team) => sum + team.metrics.average_efficiency, 0) / teams.length).toFixed(1)
+      ? (teams.reduce((sum, team) => sum + (team.metrics?.average_efficiency || 0), 0) / teams.length).toFixed(1)
       : 'no hay datos'
-    const totalProjects = teams.reduce((sum, team) => sum + team.active_projects, 0)
+    const totalProjects = teams.reduce((sum, team) => sum + (team.active_projects || 0), 0)
     
     return { totalTeams, totalEmployees, averageEfficiency, totalProjects }
   }
