@@ -72,8 +72,10 @@ function AppLayout({ children }) {
         style={{ marginLeft: sidebarOpen ? '256px' : '0' }}
       >
         <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 dark:bg-gray-900 py-8 scrollbar-overlay">
-          {children}
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 dark:bg-gray-900 py-8 scrollbar-custom">
+          <div className="w-full px-6">
+            {children}
+          </div>
         </main>
       </div>
     </div>
