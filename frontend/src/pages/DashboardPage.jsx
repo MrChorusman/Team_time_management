@@ -10,7 +10,8 @@ import {
   BarChart3,
   PieChart,
   Activity,
-  Target
+  Target,
+  HelpCircle
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useNotifications } from '../contexts/NotificationContext'
@@ -239,11 +240,19 @@ const DashboardPage = () => {
   }
 
   const getUserDisplayName = () => {
+    // Prioridad 1: Nombre completo del empleado
     if (employee?.full_name) {
       return employee.full_name.split(' ')[0]
     }
+    // Prioridad 2: first_name del user
     if (user?.first_name) {
       return user.first_name
+    }
+    // Prioridad 3: Extraer nombre del email antes de @
+    if (user?.email) {
+      const emailName = user.email.split('@')[0]
+      // Capitalizar primera letra
+      return emailName.charAt(0).toUpperCase() + emailName.slice(1)
     }
     return 'Usuario'
   }
@@ -303,41 +312,7 @@ const DashboardPage = () => {
           </Badge>
         </div>
 
-        {/* Estadísticas principales */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatsCard
-            title="Total Empleados"
-            value={dashboardData.statistics.total_employees}
-            subtitle="Empleados activos"
-            icon={Users}
-            variant="info"
-          />
-          <StatsCard
-            title="Equipos Activos"
-            value={dashboardData.statistics.total_teams}
-            subtitle="Equipos registrados"
-            icon={Target}
-            variant="success"
-          />
-          <StatsCard
-            title="Aprobaciones Pendientes"
-            value={dashboardData.statistics.pending_approvals}
-            subtitle="Requieren atención"
-            icon={AlertCircle}
-            variant="warning"
-          />
-          <StatsCard
-            title="Eficiencia Global"
-            value={`${dashboardData.statistics.global_efficiency}%`}
-            subtitle="Promedio del mes actual"
-            icon={TrendingUp}
-            trend="up"
-            trendValue="+2.3%"
-            tooltip="Se calcula como: (Horas trabajadas / Horas esperadas) × 100. Incluye horas regulares, guardias y descuenta ausencias."
-          />
-        </div>
-
-        {/* Quick Actions para sistema vacío */}
+        {/* Quick Actions para sistema vacío - PRIMERO */}
         {dashboardData.statistics.total_employees === 0 && (
           <Alert className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800">
             <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400" />
@@ -369,7 +344,85 @@ const DashboardPage = () => {
           </Alert>
         )}
 
-        {/* Contenido principal */}
+        {/* Métricas principales con botones de consulta */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Total Empleados */}
+          <Card className="hover:shadow-md transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                Total Empleados
+              </CardTitle>
+              <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                {dashboardData.statistics.total_employees}
+              </div>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => navigate('/employees')}
+                className="w-full"
+              >
+                Consultar
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Equipos Activos */}
+          <Card className="hover:shadow-md transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                Equipos Activos
+              </CardTitle>
+              <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <Target className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                {dashboardData.statistics.total_teams}
+              </div>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => navigate('/teams')}
+                className="w-full"
+              >
+                Consultar
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Aprobaciones Pendientes */}
+          <Card className="hover:shadow-md transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                Aprobaciones Pendientes
+              </CardTitle>
+              <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                {dashboardData.statistics.pending_approvals}
+              </div>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => navigate('/employees')}
+                className="w-full"
+              >
+                Consultar
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Actividad Reciente y Eficiencia Global */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Actividad reciente */}
           <Card>
@@ -413,54 +466,31 @@ const DashboardPage = () => {
             </CardContent>
           </Card>
 
-          {/* Resumen de equipos */}
+          {/* Eficiencia Global */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <BarChart3 className="w-5 h-5 mr-2" />
-                Rendimiento por Equipos
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5" />
+                Eficiencia Global
+                <Tooltip content="Se calcula como: (Horas trabajadas / Horas esperadas) × 100. Incluye horas regulares, guardias y descuenta ausencias." className="left-auto right-0 translate-x-0">
+                  <HelpCircle className="w-4 h-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-help" />
+                </Tooltip>
               </CardTitle>
               <CardDescription>
-                Eficiencia de los equipos principales
+                Promedio del mes actual
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {dashboardData.team_performance && dashboardData.team_performance.length > 0 ? (
-                  dashboardData.team_performance.map((teamData, index) => (
-                    <div key={index} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">
-                          {teamData.team_name}
-                        </span>
-                        <span className="text-sm text-gray-500 dark:text-gray-400">
-                          {teamData.efficiency}%
-                        </span>
-                      </div>
-                      <Progress value={teamData.efficiency} className="h-2" />
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {teamData.members_count} empleados
-                      </p>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-12">
-                    <BarChart3 className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                    <p className="text-base font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                      No hay equipos creados
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                      Crea tu primer equipo para comenzar a organizar empleados
-                    </p>
-                    <Button 
-                      size="sm" 
-                      onClick={() => navigate('/teams')}
-                      className="bg-blue-600 hover:bg-blue-700"
-                    >
-                      Crear Equipo
-                    </Button>
-                  </div>
-                )}
+              <div className="text-center py-8">
+                <div className="text-5xl font-bold text-gray-900 dark:text-white mb-2">
+                  {dashboardData.statistics.global_efficiency}%
+                </div>
+                <Badge 
+                  variant="outline" 
+                  className="text-sm font-semibold text-green-600 dark:text-green-400"
+                >
+                  ↗ +2.3%
+                </Badge>
               </div>
             </CardContent>
           </Card>

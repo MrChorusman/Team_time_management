@@ -171,7 +171,7 @@ const EmployeesPage = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 px-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
@@ -196,39 +196,7 @@ const EmployeesPage = () => {
         </div>
       </div>
 
-      {/* Estadísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <StatsCard
-          title="Total Empleados"
-          value={stats.total}
-          subtitle="Registrados en el sistema"
-          icon={Users}
-          variant="info"
-        />
-        <StatsCard
-          title="Aprobados"
-          value={stats.approved}
-          subtitle="Empleados activos"
-          icon={CheckCircle}
-          variant="success"
-        />
-        <StatsCard
-          title="Pendientes"
-          value={stats.pending}
-          subtitle="Esperando aprobación"
-          icon={Clock}
-          variant="warning"
-        />
-        <StatsCard
-          title="Rechazados"
-          value={stats.rejected}
-          subtitle="Registros rechazados"
-          icon={XCircle}
-          variant="danger"
-        />
-      </div>
-
-      {/* Filtros y búsqueda */}
+      {/* Filtros y búsqueda - PRIMERO */}
       <Card>
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row gap-4">
@@ -619,10 +587,93 @@ const EmployeesPage = () => {
                   Rechazar
                 </Button>
               </div>
-            )}
-          </DialogContent>
+          )}
+        </DialogContent>
         </Dialog>
       )}
+
+      {/* Estadísticas como headers expandibles - AL FINAL */}
+      <div className="space-y-4 mt-8">
+        <div className="border rounded-lg">
+          <details className="group">
+            <summary className="cursor-pointer p-4 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Users className="w-5 h-5 text-blue-600" />
+                <div>
+                  <h3 className="font-semibold text-lg">Total Empleados</h3>
+                  <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
+                </div>
+              </div>
+              <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
+            </summary>
+            <div className="px-4 pb-4 pt-2 border-t">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Total de empleados registrados en el sistema
+              </p>
+            </div>
+          </details>
+        </div>
+
+        <div className="border rounded-lg">
+          <details className="group">
+            <summary className="cursor-pointer p-4 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <div>
+                  <h3 className="font-semibold text-lg">Aprobados</h3>
+                  <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.approved}</p>
+                </div>
+              </div>
+              <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
+            </summary>
+            <div className="px-4 pb-4 pt-2 border-t">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Empleados activos y aprobados para trabajar
+              </p>
+            </div>
+          </details>
+        </div>
+
+        <div className="border rounded-lg">
+          <details className="group">
+            <summary className="cursor-pointer p-4 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Clock className="w-5 h-5 text-yellow-600" />
+                <div>
+                  <h3 className="font-semibold text-lg">Pendientes</h3>
+                  <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.pending}</p>
+                </div>
+              </div>
+              <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
+            </summary>
+            <div className="px-4 pb-4 pt-2 border-t">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Empleados esperando aprobación de manager
+              </p>
+            </div>
+          </details>
+        </div>
+
+        <div className="border rounded-lg">
+          <details className="group">
+            <summary className="cursor-pointer p-4 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <XCircle className="w-5 h-5 text-red-600" />
+                <div>
+                  <h3 className="font-semibold text-lg">Rechazados</h3>
+                  <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.rejected}</p>
+                </div>
+              </div>
+              <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
+            </summary>
+            <div className="px-4 pb-4 pt-2 border-t">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Registros rechazados por manager o admin
+              </p>
+            </div>
+          </details>
+        </div>
+      </div>
     </div>
   )
 }

@@ -222,10 +222,12 @@ const TeamsPage = () => {
   const getTeamStats = () => {
     const totalTeams = teams.length
     const totalEmployees = teams.reduce((sum, team) => sum + team.employee_count, 0)
-    const averageEfficiency = teams.reduce((sum, team) => sum + team.metrics.average_efficiency, 0) / teams.length
+    const averageEfficiency = teams.length > 0 
+      ? (teams.reduce((sum, team) => sum + team.metrics.average_efficiency, 0) / teams.length).toFixed(1)
+      : 'no hay datos'
     const totalProjects = teams.reduce((sum, team) => sum + team.active_projects, 0)
     
-    return { totalTeams, totalEmployees, averageEfficiency: averageEfficiency.toFixed(1), totalProjects }
+    return { totalTeams, totalEmployees, averageEfficiency, totalProjects }
   }
 
   const stats = getTeamStats()
@@ -244,7 +246,7 @@ const TeamsPage = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 px-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
@@ -282,40 +284,7 @@ const TeamsPage = () => {
         </div>
       </div>
 
-      {/* Estadísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <StatsCard
-          title="Total Equipos"
-          value={stats.totalTeams}
-          subtitle="Equipos activos"
-          icon={Users}
-          variant="info"
-        />
-        <StatsCard
-          title="Total Empleados"
-          value={stats.totalEmployees}
-          subtitle="En todos los equipos"
-          icon={Target}
-          variant="success"
-        />
-        <StatsCard
-          title="Eficiencia Promedio"
-          value={`${stats.averageEfficiency}%`}
-          subtitle="Rendimiento global"
-          icon={TrendingUp}
-          trend="up"
-          trendValue="+2.1%"
-        />
-        <StatsCard
-          title="Proyectos Activos"
-          value={stats.totalProjects}
-          subtitle="En desarrollo"
-          icon={Award}
-          variant="warning"
-        />
-      </div>
-
-      {/* Búsqueda */}
+      {/* Búsqueda - PRIMERO */}
       <Card>
         <CardContent className="p-6">
           <div className="relative">
@@ -626,6 +595,91 @@ const TeamsPage = () => {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Estadísticas como headers expandibles - AL FINAL */}
+      <div className="space-y-4 mt-8">
+        <div className="border rounded-lg">
+          <details className="group">
+            <summary className="cursor-pointer p-4 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Users className="w-5 h-5 text-blue-600" />
+                <div>
+                  <h3 className="font-semibold text-lg">Total Equipos</h3>
+                  <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.totalTeams}</p>
+                </div>
+              </div>
+              <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
+            </summary>
+            <div className="px-4 pb-4 pt-2 border-t">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Total de equipos activos en el sistema
+              </p>
+            </div>
+          </details>
+        </div>
+
+        <div className="border rounded-lg">
+          <details className="group">
+            <summary className="cursor-pointer p-4 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Target className="w-5 h-5 text-green-600" />
+                <div>
+                  <h3 className="font-semibold text-lg">Total Empleados</h3>
+                  <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.totalEmployees}</p>
+                </div>
+              </div>
+              <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
+            </summary>
+            <div className="px-4 pb-4 pt-2 border-t">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Total de empleados en todos los equipos
+              </p>
+            </div>
+          </details>
+        </div>
+
+        <div className="border rounded-lg">
+          <details className="group">
+            <summary className="cursor-pointer p-4 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <TrendingUp className="w-5 h-5 text-purple-600" />
+                <div>
+                  <h3 className="font-semibold text-lg">Eficiencia Promedio</h3>
+                  <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                    {typeof stats.averageEfficiency === 'string' ? stats.averageEfficiency : `${stats.averageEfficiency}%`}
+                  </p>
+                </div>
+              </div>
+              <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
+            </summary>
+            <div className="px-4 pb-4 pt-2 border-t">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Rendimiento global de todos los equipos
+              </p>
+            </div>
+          </details>
+        </div>
+
+        <div className="border rounded-lg">
+          <details className="group">
+            <summary className="cursor-pointer p-4 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Award className="w-5 h-5 text-yellow-600" />
+                <div>
+                  <h3 className="font-semibold text-lg">Proyectos Activos</h3>
+                  <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.totalProjects}</p>
+                </div>
+              </div>
+              <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
+            </summary>
+            <div className="px-4 pb-4 pt-2 border-t">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Proyectos en desarrollo actualmente
+              </p>
+            </div>
+          </details>
+        </div>
+      </div>
     </div>
   )
 }
