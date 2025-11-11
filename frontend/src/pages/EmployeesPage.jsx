@@ -33,6 +33,7 @@ import { Alert, AlertDescription } from '../components/ui/alert'
 import { Progress } from '../components/ui/progress'
 import { StatsCard } from '../components/ui/stats-card'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
+import InviteEmployeeModal from '../components/modals/InviteEmployeeModal'
 
 const EmployeesPage = () => {
   const { user, isAdmin, isManager, isEmployee } = useAuth()
@@ -43,6 +44,7 @@ const EmployeesPage = () => {
   const [teamFilter, setTeamFilter] = useState('all')
   const [selectedEmployee, setSelectedEmployee] = useState(null)
   const [showEmployeeDetail, setShowEmployeeDetail] = useState(false)
+  const [showInviteModal, setShowInviteModal] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
 
@@ -188,7 +190,7 @@ const EmployeesPage = () => {
           </Button>
           
           {(isAdmin() || isManager()) && (
-            <Button>
+            <Button onClick={() => setShowInviteModal(true)}>
               <Plus className="w-4 h-4 mr-2" />
               Invitar Empleado
             </Button>
@@ -674,6 +676,17 @@ const EmployeesPage = () => {
           </details>
         </div>
       </div>
+
+      {/* Modal de invitación */}
+      <InviteEmployeeModal
+        open={showInviteModal}
+        onClose={() => setShowInviteModal(false)}
+        onSuccess={(invitation) => {
+          console.log('Invitación enviada:', invitation)
+          // Opcional: mostrar toast de éxito
+          loadEmployees() // Recargar lista si es necesario
+        }}
+      />
     </div>
   )
 }

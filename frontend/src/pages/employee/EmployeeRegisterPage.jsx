@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { 
   User, 
@@ -27,6 +27,7 @@ import teamService from '../../services/teamService'
 
 const EmployeeRegisterPage = () => {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { user, updateEmployee, loading } = useAuth()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState(null)
@@ -35,6 +36,10 @@ const EmployeeRegisterPage = () => {
   const [loadingTeams, setLoadingTeams] = useState(true)
   const [hasSummerSchedule, setHasSummerSchedule] = useState(false)
   const [selectedSummerMonths, setSelectedSummerMonths] = useState([])
+  const [invitationToken, setInvitationToken] = useState(null)
+  const [invitationEmail, setInvitationEmail] = useState(null)
+  const [tokenValidating, setTokenValidating] = useState(false)
+  const [tokenError, setTokenError] = useState(null)
   
   const {
     register,
@@ -94,6 +99,50 @@ const EmployeeRegisterPage = () => {
 
   const selectedCountry = watch('country')
   const selectedRegion = watch('region')
+
+  // Verificar token de invitación
+  useEffect(() => {
+    const token = searchParams.get('token')
+    if (token) {
+      verifyInvitationToken(token)
+    }
+  }, [searchParams])
+
+  // Función para verificar token
+  const verifyInvitationToken = async (token) => {
+    setTokenValidating(true)
+    setTokenError(null)
+    
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/employees/invitations/verify`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ token })
+      })
+      
+      const data = await response.json()
+      
+      if (response.ok && data.valid) {
+        setInvitationToken(token)
+        setInvitationEmail(data.invitation.email)
+        
+        // Pre-llenar el email si el usuario no está logueado
+        if (!user || !user.email) {
+          setValue('email', data.invitation.email)
+        }
+      } else {
+        setTokenError(data.error || 'Token de invitación inválido')
+      }
+    } catch (error) {
+      console.error('Error verificando token:', error)
+      setTokenError('Error al verificar la invitación')
+    } finally {
+      setTokenValidating(false)
+    }
+  }
 
   // Cargar equipos disponibles
   useEffect(() => {
@@ -235,6 +284,40 @@ const EmployeeRegisterPage = () => {
             Completa tu perfil para acceder a todas las funcionalidades
           </p>
         </div>
+
+        {/* Alert de validación de token */}
+        {tokenValidating && (
+          <Alert className="mb-6">
+            <AlertDescription className="flex items-center">
+              <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent mr-2" />
+              Verificando invitación...
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Alert de error de token */}
+        {tokenError && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertDescription>
+              <strong>Invitación inválida:</strong> {tokenError}
+              <p className="mt-2 text-sm">
+                Por favor, solicita una nueva invitación a tu administrador.
+              </p>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Alert de invitación válida */}
+        {invitationToken && !tokenError && (
+          <Alert className="mb-6 bg-green-50 border-green-200">
+            <AlertDescription className="text-green-800">
+              <strong>✓ Invitación válida</strong>
+              <p className="mt-1">
+                Completa tu registro para unirte al equipo: <strong>{invitationEmail}</strong>
+              </p>
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Información del usuario actual */}
         <Card className="mb-6">

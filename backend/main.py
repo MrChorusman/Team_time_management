@@ -39,6 +39,7 @@ from app.notifications import notifications_bp
 from app.reports import reports_bp
 from app.admin import admin_bp
 from app.locations import locations_bp
+from app.invitations import invitations_bp
 
 def create_app(config_name=None):
     """Factory para crear la aplicación Flask"""
@@ -128,6 +129,7 @@ def create_app(config_name=None):
     app.register_blueprint(reports_bp, url_prefix='/api/reports')
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
     app.register_blueprint(locations_bp, url_prefix='/api/locations')
+    app.register_blueprint(invitations_bp)
     
     # Dashboard stats endpoint
     from app.dashboard import dashboard_bp
