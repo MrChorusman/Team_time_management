@@ -29,6 +29,7 @@ import { StatsCard } from '../components/ui/stats-card'
 import { Label } from '../components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import { Textarea } from '../components/ui/textarea'
+import { Alert, AlertDescription } from '../components/ui/alert'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 
 const TeamsPage = () => {
@@ -699,7 +700,7 @@ const NewTeamForm = ({ onClose }) => {
     setError(null)
     
     try {
-      const response = await fetch('http://localhost:5001/api/auth-simple/teams/create', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth-simple/teams/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
