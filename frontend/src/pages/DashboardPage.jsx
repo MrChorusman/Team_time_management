@@ -350,19 +350,25 @@ const DashboardPage = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {dashboardData.recent_activity.map((activity, index) => (
-                  <div key={index} className="flex items-start space-x-3">
-                    <div className="w-2 h-2 bg-blue-600 rounded-full mt-2" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {activity.description}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {new Date(activity.timestamp).toLocaleString('es-ES')}
-                      </p>
+                {dashboardData.recent_activity && dashboardData.recent_activity.length > 0 ? (
+                  dashboardData.recent_activity.map((activity, index) => (
+                    <div key={index} className="flex items-start space-x-3">
+                      <div className="w-2 h-2 bg-blue-600 rounded-full mt-2" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          {activity.message || activity.description}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {activity.timestamp ? new Date(activity.timestamp).toLocaleString('es-ES') : ''}
+                        </p>
+                      </div>
                     </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                    <p className="text-sm">No hay actividad reciente</p>
                   </div>
-                ))}
+                )}
               </div>
             </CardContent>
           </Card>
@@ -380,22 +386,28 @@ const DashboardPage = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {dashboardData.team_summaries.map((teamData, index) => (
-                  <div key={index} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">
-                        {teamData.team.name}
-                      </span>
-                      <span className="text-sm text-gray-500 dark:text-gray-400">
-                        {teamData.summary.average_efficiency}%
-                      </span>
+                {dashboardData.team_performance && dashboardData.team_performance.length > 0 ? (
+                  dashboardData.team_performance.map((teamData, index) => (
+                    <div key={index} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">
+                          {teamData.team_name}
+                        </span>
+                        <span className="text-sm text-gray-500 dark:text-gray-400">
+                          {teamData.efficiency}%
+                        </span>
+                      </div>
+                      <Progress value={teamData.efficiency} className="h-2" />
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {teamData.members_count} empleados
+                      </p>
                     </div>
-                    <Progress value={teamData.summary.average_efficiency} className="h-2" />
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {teamData.summary.employee_count} empleados
-                    </p>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                    <p className="text-sm">No hay equipos creados</p>
                   </div>
-                ))}
+                )}
               </div>
             </CardContent>
           </Card>
@@ -471,31 +483,37 @@ const DashboardPage = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                {dashboardData.team_summaries.map((teamData, index) => (
-                  <div key={index} className="border rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="font-medium text-gray-900 dark:text-white">
-                        {teamData.team.name}
-                      </h4>
-                      <Badge variant="outline">
-                        {teamData.summary.employee_count} empleados
-                      </Badge>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <p className="text-gray-500 dark:text-gray-400">Eficiencia</p>
-                        <p className="font-medium">{teamData.summary.average_efficiency}%</p>
+                {dashboardData.team_performance && dashboardData.team_performance.length > 0 ? (
+                  dashboardData.team_performance.map((teamData, index) => (
+                    <div key={index} className="border rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-medium text-gray-900 dark:text-white">
+                          {teamData.team_name}
+                        </h4>
+                        <Badge variant="outline">
+                          {teamData.members_count} empleados
+                        </Badge>
                       </div>
-                      <div>
-                        <p className="text-gray-500 dark:text-gray-400">Horas Reales</p>
-                        <p className="font-medium">{teamData.summary.actual_hours}h</p>
+                      
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <p className="text-gray-500 dark:text-gray-400">Eficiencia</p>
+                          <p className="font-medium">{teamData.efficiency}%</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-500 dark:text-gray-400">Miembros</p>
+                          <p className="font-medium">{teamData.members_count}</p>
+                        </div>
                       </div>
+                      
+                      <Progress value={teamData.efficiency} className="h-2 mt-3" />
                     </div>
-                    
-                    <Progress value={teamData.summary.average_efficiency} className="h-2 mt-3" />
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                    <p className="text-sm">No hay equipos con datos</p>
                   </div>
-                ))}
+                )}
               </div>
             </CardContent>
           </Card>
