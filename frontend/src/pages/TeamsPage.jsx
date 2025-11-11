@@ -309,12 +309,14 @@ const TeamsPage = () => {
                 <div className="flex-1">
                   <CardTitle className="text-lg flex items-center">
                     {team.name}
-                    <Badge variant="outline" className="ml-2">
-                      {getRankingIcon(team.metrics.team_ranking)}
-                    </Badge>
+                    {team.metrics?.team_ranking && (
+                      <Badge variant="outline" className="ml-2">
+                        {getRankingIcon(team.metrics.team_ranking)}
+                      </Badge>
+                    )}
                   </CardTitle>
                   <CardDescription className="mt-2">
-                    {team.description}
+                    {team.description || 'Sin descripción'}
                   </CardDescription>
                 </div>
               </div>
@@ -322,49 +324,57 @@ const TeamsPage = () => {
             
             <CardContent className="space-y-4">
               {/* Manager */}
-              <div className="flex items-center space-x-3">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={`/avatars/${team.manager.id}.jpg`} />
-                  <AvatarFallback className="text-xs">
-                    {getInitials(team.manager.name)}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="text-sm font-medium">{team.manager.name}</p>
-                  <p className="text-xs text-gray-500">Manager</p>
+              {team.manager && (
+                <div className="flex items-center space-x-3">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={`/avatars/${team.manager.id}.jpg`} />
+                    <AvatarFallback className="text-xs">
+                      {getInitials(team.manager.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="text-sm font-medium">{team.manager.name}</p>
+                    <p className="text-xs text-gray-500">Manager</p>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Métricas */}
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="text-gray-500">Miembros</p>
-                  <p className="font-semibold">{team.employee_count}</p>
+                  <p className="font-semibold">{team.employee_count || 0}</p>
                 </div>
                 <div>
                   <p className="text-gray-500">Proyectos</p>
-                  <p className="font-semibold">{team.active_projects}</p>
+                  <p className="font-semibold">{team.active_projects || 0}</p>
                 </div>
-                <div>
-                  <p className="text-gray-500">Eficiencia</p>
-                  <p className="font-semibold">{team.metrics.average_efficiency}%</p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Ranking</p>
-                  <p className={`font-semibold ${getRankingColor(team.metrics.team_ranking)}`}>
-                    #{team.metrics.team_ranking}
-                  </p>
-                </div>
+                {team.metrics?.average_efficiency !== undefined && (
+                  <>
+                    <div>
+                      <p className="text-gray-500">Eficiencia</p>
+                      <p className="font-semibold">{team.metrics.average_efficiency}%</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Ranking</p>
+                      <p className={`font-semibold ${getRankingColor(team.metrics.team_ranking)}`}>
+                        #{team.metrics.team_ranking}
+                      </p>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Barra de progreso */}
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span>Eficiencia del equipo</span>
-                  <span>{team.metrics.average_efficiency}%</span>
+              {team.metrics?.average_efficiency !== undefined && (
+                <div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span>Eficiencia del equipo</span>
+                    <span>{team.metrics.average_efficiency}%</span>
+                  </div>
+                  <Progress value={team.metrics.average_efficiency} className="h-2" />
                 </div>
-                <Progress value={team.metrics.average_efficiency} className="h-2" />
-              </div>
+              )}
 
               {/* Acciones */}
               <div className="flex space-x-2 pt-2">
