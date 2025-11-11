@@ -433,23 +433,31 @@ const TeamsPage = () => {
                       <CardTitle className="text-lg">Información General</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
-                      <div className="flex items-center space-x-3">
-                        <Avatar>
-                          <AvatarImage src={`/avatars/${selectedTeam.manager.id}.jpg`} />
-                          <AvatarFallback>{getInitials(selectedTeam.manager.name)}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">{selectedTeam.manager.name}</p>
-                          <p className="text-sm text-gray-500">Team Manager</p>
+                      {selectedTeam.manager ? (
+                        <div className="flex items-center space-x-3">
+                          <Avatar>
+                            <AvatarImage src={`/avatars/${selectedTeam.manager.id}.jpg`} />
+                            <AvatarFallback>{getInitials(selectedTeam.manager.name)}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-medium">{selectedTeam.manager.name}</p>
+                            <p className="text-sm text-gray-500">Team Manager</p>
+                          </div>
                         </div>
-                      </div>
-                      <div className="text-sm">
-                        <p className="text-gray-500">Creado:</p>
-                        <p>{new Date(selectedTeam.created_at).toLocaleDateString('es-ES')}</p>
-                      </div>
+                      ) : (
+                        <div className="text-sm text-gray-500">
+                          <p>Manager: No asignado</p>
+                        </div>
+                      )}
+                      {selectedTeam.created_at && (
+                        <div className="text-sm">
+                          <p className="text-gray-500">Creado:</p>
+                          <p>{new Date(selectedTeam.created_at).toLocaleDateString('es-ES')}</p>
+                        </div>
+                      )}
                       <div className="text-sm">
                         <p className="text-gray-500">Miembros:</p>
-                        <p>{selectedTeam.employee_count} empleados</p>
+                        <p>{selectedTeam.employee_count || 0} empleados</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -459,18 +467,27 @@ const TeamsPage = () => {
                       <CardTitle className="text-lg">Rendimiento</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
-                      <div className="text-center">
-                        <p className="text-3xl font-bold text-blue-600">
-                          {selectedTeam.metrics.average_efficiency}%
-                        </p>
-                        <p className="text-sm text-gray-500">Eficiencia promedio</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-green-600">
-                          #{selectedTeam.metrics.team_ranking}
-                        </p>
-                        <p className="text-sm text-gray-500">Ranking general</p>
-                      </div>
+                      {selectedTeam.metrics ? (
+                        <>
+                          <div className="text-center">
+                            <p className="text-3xl font-bold text-blue-600">
+                              {selectedTeam.metrics.average_efficiency}%
+                            </p>
+                            <p className="text-sm text-gray-500">Eficiencia promedio</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-2xl font-bold text-green-600">
+                              #{selectedTeam.metrics.team_ranking}
+                            </p>
+                            <p className="text-sm text-gray-500">Ranking general</p>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-center py-8 text-gray-400">
+                          <BarChart3 className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                          <p>Sin datos de rendimiento aún</p>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                   
@@ -481,16 +498,24 @@ const TeamsPage = () => {
                     <CardContent className="space-y-3">
                       <div className="flex justify-between">
                         <span className="text-sm">Proyectos activos:</span>
-                        <span className="font-medium">{selectedTeam.active_projects}</span>
+                        <span className="font-medium">{selectedTeam.active_projects || 0}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm">Horas mensuales:</span>
-                        <span className="font-medium">{selectedTeam.metrics.total_actual_hours}h</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm">Vacaciones:</span>
-                        <span className="font-medium">{selectedTeam.metrics.monthly_vacation_days} días</span>
-                      </div>
+                      {selectedTeam.metrics ? (
+                        <>
+                          <div className="flex justify-between">
+                            <span className="text-sm">Horas mensuales:</span>
+                            <span className="font-medium">{selectedTeam.metrics.total_actual_hours}h</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm">Vacaciones:</span>
+                            <span className="font-medium">{selectedTeam.metrics.monthly_vacation_days} días</span>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-sm text-gray-400 text-center py-4">
+                          Sin datos de actividad
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 </div>
