@@ -75,22 +75,38 @@
   }
 }
 
-/* Scrollbar oculto - El scroll funciona pero no se ve */
+/* Scrollbar estilizado y moderno */
 @layer utilities {
-  .scrollbar-hidden {
-    /* Firefox */
-    scrollbar-width: none;
+  .scrollbar-custom {
+    /* Firefox - scrollbar delgado */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
   }
   
-  /* IE/Edge */
-  .scrollbar-hidden {
-    -ms-overflow-style: none;
+  /* Webkit (Chrome, Safari, Edge) - scrollbar estilizado */
+  .scrollbar-custom::-webkit-scrollbar {
+    width: 8px;
   }
   
-  /* Webkit (Chrome, Safari, Edge) */
-  .scrollbar-hidden::-webkit-scrollbar {
-    display: none;
-    width: 0;
-    height: 0;
+  .scrollbar-custom::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .scrollbar-custom::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.4);
+    border-radius: 4px;
+  }
+  
+  .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(156, 163, 175, 0.7);
+  }
+  
+  /* Dark mode */
+  .dark .scrollbar-custom::-webkit-scrollbar-thumb {
+    background-color: rgba(75, 85, 99, 0.5);
+  }
+  
+  .dark .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(75, 85, 99, 0.8);
   }
 }
