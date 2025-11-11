@@ -559,56 +559,66 @@ const TeamsPage = () => {
               </TabsContent>
               
               <TabsContent value="metrics" className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg flex items-center">
-                        <BarChart3 className="w-5 h-5 mr-2" />
-                        Métricas de Tiempo
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="flex justify-between">
-                        <span>Horas Teóricas:</span>
-                        <span className="font-medium">{selectedTeam.metrics.total_theoretical_hours}h</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Horas Reales:</span>
-                        <span className="font-medium">{selectedTeam.metrics.total_actual_hours}h</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Eficiencia:</span>
-                        <span className="font-medium">{selectedTeam.metrics.average_efficiency}%</span>
-                      </div>
-                      <Progress value={selectedTeam.metrics.average_efficiency} className="h-3" />
-                    </CardContent>
-                  </Card>
-                  
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg flex items-center">
-                        <Calendar className="w-5 h-5 mr-2" />
-                        Actividad Mensual
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="flex justify-between">
-                        <span>Días de Vacaciones:</span>
-                        <span className="font-medium">{selectedTeam.metrics.monthly_vacation_days}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Horas HLD:</span>
-                        <span className="font-medium">{selectedTeam.metrics.monthly_hld_hours}h</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Ranking:</span>
-                        <span className={`font-medium ${getRankingColor(selectedTeam.metrics.team_ranking)}`}>
-                          #{selectedTeam.metrics.team_ranking}
-                        </span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
+                {selectedTeam.metrics ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center">
+                          <BarChart3 className="w-5 h-5 mr-2" />
+                          Métricas de Tiempo
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="flex justify-between">
+                          <span>Horas Teóricas:</span>
+                          <span className="font-medium">{selectedTeam.metrics.total_theoretical_hours}h</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Horas Reales:</span>
+                          <span className="font-medium">{selectedTeam.metrics.total_actual_hours}h</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Eficiencia:</span>
+                          <span className="font-medium">{selectedTeam.metrics.average_efficiency}%</span>
+                        </div>
+                        <Progress value={selectedTeam.metrics.average_efficiency} className="h-3" />
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center">
+                          <Calendar className="w-5 h-5 mr-2" />
+                          Actividad Mensual
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="flex justify-between">
+                          <span>Días de Vacaciones:</span>
+                          <span className="font-medium">{selectedTeam.metrics.monthly_vacation_days}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Horas HLD:</span>
+                          <span className="font-medium">{selectedTeam.metrics.monthly_hld_hours}h</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Ranking:</span>
+                          <span className={`font-medium ${getRankingColor(selectedTeam.metrics.team_ranking)}`}>
+                            #{selectedTeam.metrics.team_ranking}
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <BarChart3 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <p className="text-lg font-semibold text-gray-700 mb-2">Sin métricas disponibles</p>
+                    <p className="text-sm text-gray-500">
+                      Las métricas aparecerán cuando el equipo tenga empleados asignados y actividad registrada
+                    </p>
+                  </div>
+                )}
               </TabsContent>
               
               <TabsContent value="projects">
