@@ -532,8 +532,9 @@ const TeamsPage = () => {
                   )}
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {selectedTeam.members.map((member) => (
+                {selectedTeam.members && selectedTeam.members.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {selectedTeam.members.map((member) => (
                     <Card key={member.id}>
                       <CardContent className="p-4">
                         <div className="flex items-center space-x-3">
@@ -555,7 +556,22 @@ const TeamsPage = () => {
                       </CardContent>
                     </Card>
                   ))}
-                </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <p className="text-lg font-semibold text-gray-700 mb-2">Sin miembros asignados</p>
+                    <p className="text-sm text-gray-500 mb-6">
+                      Añade empleados a este equipo para empezar a gestionar su tiempo
+                    </p>
+                    {(isAdmin() || isManager()) && (
+                      <Button>
+                        <UserPlus className="w-4 h-4 mr-2" />
+                        Añadir Miembro
+                      </Button>
+                    )}
+                  </div>
+                )}
               </TabsContent>
               
               <TabsContent value="metrics" className="space-y-6">
