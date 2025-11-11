@@ -25,8 +25,8 @@ def get_db_connection():
         
         host = os.environ.get('SUPABASE_HOST')
         port = os.environ.get('SUPABASE_PORT', '6543')
-        database = os.environ.get('SUPABASE_DB_NAME', 'postgres')
-        user = os.environ.get('SUPABASE_DB_USER', 'postgres')
+        database = os.environ.get('SUPABASE_DB', 'postgres')
+        user = os.environ.get('SUPABASE_USER', 'postgres')
         password = os.environ.get('SUPABASE_DB_PASSWORD')
         
         connection = psycopg2.connect(
