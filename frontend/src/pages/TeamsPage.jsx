@@ -771,5 +771,3 @@ const NewTeamForm = ({ onClose }) => {
 }
 
 export default TeamsPage
-// Vercel force rebuild - 2025-11-11
-// Force rebuild
