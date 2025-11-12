@@ -373,6 +373,59 @@ def confirm_email_now():
             'message': 'Error interno del servidor'
         }), 500
 
+@auth_bp.route('/reset-password-emergency', methods=['POST'])
+def reset_password_emergency():
+    """
+    Endpoint temporal para resetear contraseña sin autenticación.
+    Útil para casos donde el hash de password está corrupto.
+    SOLO PARA DESARROLLO - Eliminar en producción final.
+    """
+    try:
+        data = request.get_json()
+        
+        if not data or not data.get('email') or not data.get('new_password'):
+            return jsonify({
+                'success': False,
+                'message': 'Email y nueva contraseña son requeridos'
+            }), 400
+        
+        email = data['email'].lower().strip()
+        new_password = data['new_password']
+        
+        # Validar longitud de contraseña
+        if len(new_password) < 6:
+            return jsonify({
+                'success': False,
+                'message': 'La contraseña debe tener al menos 6 caracteres'
+            }), 400
+        
+        # Buscar usuario
+        user = User.query.filter_by(email=email).first()
+        
+        if not user:
+            return jsonify({
+                'success': False,
+                'message': 'Usuario no encontrado'
+            }), 404
+        
+        # Resetear contraseña
+        user.password = hash_password(new_password)
+        db.session.commit()
+        
+        logger.info(f"Contraseña reseteada para usuario: {email}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Contraseña reseteada exitosamente'
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error reseteando contraseña: {e}")
+        return jsonify({
+            'success': False,
+            'message': 'Error interno del servidor'
+        }), 500
+
 @auth_bp.route('/roles', methods=['GET'])
 @auth_required()
 def get_roles():
