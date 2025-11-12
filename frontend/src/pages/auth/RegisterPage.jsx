@@ -23,8 +23,11 @@ const RegisterPage = () => {
     register,
     handleSubmit,
     watch,
+    reset,
     formState: { errors, isSubmitting }
-  } = useForm()
+  } = useForm({
+    mode: 'onChange'
+  })
 
   const password = watch('password')
 
@@ -58,6 +61,7 @@ const RegisterPage = () => {
       
       if (result && result.success) {
         console.log('Registro exitoso, estableciendo estado de éxito')
+        // NO resetear el formulario - queremos mantener el estado
         // Establecer el estado ANTES de cualquier otra operación
         setRegistrationSuccess(true)
         console.log('Estado registrationSuccess establecido a true')
@@ -70,6 +74,7 @@ const RegisterPage = () => {
           }, 3000)
         }
         // Si no hay invitación, el usuario debe ver el mensaje y hacer clic en "Ir a Login"
+        // NO llamar a reset() aquí - queremos mantener el estado de éxito
       } else {
         // Si result.success es false, el error ya fue manejado por AuthContext
         console.error('Error en registro:', result?.message || 'Error desconocido', result)
