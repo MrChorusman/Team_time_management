@@ -63,5 +63,8 @@ holidays==0.37
 Pillow==10.1.0
 reportlab==4.0.4
 
+# Email - SendGrid
+sendgrid==6.11.0
+
 # Production Server
 gunicorn==21.2.0
