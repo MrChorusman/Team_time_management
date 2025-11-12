@@ -185,6 +185,52 @@ def create_app(config_name=None):
             'app_config_should_use_mock_email': app.config.get('should_use_mock_email')
         }), 200
     
+    # DEBUG: Test conexión SMTP rápido
+    @app.route('/api/debug/test-smtp', methods=['GET'])
+    def test_smtp_connection():
+        import smtplib
+        import os
+        import time
+        
+        results = {
+            'timestamp': datetime.utcnow().isoformat(),
+            'tests': []
+        }
+        
+        try:
+            # Test 1: Conectar a SendGrid
+            start = time.time()
+            server = smtplib.SMTP(os.environ.get('MAIL_SERVER', 'smtp.sendgrid.net'), 
+                                 int(os.environ.get('MAIL_PORT', 587)), 
+                                 timeout=10)
+            elapsed = time.time() - start
+            results['tests'].append({'step': 'connect', 'status': 'ok', 'time_ms': int(elapsed * 1000)})
+            
+            # Test 2: STARTTLS
+            start = time.time()
+            server.starttls()
+            elapsed = time.time() - start
+            results['tests'].append({'step': 'starttls', 'status': 'ok', 'time_ms': int(elapsed * 1000)})
+            
+            # Test 3: Login
+            start = time.time()
+            server.login(os.environ.get('MAIL_USERNAME'), os.environ.get('MAIL_PASSWORD'))
+            elapsed = time.time() - start
+            results['tests'].append({'step': 'login', 'status': 'ok', 'time_ms': int(elapsed * 1000)})
+            
+            server.quit()
+            results['overall_status'] = 'success'
+            results['message'] = 'Conexión SMTP exitosa'
+            
+        except smtplib.SMTPException as e:
+            results['overall_status'] = 'smtp_error'
+            results['error'] = str(e)
+        except Exception as e:
+            results['overall_status'] = 'error'
+            results['error'] = str(e)
+        
+        return jsonify(results), 200
+    
     @app.route('/api/auth/login-main', methods=['POST'])
     def login_main():
         """Endpoint de login directamente en main.py para pruebas"""
