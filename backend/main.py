@@ -157,6 +157,33 @@ def create_app(config_name=None):
             'timestamp': datetime.utcnow().isoformat()
         })
     
+    # DEBUG: Endpoint temporal para verificar config SMTP
+    @app.route('/api/debug/email-config', methods=['GET'])
+    def debug_email_config():
+        import os
+        
+        mock_mode = os.environ.get('MOCK_EMAIL_MODE', 'NOT SET')
+        mail_username = os.environ.get('MAIL_USERNAME')
+        mail_password = os.environ.get('MAIL_PASSWORD')
+        
+        email_configured = all([mail_username, mail_password])
+        mock_mode_bool = mock_mode.lower() in ['true', 'on', '1'] if mock_mode != 'NOT SET' else False
+        should_use_mock = mock_mode_bool or not email_configured
+        
+        return jsonify({
+            'MOCK_EMAIL_MODE': mock_mode,
+            'MOCK_EMAIL_MODE_bool': mock_mode_bool,
+            'MAIL_SERVER': os.environ.get('MAIL_SERVER', 'NOT SET'),
+            'MAIL_PORT': os.environ.get('MAIL_PORT', 'NOT SET'),
+            'MAIL_USE_TLS': os.environ.get('MAIL_USE_TLS', 'NOT SET'),
+            'MAIL_USERNAME': 'SET' if mail_username else 'NOT SET',
+            'MAIL_PASSWORD': 'SET (hidden)' if mail_password else 'NOT SET',
+            'MAIL_DEFAULT_SENDER': os.environ.get('MAIL_DEFAULT_SENDER', 'NOT SET'),
+            'email_configured': email_configured,
+            'should_use_mock_email': should_use_mock,
+            'app_config_should_use_mock_email': app.config.get('should_use_mock_email')
+        }), 200
+    
     @app.route('/api/auth/login-main', methods=['POST'])
     def login_main():
         """Endpoint de login directamente en main.py para pruebas"""
