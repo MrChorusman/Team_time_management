@@ -12,6 +12,7 @@ import LoadingSpinner from './components/ui/LoadingSpinner'
 // Páginas principales
 import LoginPage from './pages/auth/LoginPage'
 import RegisterPage from './pages/auth/RegisterPage'
+import VerifyEmailPage from './pages/auth/VerifyEmailPage'
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage'
 import DashboardPage from './pages/DashboardPage'
 import CalendarPage from './pages/CalendarPage'
@@ -102,6 +103,12 @@ function AppContent() {
       <Route 
         path="/register" 
         element={user ? <Navigate to="/dashboard" replace /> : <RegisterPage />} 
+      />
+      
+      {/* Verificación de email (público) */}
+      <Route 
+        path="/verify-email" 
+        element={<VerifyEmailPage />} 
       />
       <Route 
         path="/forgot-password" 

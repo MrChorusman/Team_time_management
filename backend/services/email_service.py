@@ -692,6 +692,169 @@ def send_notification_email(notification: Notification) -> bool:
     return email_service.send_notification_email(notification)
 
 
+    def send_verification_email(self, to_email: str, verification_link: str, user_name: str = None) -> bool:
+        """
+        Envía un email de verificación de cuenta
+        """
+        try:
+            if self.use_mock_mode:
+                return self.mock_service.send_verification_email(
+                    to_email, verification_link, user_name
+                )
+            
+            subject = "Verifica tu cuenta en Team Time Management"
+            
+            # Nombre del usuario o email
+            display_name = user_name if user_name else to_email.split('@')[0]
+            
+            # Cuerpo del email en texto plano
+            body = f"""
+Hola {display_name},
+
+Gracias por registrarte en Team Time Management.
+
+Para activar tu cuenta y comenzar a usar la plataforma, necesitamos que verifiques tu dirección de email.
+
+Haz clic en el siguiente enlace para verificar tu cuenta:
+
+{verification_link}
+
+Este enlace es válido por 24 horas.
+
+Si no creaste esta cuenta, puedes ignorar este email de forma segura.
+
+Saludos,
+Equipo de Team Time Management
+            """
+            
+            # Cuerpo del email en HTML
+            html_body = f"""
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verifica tu cuenta - Team Time Management</title>
+</head>
+<body style="margin:0; padding:0; background:#f8f9fa; font-family:Arial,Helvetica,sans-serif;">
+  
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td align="center" style="padding:40px 20px;">
+        
+        <table width="600" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff; border-radius:8px;">
+          
+          <!-- Header -->
+          <tr>
+            <td align="center" style="padding:40px 40px 32px; background:#0066cc;">
+              <h1 style="margin:0; font-size:28px; color:#ffffff; font-weight:700;">
+                Team Time Management
+              </h1>
+            </td>
+          </tr>
+          
+          <!-- Contenido -->
+          <tr>
+            <td style="padding:40px 40px 32px;">
+              
+              <p style="margin:0 0 24px; font-size:18px; font-weight:600; color:#1a1a1a;">
+                ¡Bienvenido{', ' + display_name if user_name else ''}!
+              </p>
+              
+              <p style="margin:0 0 24px; font-size:16px; line-height:1.6; color:#333;">
+                Gracias por registrarte en <strong>Team Time Management</strong>. 
+                Para activar tu cuenta y comenzar a usar la plataforma, necesitamos verificar tu dirección de email.
+              </p>
+              
+              <!-- CTA -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center" style="padding:24px 0 32px;">
+                    <a href="{verification_link}" style="display:inline-block; padding:16px 40px; background:#0066cc; color:#ffffff; text-decoration:none; border-radius:6px; font-size:16px; font-weight:bold;">
+                      Verificar mi cuenta
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="margin:24px 0 0; font-size:14px; color:#666; line-height:1.6;">
+                Si no puedes hacer clic en el botón, copia y pega este enlace en tu navegador:
+              </p>
+              <p style="margin:8px 0 0; font-size:13px; color:#0066cc; word-break:break-all;">
+                {verification_link}
+              </p>
+              
+            </td>
+          </tr>
+          
+          <!-- Alerta -->
+          <tr>
+            <td style="padding:0 40px 32px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fff3cd; border-left:4px solid #ffc107; border-radius:4px;">
+                <tr>
+                  <td style="padding:16px;">
+                    <p style="margin:0; color:#856404; font-size:14px;">
+                      <strong>Este enlace expira en 24 horas.</strong> 
+                      Si no verificas tu cuenta en ese tiempo, necesitarás solicitar un nuevo enlace.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="padding:24px 40px; border-top:1px solid #e0e0e0; text-align:center; background:#f8f9fa;">
+              <p style="margin:0 0 8px; font-size:12px; color:#666;">
+                Si no creaste esta cuenta, puedes ignorar este email de forma segura.
+              </p>
+              <p style="margin:16px 0 0; font-size:12px; color:#999;">
+                Team Time Management © {datetime.now().year} - Todos los derechos reservados
+              </p>
+            </td>
+          </tr>
+          
+        </table>
+        
+      </td>
+    </tr>
+  </table>
+  
+</body>
+</html>
+            """
+            
+            # Enviar usando SendGrid Web API
+            if HAS_SENDGRID and os.environ.get('MAIL_PASSWORD', '').startswith('SG.'):
+                logger.info("📧 Enviando email de verificación vía SendGrid Web API")
+                return self._send_via_sendgrid_api(to_email, subject, body, html_body)
+            
+            # Fallback a SMTP
+            logger.warning("⚠️ SendGrid no configurado, intentando SMTP")
+            msg = Message(
+                subject,
+                sender=self.sender,
+                recipients=[to_email]
+            )
+            msg.body = body
+            msg.html = html_body
+            
+            self.mail.send(msg)
+            logger.info(f"✅ Email de verificación enviado a {to_email}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Error enviando email de verificación a {to_email}: {e}")
+            logger.exception(e)
+            return False
+
+
 def send_invitation_email(to_email: str, invitation_link: str, inviter_name: str, expires_days: int = 7) -> bool:
     """Wrapper para enviar email de invitación"""
     return email_service.send_invitation_email(to_email, invitation_link, inviter_name, expires_days)
+
+
+def send_verification_email(to_email: str, verification_link: str, user_name: str = None) -> bool:
+    """Wrapper para enviar email de verificación"""
+    return email_service.send_verification_email(to_email, verification_link, user_name)

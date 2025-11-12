@@ -198,6 +198,36 @@ Si tienes preguntas, contacta con tu administrador del sistema.
         
         return notification.title, html_body, text_body
     
+    def send_verification_email(self, to_email: str, verification_link: str, user_name: str = None) -> bool:
+        """Simula el envío de un email de verificación de cuenta"""
+        try:
+            email_data = {
+                'timestamp': datetime.now().isoformat(),
+                'to': to_email,
+                'subject': 'Verifica tu cuenta en Team Time Management',
+                'verification_link': verification_link,
+                'user_name': user_name,
+                'type': 'verification'
+            }
+            
+            self.sent_emails.append(email_data)
+            
+            logger.info(f"""
+========================================
+📧 MOCK EMAIL VERIFICACIÓN ENVIADA
+Para: {to_email}
+Nombre: {user_name or 'N/A'}
+Link: {verification_link}
+Expira en: 24 horas
+========================================
+            """)
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error simulando email de verificación a {to_email}: {e}")
+            return False
+    
     def get_sent_emails(self, limit: int = 50) -> List[Dict]:
         """Obtiene la lista de emails enviados (para debugging)"""
         return self.sent_emails[-limit:] if limit else self.sent_emails

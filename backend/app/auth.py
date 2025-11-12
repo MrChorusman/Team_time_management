@@ -5,7 +5,11 @@ from werkzeug.security import check_password_hash
 import logging
 
 from models.user import User, Role, db
+from models.email_verification_token import EmailVerificationToken
 from services.google_oauth_service import GoogleOAuthService
+from services.email_service import send_verification_email
+import secrets
+from datetime import timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -44,8 +48,9 @@ def login():
         if not user.confirmed_at:
             return jsonify({
                 'success': False,
-                'message': 'Debes confirmar tu email antes de iniciar sesión.',
-                'requires_confirmation': True
+                'message': 'Debes verificar tu email antes de iniciar sesión. Revisa tu bandeja de entrada.',
+                'requires_verification': True,
+                'email': user.email
             }), 401
         
         # Iniciar sesión
@@ -126,16 +131,40 @@ def register():
         db.session.add(new_user)
         db.session.commit()
         
-        # ✅ Confirmar automáticamente en desarrollo
-        # TODO: Implementar sistema completo de validación con email
-        new_user.confirmed_at = db.func.now()
+        # ⚠️ NO confirmar automáticamente - requiere verificación de email
+        # new_user.confirmed_at permanece NULL hasta que verifique su email
         db.session.commit()
         
-        logger.info(f"Nuevo usuario registrado: {email}")
+        # Generar token de verificación
+        verification_token = secrets.token_urlsafe(32)
+        expires_at = datetime.utcnow() + timedelta(hours=24)
+        
+        email_token = EmailVerificationToken(
+            user_id=new_user.id,
+            token=verification_token,
+            expires_at=expires_at
+        )
+        
+        db.session.add(email_token)
+        db.session.commit()
+        
+        # Enviar email de verificación
+        frontend_url = request.headers.get('Origin', 'https://team-time-management.vercel.app')
+        verification_link = f"{frontend_url}/verify-email?token={verification_token}"
+        
+        email_sent = send_verification_email(
+            to_email=email,
+            verification_link=verification_link,
+            user_name=new_user.first_name or new_user.email.split('@')[0]
+        )
+        
+        logger.info(f"Nuevo usuario registrado: {email} - Email de verificación enviado: {email_sent}")
         
         return jsonify({
             'success': True,
-            'message': 'Registro exitoso. Ya puedes iniciar sesión.',
+            'message': 'Registro exitoso. Te hemos enviado un email para verificar tu cuenta.',
+            'requires_verification': True,
+            'email_sent': email_sent,
             'user_id': new_user.id
         }), 201
         
@@ -460,6 +489,146 @@ def reset_password_emergency():
         return jsonify({
             'success': False,
             'message': 'Error interno del servidor'
+        }), 500
+
+@auth_bp.route('/verify-email/<token>', methods=['GET', 'POST'])
+def verify_email(token):
+    """
+    Verifica el email de un usuario usando el token recibido por email
+    """
+    try:
+        # Buscar el token en la base de datos
+        email_token = EmailVerificationToken.query.filter_by(token=token).first()
+        
+        if not email_token:
+            return jsonify({
+                'success': False,
+                'message': 'Token de verificación inválido'
+            }), 404
+        
+        # Verificar si el token ya fue usado
+        if email_token.used:
+            return jsonify({
+                'success': False,
+                'message': 'Este token ya fue utilizado'
+            }), 400
+        
+        # Verificar si el token ha expirado
+        if email_token.is_expired():
+            return jsonify({
+                'success': False,
+                'message': 'El token ha expirado. Solicita un nuevo enlace de verificación.',
+                'expired': True
+            }), 400
+        
+        # Obtener el usuario
+        user = User.query.get(email_token.user_id)
+        
+        if not user:
+            return jsonify({
+                'success': False,
+                'message': 'Usuario no encontrado'
+            }), 404
+        
+        # Verificar el email
+        user.confirmed_at = datetime.utcnow()
+        email_token.mark_as_used()
+        
+        db.session.commit()
+        
+        logger.info(f"✅ Email verificado para usuario: {user.email}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Email verificado exitosamente. Ya puedes iniciar sesión.',
+            'email': user.email
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error verificando email: {e}")
+        return jsonify({
+            'success': False,
+            'message': 'Error al verificar el email'
+        }), 500
+
+@auth_bp.route('/resend-verification', methods=['POST'])
+def resend_verification():
+    """
+    Reenvía el email de verificación a un usuario
+    """
+    try:
+        data = request.get_json()
+        
+        if not data or not data.get('email'):
+            return jsonify({
+                'success': False,
+                'message': 'Email es requerido'
+            }), 400
+        
+        email = data['email'].lower().strip()
+        
+        # Buscar usuario
+        user = User.query.filter_by(email=email).first()
+        
+        if not user:
+            return jsonify({
+                'success': False,
+                'message': 'Usuario no encontrado'
+            }), 404
+        
+        # Si ya está verificado, no hacer nada
+        if user.confirmed_at:
+            return jsonify({
+                'success': False,
+                'message': 'Esta cuenta ya está verificada'
+            }), 400
+        
+        # Invalidar tokens anteriores
+        old_tokens = EmailVerificationToken.query.filter_by(
+            user_id=user.id,
+            used=False
+        ).all()
+        
+        for old_token in old_tokens:
+            old_token.used = True
+            old_token.used_at = datetime.utcnow()
+        
+        # Generar nuevo token
+        verification_token = secrets.token_urlsafe(32)
+        expires_at = datetime.utcnow() + timedelta(hours=24)
+        
+        email_token = EmailVerificationToken(
+            user_id=user.id,
+            token=verification_token,
+            expires_at=expires_at
+        )
+        
+        db.session.add(email_token)
+        db.session.commit()
+        
+        # Enviar email
+        frontend_url = request.headers.get('Origin', 'https://team-time-management.vercel.app')
+        verification_link = f"{frontend_url}/verify-email?token={verification_token}"
+        
+        email_sent = send_verification_email(
+            to_email=email,
+            verification_link=verification_link,
+            user_name=user.first_name or user.email.split('@')[0]
+        )
+        
+        logger.info(f"Nuevo email de verificación enviado a: {email}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Email de verificación reenviado. Revisa tu bandeja de entrada.',
+            'email_sent': email_sent
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error reenviando verificación: {e}")
+        return jsonify({
+            'success': False,
+            'message': 'Error al reenviar el email de verificación'
         }), 500
 
 @auth_bp.route('/roles', methods=['GET'])
