@@ -1,9 +1,10 @@
 from flask import Blueprint, request, jsonify
+from flask_security import auth_required, current_user
 from datetime import datetime, timedelta
 from models.base import db
 from models.employee_invitation import EmployeeInvitation
 from models.user import User
-from services.auth_service import token_required, admin_or_manager_required
+from utils.decorators import manager_or_admin_required
 from services.email_service import send_invitation_email
 import secrets
 import logging
@@ -13,9 +14,9 @@ logger = logging.getLogger(__name__)
 employee_invitations_bp = Blueprint('employee_invitations', __name__)
 
 @employee_invitations_bp.route('/api/employees/invite', methods=['POST'])
-@token_required
-@admin_or_manager_required
-def invite_employee(current_user):
+@auth_required()
+@manager_or_admin_required()
+def invite_employee():
     """
     Invitar a un empleado por email
     Genera un token único y envía email de invitación
