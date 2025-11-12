@@ -682,11 +682,6 @@ Equipo de Team Time Management
             return False
 
 
-# Instancia global del servicio
-email_service = EmailService()
-
-
-# Funciones wrapper para facilitar el uso
     def send_verification_email(self, to_email: str, verification_link: str, user_name: str = None) -> bool:
         """
         Envía un email de verificación de cuenta
@@ -843,6 +838,16 @@ Equipo de Team Time Management
             logger.error(f"❌ Error enviando email de verificación a {to_email}: {e}")
             logger.exception(e)
             return False
+
+
+# Instancia global del servicio
+email_service = EmailService()
+
+
+# Funciones wrapper para facilitar el uso
+def send_notification_email(notification: Notification) -> bool:
+    """Wrapper para enviar email de notificación"""
+    return email_service.send_notification_email(notification)
 
 
 def send_invitation_email(to_email: str, invitation_link: str, inviter_name: str, expires_days: int = 7) -> bool:
