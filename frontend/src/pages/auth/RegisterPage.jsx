@@ -143,7 +143,10 @@ const RegisterPage = () => {
                       </p>
                     </div>
                     <Button 
-                      onClick={() => navigate('/login')} 
+                      onClick={() => {
+                        localStorage.removeItem('registrationSuccess')
+                        navigate('/login')
+                      }} 
                       className="w-full mt-4"
                     >
                       Ir a Iniciar Sesión
