@@ -62,6 +62,10 @@ const EmployeeRegisterPage = () => {
     }
   })
 
+  // Definir selectedCountry y selectedRegion ANTES de usarlos en useEffect
+  const selectedCountry = watch('country')
+  const selectedRegion = watch('region')
+
   // Cargar países desde BD
   useEffect(() => {
     const loadCountries = async () => {
@@ -165,9 +169,6 @@ const EmployeeRegisterPage = () => {
     { value: 11, label: 'Noviembre' },
     { value: 12, label: 'Diciembre' }
   ]
-
-  const selectedCountry = watch('country')
-  const selectedRegion = watch('region')
 
   // Verificar token de invitación
   useEffect(() => {
