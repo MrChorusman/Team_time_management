@@ -145,9 +145,7 @@ def create_app(config_name=None):
     from app.dashboard import dashboard_bp
     app.register_blueprint(dashboard_bp)
 
-    # Employee invitations blueprint
-    from app.employee_invitations import employee_invitations_bp
-    app.register_blueprint(employee_invitations_bp)
+    # Employee invitations ahora están en employees_bp
     
     # Rutas principales
     @app.route('/')
