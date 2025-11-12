@@ -27,14 +27,22 @@ class EmailService:
             logger.error(f"Error inicializando Flask-Mail: {e}")
             self.mail = None
         
-        # Determinar si usar modo mock basado en configuración
-        self._use_mock_mode = app.config.get('should_use_mock_email', False)
+        # Determinar si usar modo mock leyendo directamente MOCK_EMAIL_MODE
+        # No podemos usar app.config.get('should_use_mock_email') porque es una @property
+        mock_email_mode = app.config.get('MOCK_EMAIL_MODE', False)
+        mail_username = app.config.get('MAIL_USERNAME')
+        mail_password = app.config.get('MAIL_PASSWORD')
+        email_configured = all([mail_username, mail_password])
+        
+        # Usar modo mock si está explícitamente activado O si no hay credenciales
+        self._use_mock_mode = mock_email_mode or not email_configured
         
         # Log de configuración
-        logger.info(f"MOCK_EMAIL_MODE: {app.config.get('MOCK_EMAIL_MODE')}")
-        logger.info(f"MAIL_USERNAME configurado: {bool(app.config.get('MAIL_USERNAME'))}")
-        logger.info(f"MAIL_PASSWORD configurado: {bool(app.config.get('MAIL_PASSWORD'))}")
-        logger.info(f"should_use_mock_email: {self._use_mock_mode}")
+        logger.info(f"MOCK_EMAIL_MODE: {mock_email_mode}")
+        logger.info(f"MAIL_USERNAME configurado: {bool(mail_username)}")
+        logger.info(f"MAIL_PASSWORD configurado: {bool(mail_password)}")
+        logger.info(f"email_configured: {email_configured}")
+        logger.info(f"_use_mock_mode calculado: {self._use_mock_mode}")
         
         if self._use_mock_mode:
             logger.info("📧 EmailService inicializado en modo MOCK - emails se simularán en logs")
