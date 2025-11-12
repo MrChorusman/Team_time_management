@@ -40,6 +40,13 @@ const RegisterPage = () => {
     }
   }, [searchParams])
 
+  // Forzar re-renderizado cuando registrationSuccess cambia
+  useEffect(() => {
+    if (registrationSuccess || registrationSuccessRef.current) {
+      console.log('registrationSuccess cambió, forzando re-renderizado')
+    }
+  }, [registrationSuccess])
+
   const onSubmit = async (data, e) => {
     e?.preventDefault() // Prevenir comportamiento por defecto del formulario
     clearError()
