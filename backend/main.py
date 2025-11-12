@@ -185,6 +185,79 @@ def create_app(config_name=None):
             'app_config_should_use_mock_email': app.config.get('should_use_mock_email')
         }), 200
     
+    # DEBUG: Test SendGrid Web API
+    @app.route('/api/debug/test-sendgrid-api', methods=['GET'])
+    def test_sendgrid_api():
+        """Test completo de SendGrid Web API"""
+        import os
+        
+        results = {
+            'timestamp': datetime.utcnow().isoformat(),
+            'steps': []
+        }
+        
+        try:
+            # Paso 1: Verificar que sendgrid esté instalado
+            try:
+                from sendgrid import SendGridAPIClient
+                from sendgrid.helpers.mail import Mail as SendGridMail, Email, To, Content
+                results['steps'].append({'step': 'import_sendgrid', 'status': 'ok'})
+            except ImportError as e:
+                results['steps'].append({'step': 'import_sendgrid', 'status': 'error', 'error': str(e)})
+                results['overall_status'] = 'import_error'
+                return jsonify(results), 500
+            
+            # Paso 2: Verificar API key
+            api_key = os.environ.get('MAIL_PASSWORD')
+            if not api_key:
+                results['steps'].append({'step': 'api_key', 'status': 'error', 'error': 'MAIL_PASSWORD no configurada'})
+                results['overall_status'] = 'config_error'
+                return jsonify(results), 500
+            
+            if not api_key.startswith('SG.'):
+                results['steps'].append({'step': 'api_key', 'status': 'error', 'error': 'MAIL_PASSWORD no es una API key de SendGrid'})
+                results['overall_status'] = 'config_error'
+                return jsonify(results), 500
+            
+            results['steps'].append({'step': 'api_key', 'status': 'ok', 'key_preview': api_key[:10] + '...'})
+            
+            # Paso 3: Crear mensaje
+            from_email = os.environ.get('MAIL_DEFAULT_SENDER', 'noreply@teamtime.com')
+            to_email = 'miguelchis@gmail.com'
+            
+            message = SendGridMail(
+                from_email=Email(from_email),
+                to_emails=To(to_email),
+                subject='Test desde Team Time Management',
+                plain_text_content=Content("text/plain", "Este es un email de prueba"),
+                html_content=Content("text/html", "<p>Este es un email de prueba</p>")
+            )
+            results['steps'].append({'step': 'create_message', 'status': 'ok', 'from': from_email, 'to': to_email})
+            
+            # Paso 4: Enviar
+            sg = SendGridAPIClient(api_key)
+            response = sg.send(message)
+            
+            results['steps'].append({
+                'step': 'send_email',
+                'status': 'ok',
+                'status_code': response.status_code,
+                'body': response.body,
+                'headers': dict(response.headers)
+            })
+            
+            results['overall_status'] = 'success'
+            results['message'] = f'Email enviado con status {response.status_code}'
+            
+            return jsonify(results), 200
+            
+        except Exception as e:
+            import traceback
+            results['overall_status'] = 'error'
+            results['error'] = str(e)
+            results['traceback'] = traceback.format_exc()
+            return jsonify(results), 500
+    
     # DEBUG: Test conexión SMTP rápido
     @app.route('/api/debug/test-smtp', methods=['GET'])
     def test_smtp_connection():
