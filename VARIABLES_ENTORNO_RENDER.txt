@@ -31,11 +31,14 @@ CORS_ORIGINS=https://team-time-management.vercel.app
 --- LOGGING ---
 LOG_LEVEL=INFO
 
---- EMAIL (MOCK MODE - No funcional hasta configurar Gmail) ---
-MOCK_EMAIL_MODE=true
-MAIL_SERVER=smtp.gmail.com
+--- EMAIL (SENDGRID - CONFIGURACIÓN REAL) ---
+MOCK_EMAIL_MODE=false
+MAIL_SERVER=smtp.sendgrid.net
 MAIL_PORT=587
 MAIL_USE_TLS=true
+MAIL_USERNAME=apikey
+MAIL_PASSWORD=TU_SENDGRID_API_KEY_AQUI
+MAIL_DEFAULT_SENDER=noreply@teamtime.com
 
 --- OAUTH (OPCIONAL - Dejar vacío por ahora) ---
 GOOGLE_CLIENT_ID=
