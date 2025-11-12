@@ -7,6 +7,7 @@ import secrets
 
 from models.user import User, Role, db
 from models.email_verification_token import EmailVerificationToken
+from models.employee_invitation import EmployeeInvitation
 from services.google_oauth_service import GoogleOAuthService
 from services.email_service import send_verification_email
 
@@ -93,6 +94,7 @@ def register():
         
         email = data['email'].lower().strip()
         password = data['password']
+        invitation_token = data.get('invitation_token')  # Token opcional de invitación
         
         # Validaciones básicas
         if len(password) < 6:
@@ -108,6 +110,42 @@ def register():
                 'success': False,
                 'message': 'Ya existe una cuenta con este email'
             }), 409
+        
+        # Si hay token de invitación, validarlo
+        invitation = None
+        requires_email_verification = True
+        
+        if invitation_token:
+            invitation = EmployeeInvitation.query.filter_by(token=invitation_token).first()
+            
+            if not invitation:
+                return jsonify({
+                    'success': False,
+                    'message': 'Token de invitación inválido'
+                }), 400
+            
+            if invitation.used:
+                return jsonify({
+                    'success': False,
+                    'message': 'Esta invitación ya ha sido utilizada'
+                }), 410
+            
+            if datetime.utcnow() > invitation.expires_at:
+                return jsonify({
+                    'success': False,
+                    'message': 'Esta invitación ha expirado'
+                }), 410
+            
+            # Validar que el email coincide con el de la invitación
+            if invitation.email.lower() != email:
+                return jsonify({
+                    'success': False,
+                    'message': f'El email debe coincidir con el de la invitación ({invitation.email})'
+                }), 400
+            
+            # Si la invitación es válida, NO requiere verificación de email
+            requires_email_verification = False
+            logger.info(f"Registro con invitación válida: {email} (token: {invitation_token})")
         
         # Crear nuevo usuario
         viewer_role = Role.query.filter_by(name='viewer').first()
@@ -127,44 +165,51 @@ def register():
         
         new_user.roles.append(viewer_role)
         
+        # Si hay invitación válida, confirmar email automáticamente
+        if invitation and not requires_email_verification:
+            new_user.confirmed_at = datetime.utcnow()
+            logger.info(f"✅ Email confirmado automáticamente por invitación: {email}")
+        
         db.session.add(new_user)
         db.session.commit()
         
-        # ⚠️ NO confirmar automáticamente - requiere verificación de email
-        # new_user.confirmed_at permanece NULL hasta que verifique su email
-        db.session.commit()
-        
-        # Generar token de verificación
-        verification_token = secrets.token_urlsafe(32)
-        expires_at = datetime.utcnow() + timedelta(hours=24)
-        
-        email_token = EmailVerificationToken(
-            user_id=new_user.id,
-            token=verification_token,
-            expires_at=expires_at
-        )
-        
-        db.session.add(email_token)
-        db.session.commit()
-        
-        # Enviar email de verificación
-        frontend_url = request.headers.get('Origin', 'https://team-time-management.vercel.app')
-        verification_link = f"{frontend_url}/verify-email?token={verification_token}"
-        
-        email_sent = send_verification_email(
-            to_email=email,
-            verification_link=verification_link,
-            user_name=new_user.first_name or new_user.email.split('@')[0]
-        )
-        
-        logger.info(f"Nuevo usuario registrado: {email} - Email de verificación enviado: {email_sent}")
+        # Solo generar token de verificación si NO hay invitación
+        email_sent = False
+        if requires_email_verification:
+            # Generar token de verificación
+            verification_token = secrets.token_urlsafe(32)
+            expires_at = datetime.utcnow() + timedelta(hours=24)
+            
+            email_token = EmailVerificationToken(
+                user_id=new_user.id,
+                token=verification_token,
+                expires_at=expires_at
+            )
+            
+            db.session.add(email_token)
+            db.session.commit()
+            
+            # Enviar email de verificación
+            frontend_url = request.headers.get('Origin', 'https://team-time-management.vercel.app')
+            verification_link = f"{frontend_url}/verify-email?token={verification_token}"
+            
+            email_sent = send_verification_email(
+                to_email=email,
+                verification_link=verification_link,
+                user_name=new_user.first_name or new_user.email.split('@')[0]
+            )
+            
+            logger.info(f"Nuevo usuario registrado: {email} - Email de verificación enviado: {email_sent}")
+        else:
+            logger.info(f"Nuevo usuario registrado con invitación: {email} - Email confirmado automáticamente")
         
         return jsonify({
             'success': True,
-            'message': 'Registro exitoso. Te hemos enviado un email para verificar tu cuenta.',
-            'requires_verification': True,
+            'message': 'Registro exitoso.' + (' Te hemos enviado un email para verificar tu cuenta.' if requires_email_verification else ' Tu cuenta ha sido activada automáticamente.'),
+            'requires_verification': requires_email_verification,
             'email_sent': email_sent,
-            'user_id': new_user.id
+            'user_id': new_user.id,
+            'has_invitation': invitation is not None
         }), 201
         
     except Exception as e:
