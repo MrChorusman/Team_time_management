@@ -126,8 +126,8 @@ def register():
         db.session.add(new_user)
         db.session.commit()
         
-        # TODO: Enviar email de confirmación
-        # Por ahora, confirmar automáticamente para desarrollo
+        # ✅ Confirmar automáticamente en desarrollo
+        # TODO: Implementar sistema completo de validación con email
         new_user.confirmed_at = db.func.now()
         db.session.commit()
         
@@ -319,6 +319,58 @@ def check_session():
             'success': False,
             'authenticated': False,
             'error': 'Error verificando sesión'
+        }), 500
+
+@auth_bp.route('/confirm-email-now', methods=['POST'])
+def confirm_email_now():
+    """
+    Endpoint temporal para confirmar el email de un usuario inmediatamente.
+    Útil para desarrollo y para resolver casos donde usuarios quedaron sin confirmed_at.
+    """
+    try:
+        data = request.get_json()
+        
+        if not data or not data.get('email'):
+            return jsonify({
+                'success': False,
+                'message': 'Email es requerido'
+            }), 400
+        
+        email = data['email'].lower().strip()
+        
+        # Buscar usuario
+        user = User.query.filter_by(email=email).first()
+        
+        if not user:
+            return jsonify({
+                'success': False,
+                'message': 'Usuario no encontrado'
+            }), 404
+        
+        # Si ya está confirmado, no hacer nada
+        if user.confirmed_at:
+            return jsonify({
+                'success': True,
+                'message': 'El email ya estaba confirmado',
+                'already_confirmed': True
+            }), 200
+        
+        # Confirmar email
+        user.confirmed_at = db.func.now()
+        db.session.commit()
+        
+        logger.info(f"Email confirmado para usuario: {email}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Email confirmado exitosamente'
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error confirmando email: {e}")
+        return jsonify({
+            'success': False,
+            'message': 'Error interno del servidor'
         }), 500
 
 @auth_bp.route('/roles', methods=['GET'])

@@ -146,6 +146,12 @@ def register_employee():
             employee.summer_months_list = summer_months
         
         db.session.add(employee)
+        
+        # ✅ TEMPORAL: Confirmar email automáticamente al completar registro de empleado
+        # TODO: Implementar sistema completo de validación de email
+        if not current_user.confirmed_at:
+            current_user.confirmed_at = db.func.now()
+        
         db.session.commit()
         
         # Cargar festivos automáticamente para la ubicación del empleado
