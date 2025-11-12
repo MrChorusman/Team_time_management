@@ -114,27 +114,23 @@ const EmployeeRegisterPage = () => {
     setTokenError(null)
     
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/employees/invitations/verify`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({ token })
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/employees/invite/${token}`, {
+        method: 'GET',
+        credentials: 'include'
       })
       
       const data = await response.json()
       
       if (response.ok && data.valid) {
         setInvitationToken(token)
-        setInvitationEmail(data.invitation.email)
+        setInvitationEmail(data.email)
         
         // Pre-llenar el email si el usuario no está logueado
         if (!user || !user.email) {
-          setValue('email', data.invitation.email)
+          setValue('email', data.email)
         }
       } else {
-        setTokenError(data.error || 'Token de invitación inválido')
+        setTokenError(data.error || 'Token de invitación inválido o expirado')
       }
     } catch (error) {
       console.error('Error verificando token:', error)
@@ -213,6 +209,19 @@ const EmployeeRegisterPage = () => {
         // Actualizar contexto con los datos del empleado creado
         updateEmployee(response.employee)
         setSuccess(true)
+        
+        // Si hay token de invitación, marcarlo como usado
+        if (invitationToken) {
+          try {
+            await fetch(`${import.meta.env.VITE_API_BASE_URL}/employees/invite/${invitationToken}/use`, {
+              method: 'POST',
+              credentials: 'include'
+            })
+          } catch (error) {
+            console.error('Error marcando invitación como usada:', error)
+            // No bloquear el flujo si falla
+          }
+        }
         
         // Redirigir después de 2 segundos
         setTimeout(() => {

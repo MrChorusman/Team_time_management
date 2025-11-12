@@ -361,3 +361,176 @@ Si tienes preguntas, contacta con tu administrador del sistema.
         except Exception as e:
             logger.error(f"Error enviando email genérico a {to_email}: {e}")
             return False
+    
+    def send_invitation_email(self, to_email: str, invitation_link: str, inviter_name: str, expires_days: int = 7) -> bool:
+        """
+        Envía un email de invitación para unirse a la plataforma
+        
+        Args:
+            to_email: Email del destinatario
+            invitation_link: Link único de invitación
+            inviter_name: Nombre de quien invita
+            expires_days: Días hasta que expire la invitación
+        
+        Returns:
+            bool: True si se envió exitosamente, False en caso contrario
+        """
+        try:
+            # Usar modo mock si está configurado
+            if self.use_mock_mode:
+                return self.mock_service.send_invitation_email(
+                    to_email, invitation_link, inviter_name, expires_days
+                )
+            
+            # Modo real - enviar por SMTP
+            if not self.mail:
+                logger.error("Servicio de email no inicializado")
+                return False
+            
+            subject = f"{inviter_name} te ha invitado a Team Time Management"
+            
+            # Cuerpo del email en texto plano
+            body = f"""
+Hola,
+
+{inviter_name} te ha invitado a unirte a Team Time Management, la plataforma de gestión de tiempo y horarios.
+
+Para completar tu registro, haz clic en el siguiente enlace:
+
+{invitation_link}
+
+Esta invitación expirará en {expires_days} días.
+
+Si no esperabas este email, puedes ignorarlo.
+
+Saludos,
+Equipo de Team Time Management
+            """
+            
+            # Cuerpo del email en HTML
+            html_body = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {{
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }}
+        .container {{
+            background-color: #f9fafb;
+            border-radius: 8px;
+            padding: 30px;
+        }}
+        .header {{
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 8px 8px 0 0;
+            text-align: center;
+        }}
+        .content {{
+            background: white;
+            padding: 30px;
+            border-radius: 0 0 8px 8px;
+        }}
+        .button {{
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            padding: 14px 32px;
+            border-radius: 6px;
+            margin: 20px 0;
+            font-weight: 600;
+        }}
+        .footer {{
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            color: #6b7280;
+            font-size: 14px;
+        }}
+        .highlight {{
+            background-color: #fef3c7;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 style="margin: 0;">🎉 ¡Te han invitado!</h1>
+        </div>
+        <div class="content">
+            <p style="font-size: 18px; margin-top: 0;">Hola,</p>
+            
+            <p><strong>{inviter_name}</strong> te ha invitado a unirte a <strong>Team Time Management</strong>, la plataforma moderna de gestión de tiempo y horarios.</p>
+            
+            <p>Con Team Time Management podrás:</p>
+            <ul>
+                <li>✅ Registrar tu tiempo de trabajo</li>
+                <li>📅 Solicitar vacaciones y permisos</li>
+                <li>👥 Colaborar con tu equipo</li>
+                <li>📊 Ver estadísticas de tu rendimiento</li>
+            </ul>
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{invitation_link}" class="button">
+                    Completar mi registro →
+                </a>
+            </div>
+            
+            <p style="background-color: #fef3c7; padding: 15px; border-left: 4px solid #f59e0b; border-radius: 4px;">
+                ⏰ <strong>Importante:</strong> Esta invitación expirará en <span class="highlight">{expires_days} días</span>
+            </p>
+            
+            <div class="footer">
+                <p>Si no esperabas este email, puedes ignorarlo de forma segura.</p>
+                <p style="margin: 0;">© {datetime.now().year} Team Time Management. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+            """
+            
+            # Crear mensaje
+            msg = Message(
+                subject=subject,
+                sender=current_app.config.get('MAIL_DEFAULT_SENDER', 'noreply@teamtime.com'),
+                recipients=[to_email],
+                body=body,
+                html=html_body
+            )
+            
+            # Enviar email
+            self.mail.send(msg)
+            logger.info(f"Email de invitación enviado exitosamente a {to_email}")
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error enviando email de invitación a {to_email}: {e}")
+            return False
+
+
+# Instancia global del servicio
+email_service = EmailService()
+
+
+# Funciones wrapper para facilitar el uso
+def send_notification_email(notification: Notification) -> bool:
+    """Wrapper para enviar email de notificación"""
+    return email_service.send_notification_email(notification)
+
+
+def send_invitation_email(to_email: str, invitation_link: str, inviter_name: str, expires_days: int = 7) -> bool:
+    """Wrapper para enviar email de invitación"""
+    return email_service.send_invitation_email(to_email, invitation_link, inviter_name, expires_days)

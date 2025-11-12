@@ -142,8 +142,12 @@ def create_app(config_name=None):
     app.register_blueprint(invitations_bp)
     
     # Dashboard stats endpoint
-    from app.dashboard import dashboard_bp
-    app.register_blueprint(dashboard_bp)
+from app.dashboard import dashboard_bp
+app.register_blueprint(dashboard_bp)
+
+# Employee invitations blueprint
+from app.employee_invitations import employee_invitations_bp
+app.register_blueprint(employee_invitations_bp)
     
     # Rutas principales
     @app.route('/')

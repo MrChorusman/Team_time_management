@@ -33,7 +33,7 @@ import { Alert, AlertDescription } from '../components/ui/alert'
 import { Progress } from '../components/ui/progress'
 import { StatsCard } from '../components/ui/stats-card'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
-import InviteEmployeeModal from '../components/modals/InviteEmployeeModal'
+import InviteEmployeeModal from '../components/employees/InviteEmployeeModal'
 
 const EmployeesPage = () => {
   const { user, isAdmin, isManager, isEmployee } = useAuth()
@@ -679,9 +679,9 @@ const EmployeesPage = () => {
 
       {/* Modal de invitación */}
       <InviteEmployeeModal
-        open={showInviteModal}
+        isOpen={showInviteModal}
         onClose={() => setShowInviteModal(false)}
-        onSuccess={(invitation) => {
+        onInviteSuccess={(invitation) => {
           console.log('Invitación enviada:', invitation)
           // Opcional: mostrar toast de éxito
           loadEmployees() // Recargar lista si es necesario

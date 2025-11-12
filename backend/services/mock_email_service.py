@@ -267,3 +267,39 @@ Si tienes preguntas, contacta con tu administrador del sistema.
             'by_priority': by_priority,
             'last_email': self.sent_emails[-1]['timestamp'] if self.sent_emails else None
         }
+    
+    def send_invitation_email(self, to_email: str, invitation_link: str, inviter_name: str, expires_days: int = 7) -> bool:
+        """Simula el envío de un email de invitación"""
+        try:
+            # Simular envío guardando en logs y lista interna
+            email_data = {
+                'timestamp': datetime.now().isoformat(),
+                'to': to_email,
+                'subject': f"{inviter_name} te ha invitado a Team Time Management",
+                'invitation_link': invitation_link,
+                'inviter_name': inviter_name,
+                'expires_days': expires_days,
+                'type': 'invitation'
+            }
+            
+            self.sent_emails.append(email_data)
+            
+            logger.info(f"""
+            ========================================
+            📧 MOCK EMAIL - INVITACIÓN
+            ========================================
+            Destinatario: {to_email}
+            Asunto: {email_data['subject']}
+            Invitador: {inviter_name}
+            Link de invitación: {invitation_link}
+            Expira en: {expires_days} días
+            ========================================
+            ✅ Email simulado correctamente
+            ========================================
+            """)
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error simulando envío de email de invitación: {e}")
+            return False
