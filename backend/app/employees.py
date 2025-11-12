@@ -589,25 +589,34 @@ def invite_employee():
         frontend_url = request.headers.get('Origin', 'https://team-time-management.vercel.app')
         invitation_link = f"{frontend_url}/employee/register?token={token}"
         
+        logger.info(f"📧 Intentando enviar invitación a {email}")
+        logger.info(f"📧 Link: {invitation_link}")
+        logger.info(f"📧 Invitado por: {current_user.email}")
+        
         try:
-            send_invitation_email(
+            email_sent = send_invitation_email(
                 to_email=email,
                 invitation_link=invitation_link,
                 inviter_name=current_user.first_name or current_user.email,
                 expires_days=7
             )
             
-            logger.info(f"Invitación enviada a {email} por {current_user.email}")
+            if email_sent:
+                logger.info(f"✅ Invitación enviada exitosamente a {email}")
+            else:
+                logger.warning(f"⚠️ send_invitation_email devolvió False para {email}")
             
             return jsonify({
-                'message': 'Invitación enviada exitosamente',
+                'message': 'Invitación enviada exitosamente' if email_sent else 'Invitación creada pero el email falló',
                 'email': email,
                 'expires_at': expires_at.isoformat(),
-                'invitation_link': invitation_link if request.headers.get('X-Debug') == 'true' else None
+                'invitation_link': invitation_link if request.headers.get('X-Debug') == 'true' else None,
+                'email_sent': email_sent
             }), 201
             
         except Exception as email_error:
-            logger.error(f"Error enviando email de invitación: {email_error}")
+            logger.error(f"❌ Excepción enviando email de invitación: {email_error}")
+            logger.exception(email_error)  # Log completo del stack trace
             # No fallar si el email no se envía, pero informar
             return jsonify({
                 'message': 'Invitación creada pero hubo un error enviando el email',
