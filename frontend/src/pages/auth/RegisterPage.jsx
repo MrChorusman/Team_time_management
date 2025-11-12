@@ -53,8 +53,10 @@ const RegisterPage = () => {
       }
       
       const result = await registerUser(registerData)
+      console.log('Resultado del registro:', result)
       
-      if (result.success) {
+      if (result && result.success) {
+        console.log('Registro exitoso, mostrando mensaje de éxito')
         setRegistrationSuccess(true)
         
         // Si hay invitación, redirigir a completar perfil de empleado después de mostrar mensaje
@@ -65,9 +67,14 @@ const RegisterPage = () => {
           }, 3000)
         }
         // Si no hay invitación, el usuario debe ver el mensaje y hacer clic en "Ir a Login"
+      } else {
+        // Si result.success es false, el error ya fue manejado por AuthContext
+        console.error('Error en registro:', result?.message || 'Error desconocido', result)
       }
     } catch (error) {
-      console.error('Error en registro:', error)
+      console.error('Error capturado en registro:', error)
+      console.error('Error details:', error.response?.data || error.message)
+      // El error ya fue manejado por AuthContext, pero podemos mostrar un mensaje adicional si es necesario
     }
   }
 
@@ -87,7 +94,12 @@ const RegisterPage = () => {
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
                   {invitationToken 
                     ? 'Tu cuenta ha sido creada exitosamente. Tu email ha sido confirmado automáticamente. Ahora completa tu perfil de empleado.'
-                    : 'Tu cuenta ha sido creada exitosamente. <strong>Por favor, verifica tu email</strong> para activar tu cuenta antes de iniciar sesión.'
+                    : (
+                      <>
+                        Tu cuenta ha sido creada exitosamente.{' '}
+                        <strong>Por favor, verifica tu email</strong> para activar tu cuenta antes de iniciar sesión.
+                      </>
+                    )
                   }
                 </p>
                 {!invitationToken && (
