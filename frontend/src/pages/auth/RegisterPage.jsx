@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { Eye, EyeOff, UserPlus, Mail, Lock, User } from 'lucide-react'
@@ -18,6 +18,7 @@ const RegisterPage = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [registrationSuccess, setRegistrationSuccess] = useState(false)
   const [invitationToken, setInvitationToken] = useState(null)
+  const registrationSuccessRef = useRef(false)
   
   const {
     register,
@@ -63,6 +64,7 @@ const RegisterPage = () => {
         console.log('Registro exitoso, estableciendo estado de éxito')
         // NO resetear el formulario - queremos mantener el estado
         // Establecer el estado ANTES de cualquier otra operación
+        registrationSuccessRef.current = true
         setRegistrationSuccess(true)
         console.log('Estado registrationSuccess establecido a true')
         
@@ -86,7 +88,7 @@ const RegisterPage = () => {
     }
   }
 
-  if (registrationSuccess) {
+  if (registrationSuccess || registrationSuccessRef.current) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full">
