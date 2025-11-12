@@ -2,11 +2,20 @@ from flask import current_app, render_template, url_for
 from flask_mail import Mail, Message
 from typing import List, Dict, Optional
 import logging
+import os
 from datetime import datetime
 
 from models.notification import Notification
 from models.user import User
 from .mock_email_service import MockEmailService
+
+# SendGrid Web API (no SMTP - Render bloquea puerto 587)
+try:
+    from sendgrid import SendGridAPIClient
+    from sendgrid.helpers.mail import Mail as SendGridMail, Email, To, Content
+    HAS_SENDGRID = True
+except ImportError:
+    HAS_SENDGRID = False
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +65,41 @@ class EmailService:
             # Fallback: verificar configuración directamente
             return current_app.config.get('should_use_mock_email', False)
         return self._use_mock_mode
+    
+    def _send_via_sendgrid_api(self, to_email: str, subject: str, plain_text: str, html_content: str) -> bool:
+        """
+        Envía email usando SendGrid Web API (no SMTP)
+        Render bloquea puerto 587, por eso usamos API (HTTPS)
+        """
+        try:
+            api_key = os.environ.get('MAIL_PASSWORD')  # La API key está en MAIL_PASSWORD
+            from_email = os.environ.get('MAIL_DEFAULT_SENDER', 'noreply@teamtime.com')
+            
+            if not api_key:
+                logger.error("MAIL_PASSWORD (SendGrid API Key) no configurada")
+                return False
+            
+            # Crear mensaje usando SendGrid SDK
+            message = SendGridMail(
+                from_email=Email(from_email),
+                to_emails=To(to_email),
+                subject=subject,
+                plain_text_content=Content("text/plain", plain_text),
+                html_content=Content("text/html", html_content)
+            )
+            
+            # Enviar usando SendGrid Web API
+            sg = SendGridAPIClient(api_key)
+            response = sg.send(message)
+            
+            logger.info(f"✅ SendGrid Web API response: {response.status_code}")
+            
+            return response.status_code in [200, 201, 202]
+            
+        except Exception as e:
+            logger.error(f"❌ Error con SendGrid API: {e}")
+            logger.exception(e)
+            return False
     
     def send_notification_email(self, notification: Notification) -> bool:
         """Envía un email basado en una notificación"""
@@ -402,11 +446,21 @@ Si tienes preguntas, contacta con tu administrador del sistema.
                     to_email, invitation_link, inviter_name, expires_days
                 )
             
-            # Modo real - enviar por SMTP
+            # Modo real - intentar SendGrid Web API primero (Render bloquea SMTP)
+            if HAS_SENDGRID and os.environ.get('MAIL_PASSWORD', '').startswith('SG.'):
+                try:
+                    logger.info("📧 Usando SendGrid Web API (no SMTP)")
+                    return self._send_via_sendgrid_api(to_email, invitation_link, inviter_name, expires_days)
+                except Exception as sg_error:
+                    logger.error(f"SendGrid Web API falló: {sg_error}")
+                    # Intentar fallback a SMTP
+            
+            # Fallback: SMTP (puede no funcionar en Render)
             if not self.mail:
                 logger.error("Servicio de email no inicializado")
                 return False
             
+            logger.info("📧 Usando SMTP (puede fallar en Render)")
             subject = f"{inviter_name} te ha invitado a Team Time Management"
             
             # Cuerpo del email en texto plano
