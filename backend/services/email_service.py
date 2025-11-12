@@ -475,209 +475,177 @@ Equipo de Team Time Management
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body {{
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
-            line-height: 1.6;
-            color: #1f2937;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 0;
-            background-color: #f3f4f6;
-        }}
-        .container {{
-            background-color: #ffffff;
-            margin: 40px auto;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }}
-        .header {{
-            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-            color: white;
-            padding: 40px 30px;
-            text-align: center;
-        }}
-        .logo {{
-            font-size: 24px;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            margin: 0;
-        }}
-        .content {{
-            padding: 40px 30px;
-        }}
-        .greeting {{
-            font-size: 18px;
-            font-weight: 600;
-            color: #111827;
-            margin: 0 0 20px 0;
-        }}
-        .message {{
-            font-size: 15px;
-            color: #4b5563;
-            margin-bottom: 30px;
-            line-height: 1.6;
-        }}
-        .features {{
-            background-color: #f9fafb;
-            border-radius: 8px;
-            padding: 24px;
-            margin: 30px 0;
-        }}
-        .features-title {{
-            font-size: 16px;
-            font-weight: 600;
-            color: #111827;
-            margin: 0 0 16px 0;
-        }}
-        .feature-item {{
-            display: flex;
-            align-items: flex-start;
-            margin-bottom: 12px;
-        }}
-        .feature-item:last-child {{
-            margin-bottom: 0;
-        }}
-        .feature-icon {{
-            flex-shrink: 0;
-            margin-right: 12px;
-            margin-top: 2px;
-        }}
-        .feature-text {{
-            font-size: 14px;
-            color: #4b5563;
-            margin: 0;
-        }}
-        .cta-container {{
-            text-align: center;
-            margin: 32px 0;
-        }}
-        .cta-button {{
-            display: inline-block;
-            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-            color: white !important;
-            text-decoration: none;
-            padding: 16px 40px;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 16px;
-            box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
-        }}
-        .alert {{
-            background-color: #fef3c7;
-            border-left: 4px solid #f59e0b;
-            border-radius: 4px;
-            padding: 16px;
-            margin: 24px 0;
-        }}
-        .alert-text {{
-            font-size: 14px;
-            color: #92400e;
-            margin: 0;
-        }}
-        .alert-text strong {{
-            font-weight: 600;
-        }}
-        .footer {{
-            background-color: #f9fafb;
-            padding: 24px 30px;
-            text-align: center;
-            border-top: 1px solid #e5e7eb;
-        }}
-        .footer-text {{
-            font-size: 12px;
-            color: #6b7280;
-            margin: 4px 0;
-        }}
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invitación a Team Time Management</title>
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1 class="logo">Team Time Management</h1>
-        </div>
+<body style="margin:0; padding:0; background:#f8f9fa; font-family:Arial,Helvetica,sans-serif;">
+  
+  <!-- Contenedor principal -->
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td align="center" style="padding:40px 20px;">
         
-        <div class="content">
-            <p class="greeting">Hola,</p>
-            
-            <p class="message">
-                <strong>{inviter_name}</strong> te ha invitado a unirte a <strong>Team Time Management</strong>, 
-                la plataforma de gestión de tiempo y horarios para equipos.
-            </p>
-            
-            <div class="features">
-                <p class="features-title">Con esta plataforma podrás:</p>
+        <!-- Email content -->
+        <table width="600" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff; border-radius:8px;">
+          
+          <!-- Header con logo -->
+          <tr>
+            <td align="center" style="padding:40px 40px 32px; background:#0066cc;">
+              <h1 style="margin:0; font-size:28px; color:#ffffff; font-weight:700; letter-spacing:0.5px;">
+                Team Time Management
+              </h1>
+            </td>
+          </tr>
+          
+          <!-- Contenido principal -->
+          <tr>
+            <td style="padding:40px 40px 32px;">
+              
+              <p style="margin:0 0 24px; font-size:16px; line-height:1.6; color:#333;">
+                <strong>{inviter_name}</strong> te invita a unirte a su equipo en <strong>Team Time Management</strong>, la plataforma de gestión de tiempo y horarios.
+              </p>
+              
+              <!-- CTA Principal -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center" style="padding:24px 0 32px;">
+                    <a href="{invitation_link}" style="display:inline-block; padding:16px 40px; background:#0066cc; color:#ffffff; text-decoration:none; border-radius:6px; font-size:16px; font-weight:bold;">
+                      Aceptar invitación
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Funcionalidades -->
+              <p style="margin:0 0 20px; font-size:18px; font-weight:bold; color:#1a1a1a;">
+                Con esta plataforma podrás:
+              </p>
+              
+              <!-- Lista de funcionalidades con iconos SVG -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:24px;">
                 
-                <div class="feature-item">
-                    <div class="feature-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                    </div>
-                    <p class="feature-text">Registrar tu tiempo de trabajo</p>
-                </div>
+                <!-- Funcionalidad 1: Registro de tiempo -->
+                <tr>
+                  <td width="40" valign="top" style="padding:0 16px 16px 0;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="12" cy="12" r="10" stroke="#0066cc" stroke-width="2"/>
+                      <path d="M12 6V12L16 14" stroke="#0066cc" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                  </td>
+                  <td style="padding-bottom:16px;">
+                    <strong style="display:block; color:#1a1a1a; margin-bottom:4px; font-size:15px;">
+                      Registra tu tiempo
+                    </strong>
+                    <span style="color:#666; font-size:14px; line-height:1.5;">
+                      Controla tus horas de forma sencilla e intuitiva
+                    </span>
+                  </td>
+                </tr>
                 
-                <div class="feature-item">
-                    <div class="feature-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                            <line x1="16" y1="2" x2="16" y2="6"></line>
-                            <line x1="8" y1="2" x2="8" y2="6"></line>
-                            <line x1="3" y1="10" x2="21" y2="10"></line>
-                        </svg>
-                    </div>
-                    <p class="feature-text">Solicitar vacaciones y permisos</p>
-                </div>
+                <!-- Funcionalidad 2: Vacaciones -->
+                <tr>
+                  <td width="40" valign="top" style="padding:0 16px 16px 0;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="3" y="4" width="18" height="18" rx="2" stroke="#0066cc" stroke-width="2"/>
+                      <path d="M3 10H21" stroke="#0066cc" stroke-width="2"/>
+                      <path d="M8 2V6M16 2V6" stroke="#0066cc" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                  </td>
+                  <td style="padding-bottom:16px;">
+                    <strong style="display:block; color:#1a1a1a; margin-bottom:4px; font-size:15px;">
+                      Gestiona vacaciones y permisos
+                    </strong>
+                    <span style="color:#666; font-size:14px; line-height:1.5;">
+                      Solicita y aprueba ausencias desde un solo lugar
+                    </span>
+                  </td>
+                </tr>
                 
-                <div class="feature-item">
-                    <div class="feature-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="9" cy="7" r="4"></circle>
-                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                        </svg>
-                    </div>
-                    <p class="feature-text">Colaborar con tu equipo</p>
-                </div>
+                <!-- Funcionalidad 3: Colaboración -->
+                <tr>
+                  <td width="40" valign="top" style="padding:0 16px 16px 0;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="9" cy="7" r="4" stroke="#0066cc" stroke-width="2"/>
+                      <path d="M2 21C2 17.134 5.134 14 9 14C12.866 14 16 17.134 16 21" stroke="#0066cc" stroke-width="2"/>
+                      <circle cx="17" cy="7" r="3" stroke="#0066cc" stroke-width="2"/>
+                      <path d="M22 21C22 18.791 20.209 17 18 17" stroke="#0066cc" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                  </td>
+                  <td style="padding-bottom:16px;">
+                    <strong style="display:block; color:#1a1a1a; margin-bottom:4px; font-size:15px;">
+                      Colabora con tu equipo
+                    </strong>
+                    <span style="color:#666; font-size:14px; line-height:1.5;">
+                      Mantén la sincronización con tus compañeros
+                    </span>
+                  </td>
+                </tr>
                 
-                <div class="feature-item">
-                    <div class="feature-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="12" y1="20" x2="12" y2="10"></line>
-                            <line x1="18" y1="20" x2="18" y2="4"></line>
-                            <line x1="6" y1="20" x2="6" y2="16"></line>
-                        </svg>
-                    </div>
-                    <p class="feature-text">Ver estadísticas de tu rendimiento</p>
-                </div>
-            </div>
-            
-            <div class="cta-container">
-                <a href="{invitation_link}" class="cta-button">
-                    Completar mi Registro
-                </a>
-            </div>
-            
-            <div class="alert">
-                <p class="alert-text">
-                    <strong>Importante:</strong> Esta invitación expirará en {expires_days} días
-                </p>
-            </div>
-            
-            <p class="message" style="font-size: 13px; color: #6b7280; margin-top: 24px;">
-                Si no esperabas este email, puedes ignorarlo de forma segura.
-            </p>
-        </div>
+                <!-- Funcionalidad 4: Estadísticas -->
+                <tr>
+                  <td width="40" valign="top" style="padding:0 16px 0 0;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M3 3V21H21" stroke="#0066cc" stroke-width="2" stroke-linecap="round"/>
+                      <rect x="7" y="12" width="3" height="7" fill="#0066cc"/>
+                      <rect x="12" y="8" width="3" height="11" fill="#0066cc"/>
+                      <rect x="17" y="14" width="3" height="5" fill="#0066cc"/>
+                    </svg>
+                  </td>
+                  <td>
+                    <strong style="display:block; color:#1a1a1a; margin-bottom:4px; font-size:15px;">
+                      Visualiza tu rendimiento
+                    </strong>
+                    <span style="color:#666; font-size:14px; line-height:1.5;">
+                      Accede a estadísticas detalladas de tu productividad
+                    </span>
+                  </td>
+                </tr>
+                
+              </table>
+              
+            </td>
+          </tr>
+          
+          <!-- Alerta de caducidad -->
+          <tr>
+            <td style="padding:0 40px 32px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fff3cd; border-left:4px solid #ffc107; border-radius:4px;">
+                <tr>
+                  <td width="36" valign="top" style="padding:16px 0 16px 16px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M6 2H18V6L12 12L18 18V22H6V18L12 12L6 6V2Z" stroke="#856404" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M6 2H18M6 22H18" stroke="#856404" stroke-width="2"/>
+                    </svg>
+                  </td>
+                  <td style="padding:16px 16px 16px 8px;">
+                    <strong style="color:#856404; font-size:14px;">
+                      Tu invitación expira en {expires_days} días
+                    </strong>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="padding:24px 40px; border-top:1px solid #e0e0e0; text-align:center; background:#f8f9fa;">
+              <p style="margin:0 0 8px; font-size:12px; color:#666;">
+                ¿No esperabas este correo? Puedes ignorarlo de forma segura.
+              </p>
+              <p style="margin:16px 0 0; font-size:12px; color:#999;">
+                Team Time Management &copy; {datetime.now().year} - Todos los derechos reservados
+              </p>
+            </td>
+          </tr>
+          
+        </table>
         
-        <div class="footer">
-            <p class="footer-text">Team Time Management &copy; {datetime.now().year}</p>
-            <p class="footer-text">Todos los derechos reservados</p>
-        </div>
-    </div>
+      </td>
+    </tr>
+  </table>
+  
 </body>
 </html>
             """
