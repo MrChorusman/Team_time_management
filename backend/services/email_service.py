@@ -446,22 +446,11 @@ Si tienes preguntas, contacta con tu administrador del sistema.
                     to_email, invitation_link, inviter_name, expires_days
                 )
             
+            subject = f"{inviter_name} te ha invitado a Team Time Management"
+            
             # Modo real - intentar SendGrid Web API primero (Render bloquea SMTP)
             if HAS_SENDGRID and os.environ.get('MAIL_PASSWORD', '').startswith('SG.'):
-                try:
-                    logger.info("📧 Usando SendGrid Web API (no SMTP)")
-                    return self._send_via_sendgrid_api(to_email, invitation_link, inviter_name, expires_days)
-                except Exception as sg_error:
-                    logger.error(f"SendGrid Web API falló: {sg_error}")
-                    # Intentar fallback a SMTP
-            
-            # Fallback: SMTP (puede no funcionar en Render)
-            if not self.mail:
-                logger.error("Servicio de email no inicializado")
-                return False
-            
-            logger.info("📧 Usando SMTP (puede fallar en Render)")
-            subject = f"{inviter_name} te ha invitado a Team Time Management"
+                logger.info("📧 Usando SendGrid Web API (no SMTP)")
             
             # Cuerpo del email en texto plano
             body = f"""
@@ -575,6 +564,18 @@ Equipo de Team Time Management
 </html>
             """
             
+            # Enviar usando SendGrid Web API si está disponible
+            if HAS_SENDGRID and os.environ.get('MAIL_PASSWORD', '').startswith('SG.'):
+                logger.info("📧 Enviando vía SendGrid Web API")
+                return self._send_via_sendgrid_api(to_email, subject, body, html_body)
+            
+            # Fallback: SMTP (puede fallar en Render)
+            if not self.mail:
+                logger.error("Servicio de email no inicializado y SendGrid no disponible")
+                return False
+            
+            logger.info("📧 Enviando vía SMTP (puede fallar en Render)")
+            
             # Crear mensaje
             msg = Message(
                 subject=subject,
@@ -586,7 +587,7 @@ Equipo de Team Time Management
             
             # Enviar email
             self.mail.send(msg)
-            logger.info(f"Email de invitación enviado exitosamente a {to_email}")
+            logger.info(f"Email de invitación enviado exitosamente a {to_email} vía SMTP")
             
             return True
             
