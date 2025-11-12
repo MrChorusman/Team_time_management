@@ -147,10 +147,8 @@ def register_employee():
         
         db.session.add(employee)
         
-        # ✅ TEMPORAL: Confirmar email automáticamente al completar registro de empleado
-        # TODO: Implementar sistema completo de validación de email
-        if not current_user.confirmed_at:
-            current_user.confirmed_at = db.func.now()
+        # ⚠️ NO confirmar email automáticamente - el usuario debe verificar su email primero
+        # El email debe estar verificado antes de completar el registro de empleado
         
         db.session.commit()
         
