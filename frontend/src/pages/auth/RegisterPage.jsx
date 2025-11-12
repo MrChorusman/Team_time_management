@@ -36,7 +36,8 @@ const RegisterPage = () => {
     }
   }, [searchParams])
 
-  const onSubmit = async (data) => {
+  const onSubmit = async (data, e) => {
+    e?.preventDefault() // Prevenir comportamiento por defecto del formulario
     clearError()
     
     try {
@@ -56,8 +57,10 @@ const RegisterPage = () => {
       console.log('Resultado del registro:', result)
       
       if (result && result.success) {
-        console.log('Registro exitoso, mostrando mensaje de éxito')
+        console.log('Registro exitoso, estableciendo estado de éxito')
+        // Establecer el estado ANTES de cualquier otra operación
         setRegistrationSuccess(true)
+        console.log('Estado registrationSuccess establecido a true')
         
         // Si hay invitación, redirigir a completar perfil de empleado después de mostrar mensaje
         // Si NO hay invitación, NO redirigir automáticamente - dejar que el usuario vea el mensaje
