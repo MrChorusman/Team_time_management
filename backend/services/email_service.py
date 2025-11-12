@@ -20,14 +20,26 @@ class EmailService:
     
     def init_app(self, app):
         """Inicializa el servicio con la aplicación Flask"""
-        self.mail = Mail(app)
+        try:
+            self.mail = Mail(app)
+            logger.info(f"Flask-Mail inicializado: {self.mail is not None}")
+        except Exception as e:
+            logger.error(f"Error inicializando Flask-Mail: {e}")
+            self.mail = None
+        
         # Determinar si usar modo mock basado en configuración
         self._use_mock_mode = app.config.get('should_use_mock_email', False)
         
+        # Log de configuración
+        logger.info(f"MOCK_EMAIL_MODE: {app.config.get('MOCK_EMAIL_MODE')}")
+        logger.info(f"MAIL_USERNAME configurado: {bool(app.config.get('MAIL_USERNAME'))}")
+        logger.info(f"MAIL_PASSWORD configurado: {bool(app.config.get('MAIL_PASSWORD'))}")
+        logger.info(f"should_use_mock_email: {self._use_mock_mode}")
+        
         if self._use_mock_mode:
-            logger.info("EmailService inicializado en modo MOCK - emails se simularán en logs")
+            logger.info("📧 EmailService inicializado en modo MOCK - emails se simularán en logs")
         else:
-            logger.info("EmailService inicializado en modo REAL - emails se enviarán por SMTP")
+            logger.info("📧 EmailService inicializado en modo REAL - emails se enviarán por SMTP via SendGrid")
     
     @property
     def use_mock_mode(self):
