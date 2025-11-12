@@ -535,10 +535,81 @@ def reset_password_emergency():
             'message': 'Error interno del servidor'
         }), 500
 
-@auth_bp.route('/verify-email/<token>', methods=['GET', 'POST'])
-def verify_email(token):
+@auth_bp.route('/verify-email/<token>', methods=['GET'])
+def verify_email_get(token):
     """
-    Verifica el email de un usuario usando el token recibido por email
+    GET: Muestra información del token sin verificarlo (para evitar pre-fetch de clientes de email)
+    """
+    try:
+        # Buscar el token en la base de datos
+        email_token = EmailVerificationToken.query.filter_by(token=token).first()
+        
+        if not email_token:
+            return jsonify({
+                'success': False,
+                'message': 'Token de verificación inválido',
+                'valid': False
+            }), 404
+        
+        # Verificar si el token ya fue usado
+        if email_token.used:
+            return jsonify({
+                'success': False,
+                'message': 'Este token ya fue utilizado',
+                'valid': False,
+                'used': True
+            }), 400
+        
+        # Verificar si el token ha expirado
+        if email_token.is_expired():
+            return jsonify({
+                'success': False,
+                'message': 'El token ha expirado. Solicita un nuevo enlace de verificación.',
+                'valid': False,
+                'expired': True
+            }), 400
+        
+        # Obtener el usuario
+        user = User.query.get(email_token.user_id)
+        
+        if not user:
+            return jsonify({
+                'success': False,
+                'message': 'Usuario no encontrado',
+                'valid': False
+            }), 404
+        
+        # Si el usuario ya está verificado, informar
+        if user.confirmed_at:
+            return jsonify({
+                'success': True,
+                'message': 'Este email ya está verificado',
+                'valid': True,
+                'already_verified': True,
+                'email': user.email
+            }), 200
+        
+        # Token válido pero no verificado aún - solo devolver info, NO verificar
+        return jsonify({
+            'success': True,
+            'message': 'Token válido. Haz clic en el botón para verificar tu email.',
+            'valid': True,
+            'email': user.email,
+            'requires_confirmation': True
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error verificando email (GET): {e}")
+        return jsonify({
+            'success': False,
+            'message': 'Error al verificar el email',
+            'valid': False
+        }), 500
+
+@auth_bp.route('/verify-email/<token>', methods=['POST'])
+def verify_email_post(token):
+    """
+    POST: Verifica el email del usuario usando el token (solo cuando el usuario hace clic explícitamente)
     """
     try:
         # Buscar el token en la base de datos
@@ -589,7 +660,7 @@ def verify_email(token):
         }), 200
         
     except Exception as e:
-        logger.error(f"Error verificando email: {e}")
+        logger.error(f"Error verificando email (POST): {e}")
         return jsonify({
             'success': False,
             'message': 'Error al verificar el email'

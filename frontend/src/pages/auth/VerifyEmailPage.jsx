@@ -8,25 +8,69 @@ const VerifyEmailPage = () => {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   
-  const [status, setStatus] = useState('verifying') // verifying, success, error
+  const [status, setStatus] = useState('verifying') // verifying, pending, success, error
+  const [token, setToken] = useState('')
   const [message, setMessage] = useState('')
   const [email, setEmail] = useState('')
   const [expired, setExpired] = useState(false)
 
   useEffect(() => {
-    const token = searchParams.get('token')
+    const tokenParam = searchParams.get('token')
     
-    if (!token) {
+    if (!tokenParam) {
       setStatus('error')
       setMessage('Token de verificación no encontrado')
       return
     }
     
-    verifyEmail(token)
+    setToken(tokenParam)
+    // Solo verificar el estado del token (GET), NO verificarlo automáticamente
+    checkTokenStatus(tokenParam)
   }, [searchParams])
+
+  const checkTokenStatus = async (token) => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/auth/verify-email/${token}`,
+        {
+          method: 'GET',
+          credentials: 'include'
+        }
+      )
+      
+      const data = await response.json()
+      
+      if (response.ok && data.success) {
+        setEmail(data.email || '')
+        
+        // Si ya está verificado, mostrar éxito
+        if (data.already_verified) {
+          setStatus('success')
+          setMessage(data.message || 'Este email ya está verificado')
+          setTimeout(() => {
+            navigate('/login')
+          }, 3000)
+        } else {
+          // Token válido pero requiere confirmación del usuario
+          setStatus('pending') // Nuevo estado: pendiente de confirmación
+          setMessage(data.message || 'Token válido. Haz clic en el botón para verificar tu email.')
+        }
+      } else {
+        setStatus('error')
+        setMessage(data.message || 'Error al verificar el email')
+        setExpired(data.expired || false)
+      }
+    } catch (error) {
+      console.error('Error verificando estado del token:', error)
+      setStatus('error')
+      setMessage('Error de conexión. Inténtalo de nuevo.')
+    }
+  }
 
   const verifyEmail = async (token) => {
     try {
+      setStatus('verifying') // Cambiar a estado de verificación
+      
       const response = await fetch(
         `${import.meta.env.VITE_API_BASE_URL}/auth/verify-email/${token}`,
         {
@@ -108,6 +152,20 @@ const VerifyEmailPage = () => {
             </>
           )}
           
+          {status === 'pending' && (
+            <>
+              <div className="mx-auto h-16 w-16 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                <Mail className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+              </div>
+              <h2 className="mt-6 text-3xl font-extrabold text-gray-900 dark:text-white">
+                Verifica tu email
+              </h2>
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                Haz clic en el botón para confirmar tu dirección de email
+              </p>
+            </>
+          )}
+          
           {status === 'success' && (
             <>
               <div className="mx-auto h-16 w-16 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
@@ -136,9 +194,21 @@ const VerifyEmailPage = () => {
 
         {/* Mensaje */}
         {message && status !== 'verifying' && (
-          <Alert className={status === 'success' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}>
-            <AlertCircle className={`h-4 w-4 ${status === 'success' ? 'text-green-600' : 'text-red-600'}`} />
-            <AlertDescription className={status === 'success' ? 'text-green-800' : 'text-red-800'}>
+          <Alert className={
+            status === 'success' ? 'border-green-200 bg-green-50' : 
+            status === 'pending' ? 'border-blue-200 bg-blue-50' :
+            'border-red-200 bg-red-50'
+          }>
+            <AlertCircle className={`h-4 w-4 ${
+              status === 'success' ? 'text-green-600' : 
+              status === 'pending' ? 'text-blue-600' :
+              'text-red-600'
+            }`} />
+            <AlertDescription className={
+              status === 'success' ? 'text-green-800' : 
+              status === 'pending' ? 'text-blue-800' :
+              'text-red-800'
+            }>
               {message}
             </AlertDescription>
           </Alert>
@@ -146,6 +216,22 @@ const VerifyEmailPage = () => {
 
         {/* Acciones */}
         <div className="space-y-4">
+          {status === 'pending' && (
+            <div className="text-center">
+              <Button
+                onClick={() => verifyEmail(token)}
+                className="w-full"
+                size="lg"
+              >
+                <CheckCircle2 className="w-5 h-5 mr-2" />
+                Confirmar y verificar mi email
+              </Button>
+              <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">
+                Al hacer clic, confirmarás que esta es tu dirección de email y podrás iniciar sesión.
+              </p>
+            </div>
+          )}
+          
           {status === 'success' && (
             <div className="text-center">
               <p className="text-sm text-gray-600 dark:text-gray-400">
