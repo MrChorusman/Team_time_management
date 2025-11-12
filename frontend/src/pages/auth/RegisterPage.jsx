@@ -16,7 +16,10 @@ const RegisterPage = () => {
   const { register: registerUser, loading, error, clearError } = useAuth()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [registrationSuccess, setRegistrationSuccess] = useState(false)
+  const [registrationSuccess, setRegistrationSuccess] = useState(() => {
+    // Leer del localStorage al inicializar
+    return localStorage.getItem('registrationSuccess') === 'true'
+  })
   const [invitationToken, setInvitationToken] = useState(null)
   const registrationSuccessRef = useRef(false)
   
@@ -40,12 +43,23 @@ const RegisterPage = () => {
     }
   }, [searchParams])
 
-  // Forzar re-renderizado cuando registrationSuccess cambia
+  // Limpiar localStorage cuando el componente se desmonte o cuando se navegue
   useEffect(() => {
-    if (registrationSuccess || registrationSuccessRef.current) {
-      console.log('registrationSuccess cambió, forzando re-renderizado')
+    return () => {
+      // No limpiar aquí - queremos que persista hasta que el usuario navegue
     }
-  }, [registrationSuccess])
+  }, [])
+
+  // Limpiar localStorage cuando se navegue a login
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      // No limpiar en beforeunload - queremos que persista
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
+  }, [])
 
   const onSubmit = async (data, e) => {
     e?.preventDefault() // Prevenir comportamiento por defecto del formulario
@@ -72,6 +86,7 @@ const RegisterPage = () => {
         // NO resetear el formulario - queremos mantener el estado
         // Establecer el estado ANTES de cualquier otra operación
         registrationSuccessRef.current = true
+        localStorage.setItem('registrationSuccess', 'true')
         setRegistrationSuccess(true)
         console.log('Estado registrationSuccess establecido a true')
         
