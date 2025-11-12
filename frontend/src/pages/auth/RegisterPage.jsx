@@ -57,15 +57,14 @@ const RegisterPage = () => {
       if (result.success) {
         setRegistrationSuccess(true)
         
-        // Si hay invitación, redirigir a completar perfil de empleado
-        // Si no hay invitación, redirigir al login
-        setTimeout(() => {
-          if (invitationToken) {
+        // Si hay invitación, redirigir a completar perfil de empleado después de mostrar mensaje
+        // Si NO hay invitación, NO redirigir automáticamente - dejar que el usuario vea el mensaje
+        if (invitationToken) {
+          setTimeout(() => {
             navigate(`/employee/register?token=${invitationToken}`)
-          } else {
-            navigate('/login')
-          }
-        }, 3000)
+          }, 3000)
+        }
+        // Si no hay invitación, el usuario debe ver el mensaje y hacer clic en "Ir a Login"
       }
     } catch (error) {
       console.error('Error en registro:', error)
@@ -92,14 +91,22 @@ const RegisterPage = () => {
                   }
                 </p>
                 {!invitationToken && (
-                  <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-4">
-                    <p className="text-sm text-blue-800 dark:text-blue-200">
-                      📧 Revisa tu bandeja de entrada y busca el email de verificación. 
-                      Si no lo encuentras, revisa la carpeta de spam.
-                    </p>
-                  </div>
+                  <>
+                    <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-4">
+                      <p className="text-sm text-blue-800 dark:text-blue-200">
+                        📧 Revisa tu bandeja de entrada y busca el email de verificación. 
+                        Si no lo encuentras, revisa la carpeta de spam.
+                      </p>
+                    </div>
+                    <Button 
+                      onClick={() => navigate('/login')} 
+                      className="w-full mt-4"
+                    >
+                      Ir a Iniciar Sesión
+                    </Button>
+                  </>
                 )}
-                <LoadingSpinner size="sm" />
+                {invitationToken && <LoadingSpinner size="sm" />}
               </div>
             </CardContent>
           </Card>

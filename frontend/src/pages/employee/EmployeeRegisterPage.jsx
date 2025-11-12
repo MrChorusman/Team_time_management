@@ -28,7 +28,7 @@ import teamService from '../../services/teamService'
 const EmployeeRegisterPage = () => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { user, updateEmployee, loading } = useAuth()
+  const { user, updateEmployee, loading, logout } = useAuth()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
@@ -40,6 +40,14 @@ const EmployeeRegisterPage = () => {
   const [invitationEmail, setInvitationEmail] = useState(null)
   const [tokenValidating, setTokenValidating] = useState(false)
   const [tokenError, setTokenError] = useState(null)
+  
+  // Estados para países, regiones y ciudades desde BD
+  const [countries, setCountries] = useState([])
+  const [regions, setRegions] = useState([])
+  const [cities, setCities] = useState([])
+  const [loadingCountries, setLoadingCountries] = useState(true)
+  const [loadingRegions, setLoadingRegions] = useState(false)
+  const [loadingCities, setLoadingCities] = useState(false)
   
   const {
     register,
@@ -54,32 +62,93 @@ const EmployeeRegisterPage = () => {
     }
   })
 
-  // Datos de países, regiones y ciudades (simplificado)
-  const countries = [
-    { code: 'ES', name: 'España' },
-    { code: 'MX', name: 'México' },
-    { code: 'AR', name: 'Argentina' },
-    { code: 'CO', name: 'Colombia' },
-    { code: 'PE', name: 'Perú' },
-    { code: 'CL', name: 'Chile' }
-  ]
+  // Cargar países desde BD
+  useEffect(() => {
+    const loadCountries = async () => {
+      try {
+        setLoadingCountries(true)
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/locations/public/countries`, {
+          credentials: 'include'
+        })
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success) {
+            setCountries(data.countries || [])
+          }
+        }
+      } catch (error) {
+        console.error('Error cargando países:', error)
+      } finally {
+        setLoadingCountries(false)
+      }
+    }
+    loadCountries()
+  }, [])
 
-  const regions = {
-    'ES': ['Madrid', 'Cataluña', 'Andalucía', 'Valencia', 'País Vasco'],
-    'MX': ['Ciudad de México', 'Jalisco', 'Nuevo León', 'Puebla', 'Guanajuato'],
-    'AR': ['Buenos Aires', 'Córdoba', 'Santa Fe', 'Mendoza', 'Tucumán'],
-    'CO': ['Bogotá', 'Antioquia', 'Valle del Cauca', 'Atlántico', 'Santander'],
-    'PE': ['Lima', 'Arequipa', 'La Libertad', 'Piura', 'Lambayeque'],
-    'CL': ['Santiago', 'Valparaíso', 'Biobío', 'Araucanía', 'Los Lagos']
-  }
+  // Cargar regiones cuando se selecciona un país
+  useEffect(() => {
+    const loadRegions = async () => {
+      if (!selectedCountry) {
+        setRegions([])
+        setCities([])
+        return
+      }
+      
+      try {
+        setLoadingRegions(true)
+        const country = countries.find(c => c.code === selectedCountry || c.name === selectedCountry)
+        if (!country) return
+        
+        const response = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}/locations/public/autonomous-communities?country_code=${country.code}`,
+          { credentials: 'include' }
+        )
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success) {
+            setRegions(data.autonomous_communities || [])
+          }
+        }
+      } catch (error) {
+        console.error('Error cargando regiones:', error)
+      } finally {
+        setLoadingRegions(false)
+      }
+    }
+    loadRegions()
+  }, [selectedCountry, countries])
 
-  const cities = {
-    'Madrid': ['Madrid', 'Alcalá de Henares', 'Móstoles', 'Fuenlabrada'],
-    'Cataluña': ['Barcelona', 'Hospitalet de Llobregat', 'Terrassa', 'Badalona'],
-    'Ciudad de México': ['Ciudad de México', 'Ecatepec', 'Guadalajara', 'Puebla'],
-    'Buenos Aires': ['Buenos Aires', 'La Plata', 'Mar del Plata', 'Bahía Blanca'],
-    'Bogotá': ['Bogotá', 'Soacha', 'Villavicencio', 'Facatativá']
-  }
+  // Cargar ciudades cuando se selecciona una región
+  useEffect(() => {
+    const loadCities = async () => {
+      if (!selectedRegion) {
+        setCities([])
+        return
+      }
+      
+      try {
+        setLoadingCities(true)
+        const region = regions.find(r => r.name === selectedRegion || r.id === selectedRegion)
+        if (!region) return
+        
+        const response = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}/locations/public/cities?autonomous_community_id=${region.id}`,
+          { credentials: 'include' }
+        )
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success) {
+            setCities(data.cities || [])
+          }
+        }
+      } catch (error) {
+        console.error('Error cargando ciudades:', error)
+      } finally {
+        setLoadingCities(false)
+      }
+    }
+    loadCities()
+  }, [selectedRegion, regions])
 
   // Meses disponibles para horario de verano
   const months = [
@@ -223,10 +292,8 @@ const EmployeeRegisterPage = () => {
           }
         }
         
-        // Redirigir después de 2 segundos
-        setTimeout(() => {
-          navigate('/dashboard')
-        }, 2000)
+        // NO redirigir automáticamente - mostrar mensaje de éxito persistente
+        // El usuario debe esperar aprobación del manager
       } else {
         setError(response.message || 'Error al registrar empleado. Por favor, inténtalo de nuevo.')
       }
@@ -267,9 +334,36 @@ const EmployeeRegisterPage = () => {
                   ¡Registro Completado!
                 </h2>
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  Tu perfil de empleado ha sido enviado para aprobación. Serás redirigido al dashboard.
+                  Tu perfil de empleado ha sido enviado para aprobación. 
+                  <strong> Debes esperar a que el manager de tu equipo apruebe tu registro</strong> antes de poder acceder a todas las funcionalidades.
                 </p>
-                <LoadingSpinner size="sm" />
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg mb-4">
+                  <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                    ⏳ Estado: <strong>Pendiente de aprobación</strong>
+                  </p>
+                  <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-2">
+                    Recibirás una notificación cuando tu registro sea aprobado.
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={() => navigate('/dashboard')} 
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    Ir a Dashboard
+                  </Button>
+                  <Button 
+                    onClick={async () => {
+                      await logout()
+                      navigate('/login')
+                    }}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    Cerrar Sesión
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -283,6 +377,19 @@ const EmployeeRegisterPage = () => {
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
+          <div className="flex justify-between items-start mb-4">
+            <Button
+              variant="ghost"
+              onClick={async () => {
+                await logout()
+                navigate('/login')
+              }}
+              className="text-gray-600 dark:text-gray-400"
+            >
+              Cerrar Sesión
+            </Button>
+            <div className="flex-1"></div>
+          </div>
           <div className="mx-auto h-12 w-12 bg-blue-600 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-lg">TTM</span>
           </div>
@@ -418,14 +525,21 @@ const EmployeeRegisterPage = () => {
                 {/* País */}
                 <div className="space-y-2">
                   <Label htmlFor="country">País *</Label>
-                  <Select onValueChange={(value) => setValue('country', value)}>
+                  <Select 
+                    onValueChange={(value) => {
+                      setValue('country', value)
+                      setValue('region', '') // Limpiar región al cambiar país
+                      setValue('city', '') // Limpiar ciudad al cambiar país
+                    }}
+                    disabled={loadingCountries}
+                  >
                     <SelectTrigger>
                       <Globe className="w-4 h-4 mr-2" />
-                      <SelectValue placeholder="Selecciona país" />
+                      <SelectValue placeholder={loadingCountries ? "Cargando países..." : "Selecciona país"} />
                     </SelectTrigger>
                     <SelectContent>
                       {countries.map((country) => (
-                        <SelectItem key={country.code} value={country.code}>
+                        <SelectItem key={country.code || country.id} value={country.code || country.name}>
                           {country.name}
                         </SelectItem>
                       ))}
@@ -442,17 +556,26 @@ const EmployeeRegisterPage = () => {
                 <div className="space-y-2">
                   <Label htmlFor="region">Región/Estado *</Label>
                   <Select 
-                    onValueChange={(value) => setValue('region', value)}
-                    disabled={!selectedCountry}
+                    onValueChange={(value) => {
+                      setValue('region', value)
+                      setValue('city', '') // Limpiar ciudad al cambiar región
+                    }}
+                    disabled={!selectedCountry || loadingRegions}
                   >
                     <SelectTrigger>
                       <MapPin className="w-4 h-4 mr-2" />
-                      <SelectValue placeholder="Selecciona región" />
+                      <SelectValue placeholder={
+                        !selectedCountry 
+                          ? "Selecciona primero un país" 
+                          : loadingRegions 
+                            ? "Cargando regiones..." 
+                            : "Selecciona región"
+                      } />
                     </SelectTrigger>
                     <SelectContent>
-                      {selectedCountry && regions[selectedCountry]?.map((region) => (
-                        <SelectItem key={region} value={region}>
-                          {region}
+                      {regions.map((region) => (
+                        <SelectItem key={region.id || region.name} value={region.name}>
+                          {region.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -469,16 +592,22 @@ const EmployeeRegisterPage = () => {
                   <Label htmlFor="city">Ciudad *</Label>
                   <Select 
                     onValueChange={(value) => setValue('city', value)}
-                    disabled={!selectedRegion}
+                    disabled={!selectedRegion || loadingCities}
                   >
                     <SelectTrigger>
                       <Building className="w-4 h-4 mr-2" />
-                      <SelectValue placeholder="Selecciona ciudad" />
+                      <SelectValue placeholder={
+                        !selectedRegion 
+                          ? "Selecciona primero una región" 
+                          : loadingCities 
+                            ? "Cargando ciudades..." 
+                            : "Selecciona ciudad"
+                      } />
                     </SelectTrigger>
                     <SelectContent>
-                      {selectedRegion && cities[selectedRegion]?.map((city) => (
-                        <SelectItem key={city} value={city}>
-                          {city}
+                      {cities.map((city) => (
+                        <SelectItem key={city.id || city.name} value={city.name}>
+                          {city.name}
                         </SelectItem>
                       ))}
                     </SelectContent>

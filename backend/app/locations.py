@@ -10,7 +10,7 @@ locations_bp = Blueprint('locations', __name__)
 
 
 @locations_bp.route('/countries', methods=['GET'])
-@auth_required()
+@locations_bp.route('/public/countries', methods=['GET'])
 def get_countries():
     """Obtiene lista de países activos"""
     try:
@@ -37,7 +37,7 @@ def get_countries():
 
 
 @locations_bp.route('/autonomous-communities', methods=['GET'])
-@auth_required()
+@locations_bp.route('/public/autonomous-communities', methods=['GET'])
 def get_autonomous_communities():
     """Obtiene comunidades autónomas, opcionalmente filtradas por país"""
     try:
@@ -100,7 +100,7 @@ def get_provinces():
 
 
 @locations_bp.route('/cities', methods=['GET'])
-@auth_required()
+@locations_bp.route('/public/cities', methods=['GET'])
 def get_cities():
     """Obtiene ciudades, opcionalmente filtradas por comunidad autónoma o búsqueda"""
     try:
