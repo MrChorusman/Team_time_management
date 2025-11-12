@@ -3,13 +3,13 @@ from flask_security import login_user, logout_user, current_user, auth_required
 from flask_security.utils import hash_password
 from werkzeug.security import check_password_hash
 import logging
+from datetime import datetime, timedelta
+import secrets
 
 from models.user import User, Role, db
 from models.email_verification_token import EmailVerificationToken
 from services.google_oauth_service import GoogleOAuthService
 from services.email_service import send_verification_email
-import secrets
-from datetime import timedelta
 
 logger = logging.getLogger(__name__)
 
