@@ -373,6 +373,42 @@ def confirm_email_now():
             'message': 'Error interno del servidor'
         }), 500
 
+@auth_bp.route('/debug-user', methods=['POST'])
+def debug_user():
+    """
+    Endpoint de debug para ver el estado real del usuario en BD
+    """
+    try:
+        data = request.get_json()
+        email = data.get('email', '').lower().strip()
+        
+        if not email:
+            return jsonify({'error': 'Email requerido'}), 400
+        
+        user = User.query.filter_by(email=email).first()
+        
+        if not user:
+            return jsonify({'error': 'Usuario no encontrado'}), 404
+        
+        # Forzar refresh desde BD
+        db.session.refresh(user)
+        
+        return jsonify({
+            'id': user.id,
+            'email': user.email,
+            'password_hash_length': len(user.password) if user.password else 0,
+            'password_hash_starts_with': user.password[:10] if user.password else 'NULL',
+            'password_is_none': user.password is None,
+            'password_is_empty_string': user.password == '',
+            'confirmed_at': user.confirmed_at.isoformat() if user.confirmed_at else None,
+            'active': user.active
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error en debug: {e}")
+        import traceback
+        return jsonify({'error': str(e), 'traceback': traceback.format_exc()}), 500
+
 @auth_bp.route('/reset-password-emergency', methods=['POST'])
 def reset_password_emergency():
     """
