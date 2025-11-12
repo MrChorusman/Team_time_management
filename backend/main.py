@@ -122,7 +122,8 @@ def create_app(config_name=None):
             get_logger('migrations').error(f"Auto-migración fallida: {e}")
 
     # Inicializar servicios
-    email_service = EmailService()
+    # Importar el singleton global y inicializarlo
+    from services.email_service import email_service
     email_service.init_app(app)
     
     # Guardar email_service en app para acceso global
