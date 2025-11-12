@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { Eye, EyeOff, UserPlus, Mail, Lock, User } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
@@ -12,10 +12,12 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner'
 
 const RegisterPage = () => {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { register: registerUser, loading, error, clearError } = useAuth()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [registrationSuccess, setRegistrationSuccess] = useState(false)
+  const [invitationToken, setInvitationToken] = useState(null)
   
   const {
     register,
@@ -26,22 +28,43 @@ const RegisterPage = () => {
 
   const password = watch('password')
 
+  // Detectar token de invitación en la URL
+  useEffect(() => {
+    const token = searchParams.get('token')
+    if (token) {
+      setInvitationToken(token)
+    }
+  }, [searchParams])
+
   const onSubmit = async (data) => {
     clearError()
     
     try {
-      const result = await registerUser({
+      const registerData = {
         email: data.email,
         password: data.password,
         first_name: data.firstName,
         last_name: data.lastName
-      })
+      }
+      
+      // Si hay token de invitación, incluirlo en el registro
+      if (invitationToken) {
+        registerData.invitation_token = invitationToken
+      }
+      
+      const result = await registerUser(registerData)
       
       if (result.success) {
         setRegistrationSuccess(true)
-        // Redirigir al login después de 3 segundos
+        
+        // Si hay invitación, redirigir a completar perfil de empleado
+        // Si no hay invitación, redirigir al login
         setTimeout(() => {
-          navigate('/login')
+          if (invitationToken) {
+            navigate(`/employee/register?token=${invitationToken}`)
+          } else {
+            navigate('/login')
+          }
         }, 3000)
       }
     } catch (error) {
@@ -63,14 +86,19 @@ const RegisterPage = () => {
                   ¡Registro Exitoso!
                 </h2>
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  Tu cuenta ha sido creada exitosamente. <strong>Por favor, verifica tu email</strong> para activar tu cuenta antes de iniciar sesión.
+                  {invitationToken 
+                    ? 'Tu cuenta ha sido creada exitosamente. Tu email ha sido confirmado automáticamente. Ahora completa tu perfil de empleado.'
+                    : 'Tu cuenta ha sido creada exitosamente. <strong>Por favor, verifica tu email</strong> para activar tu cuenta antes de iniciar sesión.'
+                  }
                 </p>
-                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-4">
-                  <p className="text-sm text-blue-800 dark:text-blue-200">
-                    📧 Revisa tu bandeja de entrada y busca el email de verificación. 
-                    Si no lo encuentras, revisa la carpeta de spam.
-                  </p>
-                </div>
+                {!invitationToken && (
+                  <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-4">
+                    <p className="text-sm text-blue-800 dark:text-blue-200">
+                      📧 Revisa tu bandeja de entrada y busca el email de verificación. 
+                      Si no lo encuentras, revisa la carpeta de spam.
+                    </p>
+                  </div>
+                )}
                 <LoadingSpinner size="sm" />
               </div>
             </CardContent>
