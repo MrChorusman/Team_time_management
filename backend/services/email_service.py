@@ -687,11 +687,6 @@ email_service = EmailService()
 
 
 # Funciones wrapper para facilitar el uso
-def send_notification_email(notification: Notification) -> bool:
-    """Wrapper para enviar email de notificación"""
-    return email_service.send_notification_email(notification)
-
-
     def send_verification_email(self, to_email: str, verification_link: str, user_name: str = None) -> bool:
         """
         Envía un email de verificación de cuenta
