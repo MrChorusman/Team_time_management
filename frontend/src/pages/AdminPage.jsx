@@ -611,14 +611,14 @@ const AdminPage = () => {
                 </div>
                 
                 <Select 
-                  value={usersFilter.role} 
-                  onValueChange={(value) => setUsersFilter(prev => ({ ...prev, role: value }))}
+                  value={usersFilter.role || "all"} 
+                  onValueChange={(value) => setUsersFilter(prev => ({ ...prev, role: value === "all" ? "" : value }))}
                 >
                   <SelectTrigger className="w-48">
                     <SelectValue placeholder="Filtrar por rol" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos los roles</SelectItem>
+                    <SelectItem value="all">Todos los roles</SelectItem>
                     {roles.map(role => (
                       <SelectItem key={role.name} value={role.name}>
                         {role.description}
