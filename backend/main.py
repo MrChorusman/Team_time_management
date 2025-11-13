@@ -1,10 +1,10 @@
 import os
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_migrate import Migrate
 from flask_mail import Mail
 from flask_security import Security, SQLAlchemyUserDatastore
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 
 # Importar configuración desde app_config (evita conflicto con directorio config/)
@@ -65,20 +65,49 @@ def create_app(config_name=None):
     # Configurar logging estructurado
     setup_logging(app)
     
+    # Inicializar mejoras de compatibilidad móvil
+    try:
+        from app import init_mobile_compatibility
+        init_mobile_compatibility(app)
+    except ImportError:
+        # Si el módulo no existe, continuar sin él
+        pass
+    
     # Inicializar extensiones
     db.init_app(app)
+    # Configuración de CORS mejorada para móviles
+    # Permitir configuración adicional desde variables de entorno
+    cors_origins = list(app.config['CORS_ORIGINS'])
+    additional_origins = os.environ.get('CORS_ADDITIONAL_ORIGINS', '')
+    if additional_origins:
+        cors_origins.extend([origin.strip() for origin in additional_origins.split(',') if origin.strip()])
+    
     CORS(app, 
-         origins=app.config['CORS_ORIGINS'],
+         origins=cors_origins,
          supports_credentials=True,
-         allow_headers=['Content-Type', 'Authorization'],
-         methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
+         allow_headers=['Content-Type', 'Authorization', 'X-Requested-With', 'Origin', 'Accept'],
+         methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+         expose_headers=['Content-Type', 'Authorization'],
+         max_age=3600)  # Cache preflight requests por 1 hora
     
     # Configuración de sesiones para cross-domain (Vercel → Render)
     is_production = os.environ.get('FLASK_ENV') == 'production' or os.environ.get('RENDER')
+    
+    # Detectar si la petición viene de HTTPS (importante para móviles y proxies)
+    @app.before_request
+    def detect_secure():
+        """Detecta si la conexión es segura basándose en headers de proxy"""
+        if request.headers.get('X-Forwarded-Proto') == 'https' or request.headers.get('X-Forwarded-Ssl') == 'on':
+            request.is_secure = True
+    
+    # Configuración de cookies mejorada para móviles
     app.config['SESSION_COOKIE_SECURE'] = is_production  # Solo HTTPS en producción
     app.config['SESSION_COOKIE_HTTPONLY'] = True  # No accesible desde JavaScript
+    # SameSite=None requiere Secure=True, pero en desarrollo puede causar problemas en móviles
     app.config['SESSION_COOKIE_SAMESITE'] = 'None' if is_production else 'Lax'  # Cross-domain en producción
     app.config['SESSION_COOKIE_DOMAIN'] = None  # Permitir cross-domain
+    # Aumentar tiempo de vida de sesión para móviles (pueden tener conexiones intermitentes)
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
     
     # Configurar Flask-Mail
     mail = Mail(app)
