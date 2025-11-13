@@ -657,7 +657,7 @@ const DashboardPage = () => {
             <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
               Empleado
             </Badge>
-            {dashboardData.employee_data.team && (
+            {dashboardData?.employee_data?.team && (
               <Badge variant="secondary">
                 {dashboardData.employee_data.team}
               </Badge>
@@ -666,7 +666,7 @@ const DashboardPage = () => {
         </div>
 
         {/* Estado de aprobación */}
-        {!dashboardData.employee_data.approved && (
+        {dashboardData?.employee_data && !dashboardData.employee_data.approved && (
           <Alert variant="warning">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>

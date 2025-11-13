@@ -46,7 +46,7 @@ class NotificationService:
     
     @staticmethod
     def notify_employee_approved(employee: Employee, approved_by_user: User) -> Optional[Notification]:
-        """Notifica al empleado que su cuenta ha sido aprobada"""
+        """Notifica al empleado que su cuenta ha sido aprobada y envía email"""
         try:
             employee_user = employee.user
             if not employee_user:
@@ -59,7 +59,22 @@ class NotificationService:
             )
             
             db.session.commit()
-            logger.info(f"Notificación de aprobación enviada a {employee_user.email}")
+            logger.info(f"Notificación de aprobación creada para {employee_user.email}")
+            
+            # Enviar email inmediatamente si está configurado
+            if notification.send_email:
+                try:
+                    from .email_service import EmailService
+                    email_service = EmailService()
+                    success = email_service.send_notification_email(notification)
+                    if success:
+                        notification.mark_email_sent()
+                        logger.info(f"Email de aprobación enviado a {employee_user.email}")
+                    else:
+                        logger.warning(f"No se pudo enviar email de aprobación a {employee_user.email}")
+                except Exception as email_error:
+                    logger.error(f"Error enviando email de aprobación: {email_error}")
+                    # No fallar si el email no se puede enviar, la notificación ya está creada
             
             return notification
             

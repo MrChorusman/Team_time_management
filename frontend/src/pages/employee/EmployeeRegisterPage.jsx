@@ -340,10 +340,10 @@ const EmployeeRegisterPage = () => {
                 </p>
                 <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg mb-4">
                   <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                    ⏳ Estado: <strong>Pendiente de aprobación</strong>
+                    Estado: <strong>Pendiente de aprobación</strong>
                   </p>
                   <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-2">
-                    Recibirás una notificación cuando tu registro sea aprobado.
+                    Recibirás un email cuando tu registro sea aprobado por el manager de tu equipo.
                   </p>
                 </div>
                 <div className="flex gap-2">
