@@ -61,10 +61,7 @@ const InviteEmployeeModal = ({ isOpen, onClose, onInviteSuccess }) => {
         onInviteSuccess(data)
       }
 
-      // Auto-cerrar después de 3 segundos
-      setTimeout(() => {
-        handleClose()
-      }, 3000)
+      // NO auto-cerrar - el usuario debe hacer clic en "Aceptar"
 
     } catch (err) {
       console.error('Error invitando empleado:', err)
@@ -148,36 +145,44 @@ const InviteEmployeeModal = ({ isOpen, onClose, onInviteSuccess }) => {
 
           {/* Botones */}
           <div className="flex gap-3 justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={loading}
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              disabled={loading || success}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-            >
-              {loading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                  Enviando...
-                </>
-              ) : success ? (
-                <>
-                  <CheckCircle2 className="w-4 h-4 mr-2" />
-                  Enviado
-                </>
-              ) : (
-                <>
-                  <Send className="w-4 h-4 mr-2" />
-                  Enviar Invitación
-                </>
-              )}
-            </Button>
+            {success ? (
+              <Button
+                type="button"
+                onClick={handleClose}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              >
+                <CheckCircle2 className="w-4 h-4 mr-2" />
+                Aceptar
+              </Button>
+            ) : (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleClose}
+                  disabled={loading}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                >
+                  {loading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                      Enviando...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4 mr-2" />
+                      Enviar Invitación
+                    </>
+                  )}
+                </Button>
+              </>
+            )}
           </div>
         </form>
       </DialogContent>

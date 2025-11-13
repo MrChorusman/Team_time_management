@@ -77,31 +77,25 @@ const EmployeesPage = () => {
   }
 
 
-  const getStatusColor = (status) => {
-    const colors = {
-      approved: 'bg-green-100 text-green-800 border-green-200',
-      pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      rejected: 'bg-red-100 text-red-800 border-red-200'
-    }
-    return colors[status] || colors.pending
+  const getStatusLabel = (employee) => {
+    if (employee.approved === true) return 'Aprobado'
+    if (employee.approved === false && employee.active === true) return 'Pendiente'
+    if (employee.approved === false && employee.active === false) return 'Rechazado'
+    return 'Desconocido'
   }
 
-  const getStatusLabel = (status) => {
-    const labels = {
-      approved: 'Aprobado',
-      pending: 'Pendiente',
-      rejected: 'Rechazado'
-    }
-    return labels[status] || 'Desconocido'
+  const getStatusIcon = (employee) => {
+    if (employee.approved === true) return <CheckCircle className="w-4 h-4" />
+    if (employee.approved === false && employee.active === true) return <Clock className="w-4 h-4" />
+    if (employee.approved === false && employee.active === false) return <XCircle className="w-4 h-4" />
+    return <Clock className="w-4 h-4" />
   }
-
-  const getStatusIcon = (status) => {
-    const icons = {
-      approved: <CheckCircle className="w-4 h-4" />,
-      pending: <Clock className="w-4 h-4" />,
-      rejected: <XCircle className="w-4 h-4" />
-    }
-    return icons[status] || icons.pending
+  
+  const getStatusColor = (employee) => {
+    if (employee.approved === true) return 'bg-green-100 text-green-800 border-green-200'
+    if (employee.approved === false && employee.active === true) return 'bg-yellow-100 text-yellow-800 border-yellow-200'
+    if (employee.approved === false && employee.active === false) return 'bg-red-100 text-red-800 border-red-200'
+    return 'bg-yellow-100 text-yellow-800 border-yellow-200'
   }
 
   const getInitials = (name) => {
@@ -111,10 +105,18 @@ const EmployeesPage = () => {
   const filteredEmployees = employees.filter(employee => {
     const matchesSearch = employee.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          employee.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         employee.team.name.toLowerCase().includes(searchTerm.toLowerCase())
+                         (employee.team?.name || '').toLowerCase().includes(searchTerm.toLowerCase())
     
-    const matchesStatus = statusFilter === 'all' || employee.approved === statusFilter
-    const matchesTeam = teamFilter === 'all' || employee.team.name === teamFilter
+    // Convertir boolean a string para comparar con el filtro
+    let employeeStatus = 'pending'
+    if (employee.approved === true) {
+      employeeStatus = 'approved'
+    } else if (employee.approved === false) {
+      employeeStatus = 'pending'
+    }
+    
+    const matchesStatus = statusFilter === 'all' || employeeStatus === statusFilter
+    const matchesTeam = teamFilter === 'all' || (employee.team?.name || '') === teamFilter
     
     return matchesSearch && matchesStatus && matchesTeam
   })
@@ -150,9 +152,9 @@ const EmployeesPage = () => {
 
   const getEmployeeStats = () => {
     const total = employees.length
-    const approved = employees.filter(e => e.approved === 'approved').length
-    const pending = employees.filter(e => e.approved === 'pending').length
-    const rejected = employees.filter(e => e.approved === 'rejected').length
+    const approved = employees.filter(e => e.approved === true).length
+    const pending = employees.filter(e => e.approved === false && e.active === true).length
+    const rejected = employees.filter(e => e.approved === false && e.active === false).length
     
     return { total, approved, pending, rejected }
   }
@@ -301,9 +303,9 @@ const EmployeesPage = () => {
                     </TableCell>
                     
                     <TableCell>
-                      <Badge className={getStatusColor(employee.approved)}>
-                        {getStatusIcon(employee.approved)}
-                        <span className="ml-1">{getStatusLabel(employee.approved)}</span>
+                      <Badge className={getStatusColor(employee)}>
+                        {getStatusIcon(employee)}
+                        <span className="ml-1">{getStatusLabel(employee)}</span>
                       </Badge>
                     </TableCell>
                     
@@ -477,9 +479,9 @@ const EmployeesPage = () => {
                       </div>
                       <div className="flex items-center justify-between">
                         <span>Estado:</span>
-                        <Badge className={getStatusColor(selectedEmployee.approved)}>
-                          {getStatusIcon(selectedEmployee.approved)}
-                          <span className="ml-1">{getStatusLabel(selectedEmployee.approved)}</span>
+                        <Badge className={getStatusColor(selectedEmployee)}>
+                          {getStatusIcon(selectedEmployee)}
+                          <span className="ml-1">{getStatusLabel(selectedEmployee)}</span>
                         </Badge>
                       </div>
                     </CardContent>

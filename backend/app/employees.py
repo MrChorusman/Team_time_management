@@ -8,6 +8,7 @@ from models.user import User, Role, db
 from models.employee import Employee
 from models.employee_invitation import EmployeeInvitation
 from models.team import Team
+from models.notification import Notification
 from services.notification_service import NotificationService
 from services.holiday_service import HolidayService
 from services.email_service import send_invitation_email
@@ -161,6 +162,56 @@ def register_employee():
         
         # Notificar al manager del equipo
         NotificationService.notify_employee_registration(employee, current_user)
+        
+        # Crear notificación para administradores sobre nuevo empleado registrado
+        admin_role = Role.query.filter_by(name='admin').first()
+        if admin_role:
+            admin_users = User.query.join(User.roles).filter(Role.id == admin_role.id).all()
+            for admin_user in admin_users:
+                notification = Notification(
+                    user_id=admin_user.id,
+                    title="Nuevo empleado registrado",
+                    message=f"{employee.full_name} se ha registrado en el equipo {team.name}. Estado: {'Aprobado' if employee.approved else 'Pendiente de aprobación'}",
+                    notification_type='employee_registration',
+                    priority='high' if not employee.approved else 'medium',
+                    send_email=False,
+                    created_by=current_user.id,
+                    data={
+                        'employee_id': employee.id,
+                        'employee_name': employee.full_name,
+                        'team_id': team.id,
+                        'team_name': team.name,
+                        'approved': employee.approved,
+                        'created_at': datetime.utcnow().isoformat()
+                    }
+                )
+                db.session.add(notification)
+            
+            # Si hay aprobaciones pendientes, crear notificación de alta prioridad
+            pending_count = Employee.query.filter(
+                Employee.active == True,
+                Employee.approved == False
+            ).count()
+            
+            if pending_count > 0:
+                for admin_user in admin_users:
+                    approval_notification = Notification(
+                        user_id=admin_user.id,
+                        title="Aprobación pendiente",
+                        message=f"Tienes {pending_count} empleado(s) pendiente(s) de aprobación",
+                        notification_type='approval_request',
+                        priority='high',
+                        send_email=False,
+                        created_by=current_user.id,
+                        data={
+                            'pending_count': pending_count,
+                            'action_url': '/employees?status=pending'
+                        }
+                    )
+                    db.session.add(approval_notification)
+            
+            db.session.commit()
+        
         logger.info(f"Empleado registrado: {employee.full_name} en equipo {team.name}")
         
         return jsonify({
@@ -649,7 +700,7 @@ def invite_employee():
         
         # Enviar email de invitación
         frontend_url = request.headers.get('Origin', 'https://team-time-management.vercel.app')
-        invitation_link = f"{frontend_url}/employee/register?token={token}"
+        invitation_link = f"{frontend_url}/register?token={token}"
         
         logger.info(f"📧 Intentando enviar invitación a {email}")
         logger.info(f"📧 Link: {invitation_link}")
@@ -665,6 +716,27 @@ def invite_employee():
             
             if email_sent:
                 logger.info(f"✅ Invitación enviada exitosamente a {email}")
+                
+                # Crear notificación para administradores sobre la invitación enviada
+                admin_users = User.query.join(User.roles).filter(Role.name == 'admin').all()
+                for admin_user in admin_users:
+                    notification = Notification(
+                        user_id=admin_user.id,
+                        title="Invitación enviada",
+                        message=f"Se ha enviado una invitación a {email} para unirse al sistema.",
+                        notification_type='system',
+                        priority='low',
+                        send_email=False,
+                        created_by=current_user.id,
+                        data={
+                            'invitation_email': email,
+                            'invited_by': current_user.email,
+                            'expires_at': expires_at.isoformat()
+                        }
+                    )
+                    db.session.add(notification)
+                
+                db.session.commit()
             else:
                 logger.warning(f"⚠️ send_invitation_email devolvió False para {email}")
             

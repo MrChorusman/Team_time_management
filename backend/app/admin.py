@@ -91,6 +91,23 @@ def get_admin_dashboard():
                 'approved': employee.approved
             })
         
+        # Invitaciones enviadas recientemente
+        from models.employee_invitation import EmployeeInvitation
+        recent_invitations = EmployeeInvitation.query.filter(
+            EmployeeInvitation.created_at >= datetime.utcnow() - timedelta(days=7)
+        ).order_by(EmployeeInvitation.created_at.desc()).limit(5).all()
+        
+        for invitation in recent_invitations:
+            inviter = User.query.get(invitation.invited_by)
+            inviter_name = inviter.email if inviter else 'Sistema'
+            recent_activity.append({
+                'type': 'invitation_sent',
+                'description': f'Invitación enviada a {invitation.email}',
+                'timestamp': invitation.created_at.isoformat(),
+                'invitation_email': invitation.email,
+                'invited_by': inviter_name
+            })
+        
         # Ordenar actividad por fecha
         recent_activity.sort(key=lambda x: x['timestamp'], reverse=True)
         

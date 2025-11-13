@@ -641,6 +641,63 @@ const DashboardPage = () => {
 
   // Dashboard para Empleados
   if (dashboardData.type === 'employee') {
+    // Si el empleado está pendiente de aprobación, mostrar mensaje y no cargar datos
+    if (dashboardData?.employee_data && dashboardData.employee_data.approved === false) {
+      return (
+        <div className="w-full space-y-8 px-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                {getGreeting()}, {getUserDisplayName()}
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400">
+                Tu registro está pendiente de aprobación
+              </p>
+            </div>
+          </div>
+
+          {/* Mensaje de estado pendiente */}
+          <Alert variant="warning" className="border-yellow-200 bg-yellow-50 dark:bg-yellow-900/20">
+            <AlertCircle className="h-4 w-4 text-yellow-600" />
+            <AlertDescription className="text-yellow-800 dark:text-yellow-200">
+              <p className="font-semibold mb-2">Tu registro está pendiente de aprobación</p>
+              <p className="text-sm">
+                Tu manager revisará tu solicitud y recibirás un email cuando tu cuenta sea aprobada. 
+                Una vez aprobado, podrás acceder a todas las funcionalidades de la aplicación.
+              </p>
+            </AlertDescription>
+          </Alert>
+
+          {/* Información básica */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Información de tu Registro</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Nombre:</span>
+                <span className="font-medium">{dashboardData.employee_data?.full_name || 'N/A'}</span>
+              </div>
+              {dashboardData.employee_data?.team && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Equipo:</span>
+                  <Badge variant="secondary">{dashboardData.employee_data.team}</Badge>
+                </div>
+              )}
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Estado:</span>
+                <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
+                  <Clock className="w-3 h-3 mr-1" />
+                  Pendiente de Aprobación
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )
+    }
+
     return (
       <div className="space-y-6">
         {/* Header */}
@@ -664,16 +721,6 @@ const DashboardPage = () => {
             )}
           </div>
         </div>
-
-        {/* Estado de aprobación */}
-        {dashboardData?.employee_data && !dashboardData.employee_data.approved && (
-          <Alert variant="warning">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              Tu registro está pendiente de aprobación por tu manager. Algunas funcionalidades pueden estar limitadas.
-            </AlertDescription>
-          </Alert>
-        )}
 
         {/* Pestañas de resumen */}
         <Tabs defaultValue="monthly" className="space-y-6">

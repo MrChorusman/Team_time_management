@@ -30,6 +30,90 @@ import { Progress } from '../components/ui/progress'
 import { Alert, AlertDescription } from '../components/ui/alert'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 
+// Componente para mostrar la lista de actividad
+const ActivityList = ({ userId }) => {
+  const [activities, setActivities] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (userId) {
+      loadActivities()
+    }
+  }, [userId])
+
+  const loadActivities = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/notifications?per_page=10`, {
+        credentials: 'include'
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setActivities(data.notifications || [])
+      }
+    } catch (error) {
+      console.error('Error cargando actividad:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const getActivityColor = (type) => {
+    const colors = {
+      'employee_registration': 'bg-blue-600',
+      'employee_approved': 'bg-green-600',
+      'approval_request': 'bg-yellow-600',
+      'system': 'bg-purple-600',
+      'calendar_change': 'bg-indigo-600'
+    }
+    return colors[type] || 'bg-gray-600'
+  }
+
+  const formatTimeAgo = (dateString) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffMs = now - date
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays = Math.floor(diffMs / 86400000)
+
+    if (diffMins < 1) return 'Hace unos momentos'
+    if (diffMins < 60) return `Hace ${diffMins} minuto${diffMins > 1 ? 's' : ''}`
+    if (diffHours < 24) return `Hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`
+    if (diffDays < 7) return `Hace ${diffDays} día${diffDays > 1 ? 's' : ''}`
+    
+    return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+  }
+
+  if (loading) {
+    return <LoadingSpinner size="sm" text="Cargando actividad..." />
+  }
+
+  if (activities.length === 0) {
+    return (
+      <div className="text-center py-8 text-gray-500">
+        <p>No hay actividad reciente</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      {activities.map((activity) => (
+        <div key={activity.id} className="flex items-start space-x-3">
+          <div className={`w-2 h-2 ${getActivityColor(activity.notification_type)} rounded-full mt-2`} />
+          <div className="flex-1">
+            <p className="text-sm font-medium">{activity.title}</p>
+            <p className="text-xs text-gray-500">{activity.message}</p>
+            <p className="text-xs text-gray-400 mt-1">{formatTimeAgo(activity.created_at)}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 const ProfilePage = () => {
   const { user, employee, updateProfile } = useAuth()
   const [loading, setLoading] = useState(false)
@@ -622,39 +706,7 @@ const ProfilePage = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-start space-x-3">
-                      <div className="w-2 h-2 bg-green-600 rounded-full mt-2" />
-                      <div>
-                        <p className="text-sm font-medium">Perfil actualizado</p>
-                        <p className="text-xs text-gray-500">Hace 2 horas</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start space-x-3">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full mt-2" />
-                      <div>
-                        <p className="text-sm font-medium">Solicitud de vacaciones enviada</p>
-                        <p className="text-xs text-gray-500">Ayer a las 14:30</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start space-x-3">
-                      <div className="w-2 h-2 bg-purple-600 rounded-full mt-2" />
-                      <div>
-                        <p className="text-sm font-medium">Contraseña cambiada</p>
-                        <p className="text-xs text-gray-500">Hace 3 días</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start space-x-3">
-                      <div className="w-2 h-2 bg-yellow-600 rounded-full mt-2" />
-                      <div>
-                        <p className="text-sm font-medium">Inicio de sesión desde nuevo dispositivo</p>
-                        <p className="text-xs text-gray-500">Hace 1 semana</p>
-                      </div>
-                    </div>
-                  </div>
+                  <ActivityList userId={user?.id} />
                 </CardContent>
               </Card>
             </TabsContent>

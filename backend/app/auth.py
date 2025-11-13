@@ -8,6 +8,7 @@ import secrets
 from models.user import User, Role, db
 from models.email_verification_token import EmailVerificationToken
 from models.employee_invitation import EmployeeInvitation
+from models.notification import Notification
 from services.google_oauth_service import GoogleOAuthService
 from services.email_service import send_verification_email
 
@@ -172,6 +173,29 @@ def register():
         
         db.session.add(new_user)
         db.session.commit()
+        
+        # Crear notificación para administradores sobre nuevo usuario registrado
+        admin_role = Role.query.filter_by(name='admin').first()
+        if admin_role:
+            admin_users = User.query.join(User.roles).filter(Role.id == admin_role.id).all()
+            for admin_user in admin_users:
+                notification = Notification(
+                    user_id=admin_user.id,
+                    title="Nuevo usuario registrado",
+                    message=f"Un nuevo usuario se ha registrado: {email}",
+                    notification_type='system',
+                    priority='medium',
+                    send_email=False,
+                    created_by=new_user.id,
+                    data={
+                        'user_id': new_user.id,
+                        'user_email': email,
+                        'has_invitation': invitation is not None,
+                        'created_at': datetime.utcnow().isoformat()
+                    }
+                )
+                db.session.add(notification)
+            db.session.commit()
         
         # Solo generar token de verificación si NO hay invitación
         email_sent = False
