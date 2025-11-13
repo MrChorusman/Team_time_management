@@ -448,41 +448,55 @@ const AdminPage = () => {
 
         {/* Pestaña de Resumen */}
         <TabsContent value="overview" className="space-y-6">
-          {/* Estadísticas del sistema */}
-          {dashboardData && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <StatsCard
-                title="Usuarios Totales"
-                value={stats.users?.total || 0}
-                subtitle={`${stats.users?.active || 0} activos`}
-                icon={Users}
-                variant="info"
-              />
-              <StatsCard
-                title="Empleados"
-                value={stats.employees?.total || 0}
-                subtitle={`${stats.employees?.approved || 0} aprobados`}
-                icon={Users}
-                variant="info"
-              />
-              <StatsCard
-                title="Equipos"
-                value={stats.teams?.total || 0}
-                subtitle={`${stats.teams?.with_manager || 0} con manager`}
-                icon={Building}
-                variant="success"
-              />
-              <StatsCard
-                title="Aprobaciones Pendientes"
-                value={stats.employees?.pending_approval || 0}
-                subtitle="Empleados esperando aprobación"
-                icon={Clock}
-                variant="warning"
-              />
-            </div>
-          )}
-
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Estadísticas del sistema */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <BarChart3 className="w-5 h-5 mr-2" />
+                  Estadísticas del Sistema
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {dashboardData ? (
+                    <>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-sm">Usuarios Totales</span>
+                          <span className="text-sm font-medium">{stats.users?.total || 0} ({stats.users?.active || 0} activos)</span>
+                        </div>
+                        <Progress value={stats.users?.total > 0 ? ((stats.users?.active || 0) / stats.users.total) * 100 : 0} className="h-2" />
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-sm">Empleados</span>
+                          <span className="text-sm font-medium">{stats.employees?.total || 0} ({stats.employees?.approved || 0} aprobados)</span>
+                        </div>
+                        <Progress value={stats.employees?.total > 0 ? ((stats.employees?.approved || 0) / stats.employees.total) * 100 : 0} className="h-2" />
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-sm">Equipos</span>
+                          <span className="text-sm font-medium">{stats.teams?.total || 0} ({stats.teams?.with_manager || 0} con manager)</span>
+                        </div>
+                        <Progress value={stats.teams?.total > 0 ? ((stats.teams?.with_manager || 0) / stats.teams.total) * 100 : 0} className="h-2" />
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-sm">Aprobaciones Pendientes</span>
+                          <span className="text-sm font-medium">{stats.employees?.pending_approval || 0}</span>
+                        </div>
+                        <Progress value={stats.employees?.pending_approval > 0 ? Math.min((stats.employees.pending_approval / (stats.employees?.total || 1)) * 100, 100) : 0} className="h-2" />
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-sm text-gray-500">Cargando datos...</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Distribución de roles */}
             <Card>
               <CardHeader>
@@ -550,31 +564,35 @@ const AdminPage = () => {
         {/* Pestaña de Usuarios */}
         <TabsContent value="users" className="space-y-6">
           {/* Estadísticas de usuarios */}
-          {dashboardData && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <StatsCard
-                title="Usuarios Totales"
-                value={stats.users?.total || 0}
-                subtitle={`${stats.users?.active || 0} activos`}
-                icon={Users}
-                variant="info"
-              />
-              <StatsCard
-                title="Empleados"
-                value={stats.employees?.total || 0}
-                subtitle={`${stats.employees?.approved || 0} aprobados`}
-                icon={Users}
-                variant="info"
-              />
-              <StatsCard
-                title="Aprobaciones Pendientes"
-                value={stats.employees?.pending_approval || 0}
-                subtitle="Empleados esperando aprobación"
-                icon={Clock}
-                variant="warning"
-              />
-            </div>
-          )}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {dashboardData ? (
+              <>
+                <StatsCard
+                  title="Usuarios Totales"
+                  value={stats.users?.total || 0}
+                  subtitle={`${stats.users?.active || 0} activos`}
+                  icon={Users}
+                  variant="info"
+                />
+                <StatsCard
+                  title="Empleados"
+                  value={stats.employees?.total || 0}
+                  subtitle={`${stats.employees?.approved || 0} aprobados`}
+                  icon={Users}
+                  variant="info"
+                />
+                <StatsCard
+                  title="Aprobaciones Pendientes"
+                  value={stats.employees?.pending_approval || 0}
+                  subtitle="Empleados esperando aprobación"
+                  icon={Clock}
+                  variant="warning"
+                />
+              </>
+            ) : (
+              <div className="col-span-3 text-center py-4 text-gray-500">Cargando datos...</div>
+            )}
+          </div>
 
           <Card>
             <CardHeader>
@@ -786,19 +804,6 @@ const AdminPage = () => {
 
         {/* Pestaña de Sistema */}
         <TabsContent value="system" className="space-y-6">
-          {/* Estadísticas de equipos */}
-          {dashboardData && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <StatsCard
-                title="Equipos"
-                value={stats.teams?.total || 0}
-                subtitle={`${stats.teams?.with_manager || 0} con manager`}
-                icon={Building}
-                variant="success"
-              />
-            </div>
-          )}
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
