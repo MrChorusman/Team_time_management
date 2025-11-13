@@ -6,7 +6,6 @@ import {
   Plus,
   Download,
   Eye,
-  Edit,
   Trash2,
   CheckCircle,
   XCircle,
@@ -17,7 +16,8 @@ import {
   Phone,
   Calendar,
   TrendingUp,
-  AlertCircle
+  AlertCircle,
+  Shield
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { Button } from '../components/ui/button'
@@ -47,6 +47,7 @@ const EmployeesPage = () => {
   const [showInviteModal, setShowInviteModal] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
+  const [availableRoles] = useState(['admin', 'manager', 'employee', 'viewer'])
 
   useEffect(() => {
     loadEmployees()
@@ -142,7 +143,12 @@ const EmployeesPage = () => {
       })
       
       if (!response.ok) {
-        throw new Error('Error al aprobar empleado')
+        const errorData = await response.json().catch(() => ({}))
+        if (response.status === 409) {
+          alert('El empleado ya está aprobado o hay un conflicto. Recargando datos...')
+        } else {
+          throw new Error(errorData.message || 'Error al aprobar empleado')
+        }
       }
       
       const data = await response.json()
@@ -164,7 +170,43 @@ const EmployeesPage = () => {
       }
     } catch (error) {
       console.error('Error aprobando empleado:', error)
-      alert('Error al aprobar empleado. Por favor, intenta de nuevo.')
+      alert(`Error al aprobar empleado: ${error.message}. Por favor, intenta de nuevo.`)
+    }
+  }
+
+  const handleChangeRole = async (employee, newRole) => {
+    if (!employee.user_id) {
+      alert('No se puede cambiar el rol: usuario no encontrado')
+      return
+    }
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/users/${employee.user_id}/roles`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          role_names: [newRole]
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || 'Error al cambiar rol')
+      }
+
+      const data = await response.json()
+      
+      if (data.success) {
+        // Recargar datos
+        loadEmployees()
+        alert('Rol actualizado exitosamente')
+      }
+    } catch (error) {
+      console.error('Error cambiando rol:', error)
+      alert(`Error al cambiar rol: ${error.message}`)
     }
   }
 
@@ -179,16 +221,6 @@ const EmployeesPage = () => {
     }
   }
 
-  const getEmployeeStats = () => {
-    const total = employees.length
-    const approved = employees.filter(e => e.approved === true).length
-    const pending = employees.filter(e => e.approved === false && e.active === true).length
-    const rejected = employees.filter(e => e.approved === false && e.active === false).length
-    
-    return { total, approved, pending, rejected }
-  }
-
-  const stats = getEmployeeStats()
 
   if (loading) {
     return (
@@ -294,7 +326,7 @@ const EmployeesPage = () => {
                   <TableHead>Ubicación</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Eficiencia</TableHead>
-                  <TableHead>Última Actividad</TableHead>
+                  <TableHead>Rol</TableHead>
                   <TableHead>Acciones</TableHead>
                 </TableRow>
               </TableHeader>
@@ -350,9 +382,28 @@ const EmployeesPage = () => {
                     </TableCell>
                     
                     <TableCell>
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
-                        {employee.last_activity ? new Date(employee.last_activity).toLocaleDateString('es-ES') : 'Sin actividad'}
-                      </span>
+                      {isAdmin() ? (
+                        <Select
+                          value={employee.user_roles?.[0] || 'employee'}
+                          onValueChange={(newRole) => handleChangeRole(employee, newRole)}
+                        >
+                          <SelectTrigger className="w-32">
+                            <Shield className="w-4 h-4 mr-2" />
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableRoles.map(role => (
+                              <SelectItem key={role} value={role}>
+                                {role.charAt(0).toUpperCase() + role.slice(1)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Badge variant="outline">
+                          {employee.user_roles?.[0] ? employee.user_roles[0].charAt(0).toUpperCase() + employee.user_roles[0].slice(1) : 'Sin rol'}
+                        </Badge>
+                      )}
                     </TableCell>
                     
                     <TableCell>
@@ -389,11 +440,6 @@ const EmployeesPage = () => {
                           </>
                         )}
                         
-                        {(isAdmin() || isManager()) && (
-                          <Button variant="ghost" size="sm">
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -626,87 +672,6 @@ const EmployeesPage = () => {
       )}
 
       {/* Estadísticas como headers expandibles - AL FINAL */}
-      <div className="space-y-4 mt-8">
-        <div className="border rounded-lg">
-          <details className="group">
-            <summary className="cursor-pointer p-4 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <Users className="w-5 h-5 text-blue-600" />
-                <div>
-                  <h3 className="font-semibold text-lg">Total Empleados</h3>
-                  <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
-                </div>
-              </div>
-              <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
-            </summary>
-            <div className="px-4 pb-4 pt-2 border-t">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Total de empleados registrados en el sistema
-              </p>
-            </div>
-          </details>
-        </div>
-
-        <div className="border rounded-lg">
-          <details className="group">
-            <summary className="cursor-pointer p-4 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-                <div>
-                  <h3 className="font-semibold text-lg">Aprobados</h3>
-                  <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.approved}</p>
-                </div>
-              </div>
-              <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
-            </summary>
-            <div className="px-4 pb-4 pt-2 border-t">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Empleados activos y aprobados para trabajar
-              </p>
-            </div>
-          </details>
-        </div>
-
-        <div className="border rounded-lg">
-          <details className="group">
-            <summary className="cursor-pointer p-4 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <Clock className="w-5 h-5 text-yellow-600" />
-                <div>
-                  <h3 className="font-semibold text-lg">Pendientes</h3>
-                  <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.pending}</p>
-                </div>
-              </div>
-              <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
-            </summary>
-            <div className="px-4 pb-4 pt-2 border-t">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Empleados esperando aprobación de manager
-              </p>
-            </div>
-          </details>
-        </div>
-
-        <div className="border rounded-lg">
-          <details className="group">
-            <summary className="cursor-pointer p-4 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <XCircle className="w-5 h-5 text-red-600" />
-                <div>
-                  <h3 className="font-semibold text-lg">Rechazados</h3>
-                  <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.rejected}</p>
-                </div>
-              </div>
-              <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
-            </summary>
-            <div className="px-4 pb-4 pt-2 border-t">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Registros rechazados por manager o admin
-              </p>
-            </div>
-          </details>
-        </div>
-      </div>
 
       {/* Modal de invitación */}
       <InviteEmployeeModal

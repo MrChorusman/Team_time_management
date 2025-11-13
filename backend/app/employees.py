@@ -374,6 +374,10 @@ def list_employees():
             # Añadir información del equipo
             if employee.team:
                 emp_data['team_name'] = employee.team.name
+            # Añadir roles del usuario asociado
+            if employee.user:
+                emp_data['user_roles'] = [role.name for role in employee.user.roles]
+                emp_data['user_id'] = employee.user_id
             employees_data.append(emp_data)
         
         return jsonify({

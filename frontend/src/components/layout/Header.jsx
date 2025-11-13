@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { 
   Menu, 
   Bell, 
@@ -26,13 +27,23 @@ import { Badge } from '../ui/badge'
 import { cn } from '@/lib/utils.js'
 
 const Header = ({ onMenuClick }) => {
+  const navigate = useNavigate()
   const { user, employee, logout } = useAuth()
   const { unreadCount, summary, notifications } = useNotifications()
   const { theme, toggleTheme } = useTheme()
   const [searchQuery, setSearchQuery] = useState('')
+  const [showMobileSearch, setShowMobileSearch] = useState(false)
 
   const handleLogout = async () => {
     await logout()
+  }
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      // Navegar a página de búsqueda o filtrar en la página actual
+      navigate(`/employees?search=${encodeURIComponent(searchQuery.trim())}`)
+    }
   }
 
   const getGreeting = () => {
@@ -84,7 +95,7 @@ const Header = ({ onMenuClick }) => {
         </div>
 
         {/* Barra de búsqueda central */}
-        <div className="hidden lg:flex flex-1 max-w-md mx-8">
+        <form onSubmit={handleSearchSubmit} className="hidden lg:flex flex-1 max-w-md mx-8">
           <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
@@ -95,7 +106,7 @@ const Header = ({ onMenuClick }) => {
               className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
-        </div>
+        </form>
 
         {/* Lado derecho */}
         <div className="flex items-center space-x-3">
@@ -104,9 +115,27 @@ const Header = ({ onMenuClick }) => {
             variant="ghost"
             size="sm"
             className="lg:hidden"
+            onClick={() => setShowMobileSearch(!showMobileSearch)}
           >
             <Search className="w-5 h-5" />
           </Button>
+          
+          {/* Barra de búsqueda móvil */}
+          {showMobileSearch && (
+            <div className="lg:hidden absolute top-full left-0 right-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 p-4">
+              <form onSubmit={handleSearchSubmit} className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  type="text"
+                  placeholder="Buscar empleados, equipos..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  autoFocus
+                />
+              </form>
+            </div>
+          )}
 
           {/* Toggle de tema */}
           <Button
@@ -171,7 +200,10 @@ const Header = ({ onMenuClick }) => {
                     </DropdownMenuItem>
                   ))}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-center text-blue-600 hover:text-blue-700">
+                  <DropdownMenuItem 
+                    className="text-center text-blue-600 hover:text-blue-700"
+                    onSelect={() => navigate('/notifications')}
+                  >
                     Ver todas las notificaciones
                   </DropdownMenuItem>
                 </>
@@ -210,12 +242,18 @@ const Header = ({ onMenuClick }) => {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               
-              <DropdownMenuItem className="flex items-center">
+              <DropdownMenuItem 
+                className="flex items-center"
+                onSelect={() => navigate('/profile')}
+              >
                 <User className="w-4 h-4 mr-2" />
                 Mi Perfil
               </DropdownMenuItem>
               
-              <DropdownMenuItem className="flex items-center">
+              <DropdownMenuItem 
+                className="flex items-center"
+                disabled
+              >
                 <Settings className="w-4 h-4 mr-2" />
                 Configuración
               </DropdownMenuItem>
