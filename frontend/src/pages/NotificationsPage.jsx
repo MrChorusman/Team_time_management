@@ -107,7 +107,7 @@ const NotificationsPage = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 px-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
@@ -130,38 +130,6 @@ const NotificationsPage = () => {
             </Button>
           )}
         </div>
-      </div>
-
-      {/* Estadísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <StatsCard
-          title="Total Notificaciones"
-          value={stats.total}
-          subtitle="En tu bandeja"
-          icon={Bell}
-          variant="info"
-        />
-        <StatsCard
-          title="Sin Leer"
-          value={stats.unread}
-          subtitle="Requieren atención"
-          icon={Eye}
-          variant="warning"
-        />
-        <StatsCard
-          title="Alta Prioridad"
-          value={stats.high_priority}
-          subtitle="Urgentes sin leer"
-          icon={AlertCircle}
-          variant="danger"
-        />
-        <StatsCard
-          title="Hoy"
-          value={stats.today}
-          subtitle="Recibidas hoy"
-          icon={Clock}
-          variant="success"
-        />
       </div>
 
       {/* Configuración de notificaciones */}
@@ -244,7 +212,7 @@ const NotificationsPage = () => {
         </Card>
       )}
 
-      {/* Filtros */}
+      {/* Filtros y búsqueda - PRIMERO */}
       <Card>
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row gap-4">
@@ -360,21 +328,88 @@ const NotificationsPage = () => {
         </TabsContent>
       </Tabs>
 
-      {/* Información adicional */}
-      {filteredNotifications.length > 0 && (
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
-              <span>
-                Mostrando {filteredNotifications.length} de {notifications.length} notificaciones
-              </span>
-              <span>
-                {stats.unread > 0 && `${stats.unread} sin leer`}
-              </span>
+      {/* Estadísticas como headers expandibles - AL FINAL */}
+      <div className="space-y-4 mt-8">
+        <div className="border rounded-lg">
+          <details className="group">
+            <summary className="cursor-pointer p-4 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Bell className="w-5 h-5 text-blue-600" />
+                <div>
+                  <h3 className="font-semibold text-lg">Total Notificaciones</h3>
+                  <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
+                </div>
+              </div>
+              <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
+            </summary>
+            <div className="px-4 pb-4 pt-2 border-t">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Total de notificaciones en tu bandeja
+              </p>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </details>
+        </div>
+
+        <div className="border rounded-lg">
+          <details className="group">
+            <summary className="cursor-pointer p-4 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Eye className="w-5 h-5 text-yellow-600" />
+                <div>
+                  <h3 className="font-semibold text-lg">Sin Leer</h3>
+                  <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.unread}</p>
+                </div>
+              </div>
+              <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
+            </summary>
+            <div className="px-4 pb-4 pt-2 border-t">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Notificaciones que requieren tu atención
+              </p>
+            </div>
+          </details>
+        </div>
+
+        <div className="border rounded-lg">
+          <details className="group">
+            <summary className="cursor-pointer p-4 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <div>
+                  <h3 className="font-semibold text-lg">Alta Prioridad</h3>
+                  <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.high_priority}</p>
+                </div>
+              </div>
+              <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
+            </summary>
+            <div className="px-4 pb-4 pt-2 border-t">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Notificaciones urgentes sin leer
+              </p>
+            </div>
+          </details>
+        </div>
+
+        <div className="border rounded-lg">
+          <details className="group">
+            <summary className="cursor-pointer p-4 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Clock className="w-5 h-5 text-green-600" />
+                <div>
+                  <h3 className="font-semibold text-lg">Hoy</h3>
+                  <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.today}</p>
+                </div>
+              </div>
+              <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
+            </summary>
+            <div className="px-4 pb-4 pt-2 border-t">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Notificaciones recibidas hoy
+              </p>
+            </div>
+          </details>
+        </div>
+      </div>
     </div>
   )
 }

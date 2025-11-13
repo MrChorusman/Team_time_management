@@ -22,6 +22,7 @@ import ReportsPage from './pages/ReportsPage'
 import NotificationsPage from './pages/NotificationsPage'
 import ProfilePage from './pages/ProfilePage'
 import AdminPage from './pages/AdminPage'
+import AdminCalendarsPage from './pages/admin/AdminCalendarsPage'
 import EmployeeRegisterPage from './pages/employee/EmployeeRegisterPage'
 import CalendarDemoPage from './pages/CalendarDemoPage'
 
@@ -187,6 +188,14 @@ function AppContent() {
         <ProtectedRoute requiredRole="admin">
           <AppLayout>
             <AdminPage />
+          </AppLayout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/admin/calendars" element={
+        <ProtectedRoute requiredRole="admin">
+          <AppLayout>
+            <AdminCalendarsPage />
           </AppLayout>
         </ProtectedRoute>
       } />

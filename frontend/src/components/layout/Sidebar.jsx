@@ -67,6 +67,12 @@ const Sidebar = ({ isOpen, onToggle }) => {
 
   const adminItems = [
     {
+      title: 'Calendarios',
+      icon: Calendar,
+      path: '/admin/calendars',
+      show: isAdmin()
+    },
+    {
       title: 'Administración',
       icon: Shield,
       path: '/admin',
