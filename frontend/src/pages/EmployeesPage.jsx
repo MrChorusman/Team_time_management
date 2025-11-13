@@ -119,7 +119,6 @@ const EmployeesPage = () => {
     }
     
     const matchesStatus = statusFilter === 'all' || employeeStatus === statusFilter
-    const teamName = employee.team_name || employee.team?.name || ''
     const matchesTeam = teamFilter === 'all' || teamName === teamFilter
     
     return matchesSearch && matchesStatus && matchesTeam
