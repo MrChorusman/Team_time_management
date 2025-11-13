@@ -62,7 +62,6 @@ const AdminPage = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [showRoleDialog, setShowRoleDialog] = useState(false)
   const [showTeamDialog, setShowTeamDialog] = useState(false)
-  const [activeTab, setActiveTab] = useState('overview')
   const [systemSettings, setSystemSettings] = useState({
     maintenance_mode: false,
     user_registration: true,
@@ -439,7 +438,7 @@ const AdminPage = () => {
       </div>
 
       {/* Contenido principal */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs defaultValue="overview" className="space-y-6">
         <TabsList>
           <TabsTrigger value="overview">Resumen</TabsTrigger>
           <TabsTrigger value="users">Usuarios</TabsTrigger>
