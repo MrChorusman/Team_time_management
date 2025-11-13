@@ -67,11 +67,22 @@ def create_app(config_name=None):
     
     # Inicializar extensiones
     db.init_app(app)
+    # Configuración mejorada de CORS para compatibilidad con redes móviles/5G
     CORS(app, 
          origins=app.config['CORS_ORIGINS'],
          supports_credentials=True,
-         allow_headers=['Content-Type', 'Authorization'],
-         methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
+         allow_headers=[
+             'Content-Type', 
+             'Authorization',
+             'X-Requested-With',  # Requerido por algunos navegadores móviles
+             'Accept',
+             'Origin',
+             'Access-Control-Request-Method',
+             'Access-Control-Request-Headers'
+         ],
+         methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+         expose_headers=['Content-Length', 'Content-Type'],  # Exponer headers adicionales
+         max_age=86400)  # Cache preflight por 24 horas para reducir latencia en móviles
     
     # Configuración de sesiones para cross-domain (Vercel → Render)
     is_production = os.environ.get('FLASK_ENV') == 'production' or os.environ.get('RENDER')
@@ -592,6 +603,67 @@ def create_app(config_name=None):
                 'admin': '/api/admin'
             }
         })
+    
+    @app.route('/api/debug/mobile-connection', methods=['GET', 'POST'])
+    def debug_mobile_connection():
+        """Diagnóstico específico para problemas de conexión móvil/5G"""
+        from flask import request
+        
+        diagnostics = {
+            'timestamp': datetime.utcnow().isoformat(),
+            'request_method': request.method,
+            'request_headers': dict(request.headers),
+            'cors_config': {
+                'origins': app.config['CORS_ORIGINS'],
+                'supports_credentials': True,
+            },
+            'cookie_config': {
+                'secure': app.config.get('SESSION_COOKIE_SECURE'),
+                'httponly': app.config.get('SESSION_COOKIE_HTTPONLY'),
+                'samesite': app.config.get('SESSION_COOKIE_SAMESITE'),
+                'domain': app.config.get('SESSION_COOKIE_DOMAIN'),
+            },
+            'client_info': {
+                'user_agent': request.headers.get('User-Agent', 'Not provided'),
+                'origin': request.headers.get('Origin', 'Not provided'),
+                'referer': request.headers.get('Referer', 'Not provided'),
+                'accept': request.headers.get('Accept', 'Not provided'),
+            },
+            'network_info': {
+                'remote_addr': request.remote_addr,
+                'host': request.host,
+                'scheme': request.scheme,
+            },
+            'cors_headers_present': {
+                'access_control_allow_origin': request.headers.get('Access-Control-Allow-Origin'),
+                'access_control_request_method': request.headers.get('Access-Control-Request-Method'),
+                'access_control_request_headers': request.headers.get('Access-Control-Request-Headers'),
+            },
+            'recommendations': []
+        }
+        
+        # Detectar posibles problemas
+        user_agent = diagnostics['client_info']['user_agent'].lower()
+        is_mobile = any(mobile in user_agent for mobile in ['mobile', 'android', 'iphone', 'ipad', 'ipod'])
+        
+        if is_mobile:
+            diagnostics['detected_device'] = 'mobile'
+            # Verificar configuración de cookies para móviles
+            if app.config.get('SESSION_COOKIE_SAMESITE') == 'None' and not app.config.get('SESSION_COOKIE_SECURE'):
+                diagnostics['recommendations'].append(
+                    '⚠️ SameSite=None requiere Secure=True para funcionar en móviles'
+                )
+        else:
+            diagnostics['detected_device'] = 'desktop'
+        
+        # Verificar origen en CORS
+        origin = request.headers.get('Origin')
+        if origin and origin not in app.config['CORS_ORIGINS']:
+            diagnostics['recommendations'].append(
+                f'⚠️ Origen {origin} no está en la lista de CORS_ORIGINS permitidos'
+            )
+        
+        return jsonify(diagnostics)
     
     # Manejadores de errores
     @app.errorhandler(404)

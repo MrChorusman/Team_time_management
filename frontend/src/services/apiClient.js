@@ -6,7 +6,7 @@ const API_BASE_URL = config.API_BASE_URL
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000,
+  timeout: 60000, // Aumentado a 60 segundos para redes móviles/5G con mayor latencia
   headers: {
     'Content-Type': 'application/json',
   },
@@ -35,7 +35,7 @@ apiClient.interceptors.request.use(
   }
 )
 
-// Interceptor para responses
+// Interceptor para responses con retry logic para redes móviles
 apiClient.interceptors.response.use(
   (response) => {
     // Log de responses exitosas en desarrollo
@@ -45,12 +45,34 @@ apiClient.interceptors.response.use(
     
     return response
   },
-  (error) => {
+  async (error) => {
     const originalRequest = error.config
     
     // Log de errores
     if (import.meta.env.DEV) {
       console.error(`❌ ${originalRequest?.method?.toUpperCase()} ${originalRequest?.url}`, error.response?.data)
+    }
+    
+    // Retry logic para errores de red (timeout, conexión perdida, etc.)
+    // Solo para errores de red, no para errores HTTP (4xx, 5xx)
+    if (!error.response && originalRequest && !originalRequest.__retryCount) {
+      originalRequest.__retryCount = 0
+    }
+    
+    // Reintentar hasta 3 veces para errores de red
+    if (!error.response && originalRequest && originalRequest.__retryCount < 3) {
+      originalRequest.__retryCount += 1
+      
+      // Backoff exponencial: 1s, 2s, 4s
+      const delay = Math.pow(2, originalRequest.__retryCount - 1) * 1000
+      
+      if (import.meta.env.DEV) {
+        console.log(`🔄 Reintentando request (intento ${originalRequest.__retryCount}/3) después de ${delay}ms...`)
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, delay))
+      
+      return apiClient(originalRequest)
     }
     
     // Manejar errores específicos
