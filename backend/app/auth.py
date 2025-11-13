@@ -911,3 +911,43 @@ def google_disconnect():
             'success': False,
             'message': 'Error desconectando cuenta de Google'
         }), 500
+
+@auth_bp.route('/reset-admin-password', methods=['POST'])
+def reset_admin_password():
+    """Endpoint temporal para resetear contraseña del admin"""
+    try:
+        # Solo permitir en desarrollo o con una clave secreta
+        secret_key = request.json.get('secret_key')
+        if secret_key != 'TEMPORARY_RESET_KEY_2025':
+            return jsonify({
+                'success': False,
+                'message': 'No autorizado'
+            }), 403
+        
+        admin_user = User.query.filter_by(email='admin@teamtime.com').first()
+        if not admin_user:
+            return jsonify({
+                'success': False,
+                'message': 'Usuario admin no encontrado'
+            }), 404
+        
+        new_password = 'Admin2025!'
+        admin_user.password = hash_password(new_password)
+        db.session.commit()
+        
+        logger.info(f"Contraseña del admin reseteada exitosamente")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Contraseña del admin reseteada exitosamente',
+            'email': admin_user.email,
+            'password': new_password
+        })
+        
+    except Exception as e:
+        logger.error(f"Error reseteando contraseña del admin: {e}")
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': 'Error interno del servidor'
+        }), 500
