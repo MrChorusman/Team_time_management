@@ -62,6 +62,7 @@ const AdminPage = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [showRoleDialog, setShowRoleDialog] = useState(false)
   const [showTeamDialog, setShowTeamDialog] = useState(false)
+  const [activeTab, setActiveTab] = useState('overview')
   const [systemSettings, setSystemSettings] = useState({
     maintenance_mode: false,
     user_registration: true,
@@ -437,42 +438,8 @@ const AdminPage = () => {
         </div>
       </div>
 
-      {/* Estadísticas del sistema */}
-      {dashboardData && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatsCard
-            title="Usuarios Totales"
-            value={stats.users?.total || 0}
-            subtitle={`${stats.users?.active || 0} activos`}
-            icon={Users}
-            variant="info"
-          />
-          <StatsCard
-            title="Empleados"
-            value={stats.employees?.total || 0}
-            subtitle={`${stats.employees?.approved || 0} aprobados`}
-            icon={Users}
-            variant="info"
-          />
-          <StatsCard
-            title="Equipos"
-            value={stats.teams?.total || 0}
-            subtitle={`${stats.teams?.with_manager || 0} con manager`}
-            icon={Building}
-            variant="success"
-          />
-          <StatsCard
-            title="Aprobaciones Pendientes"
-            value={stats.employees?.pending_approval || 0}
-            subtitle="Empleados esperando aprobación"
-            icon={Clock}
-            variant="warning"
-          />
-        </div>
-      )}
-
       {/* Contenido principal */}
-      <Tabs defaultValue="overview" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList>
           <TabsTrigger value="overview">Resumen</TabsTrigger>
           <TabsTrigger value="users">Usuarios</TabsTrigger>
@@ -482,6 +449,40 @@ const AdminPage = () => {
 
         {/* Pestaña de Resumen */}
         <TabsContent value="overview" className="space-y-6">
+          {/* Estadísticas del sistema */}
+          {dashboardData && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <StatsCard
+                title="Usuarios Totales"
+                value={stats.users?.total || 0}
+                subtitle={`${stats.users?.active || 0} activos`}
+                icon={Users}
+                variant="info"
+              />
+              <StatsCard
+                title="Empleados"
+                value={stats.employees?.total || 0}
+                subtitle={`${stats.employees?.approved || 0} aprobados`}
+                icon={Users}
+                variant="info"
+              />
+              <StatsCard
+                title="Equipos"
+                value={stats.teams?.total || 0}
+                subtitle={`${stats.teams?.with_manager || 0} con manager`}
+                icon={Building}
+                variant="success"
+              />
+              <StatsCard
+                title="Aprobaciones Pendientes"
+                value={stats.employees?.pending_approval || 0}
+                subtitle="Empleados esperando aprobación"
+                icon={Clock}
+                variant="warning"
+              />
+            </div>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Distribución de roles */}
             <Card>
@@ -549,6 +550,33 @@ const AdminPage = () => {
 
         {/* Pestaña de Usuarios */}
         <TabsContent value="users" className="space-y-6">
+          {/* Estadísticas de usuarios */}
+          {dashboardData && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <StatsCard
+                title="Usuarios Totales"
+                value={stats.users?.total || 0}
+                subtitle={`${stats.users?.active || 0} activos`}
+                icon={Users}
+                variant="info"
+              />
+              <StatsCard
+                title="Empleados"
+                value={stats.employees?.total || 0}
+                subtitle={`${stats.employees?.approved || 0} aprobados`}
+                icon={Users}
+                variant="info"
+              />
+              <StatsCard
+                title="Aprobaciones Pendientes"
+                value={stats.employees?.pending_approval || 0}
+                subtitle="Empleados esperando aprobación"
+                icon={Clock}
+                variant="warning"
+              />
+            </div>
+          )}
+
           <Card>
             <CardHeader>
               <CardTitle>Gestión de Usuarios</CardTitle>
@@ -759,6 +787,19 @@ const AdminPage = () => {
 
         {/* Pestaña de Sistema */}
         <TabsContent value="system" className="space-y-6">
+          {/* Estadísticas de equipos */}
+          {dashboardData && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <StatsCard
+                title="Equipos"
+                value={stats.teams?.total || 0}
+                subtitle={`${stats.teams?.with_manager || 0} con manager`}
+                icon={Building}
+                variant="success"
+              />
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>

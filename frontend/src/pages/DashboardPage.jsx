@@ -344,10 +344,10 @@ const DashboardPage = () => {
           </Alert>
         )}
 
-        {/* Métricas principales con botones de consulta */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Métricas principales con botones de consulta - Diseño compacto */}
+        <div className="flex flex-wrap gap-4">
           {/* Total Empleados */}
-          <Card className="hover:shadow-md transition-shadow">
+          <Card className="hover:shadow-md transition-shadow flex-shrink-0" style={{ minWidth: '200px', maxWidth: '280px' }}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
               <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                 Total Empleados
@@ -372,7 +372,7 @@ const DashboardPage = () => {
           </Card>
 
           {/* Equipos Activos */}
-          <Card className="hover:shadow-md transition-shadow">
+          <Card className="hover:shadow-md transition-shadow flex-shrink-0" style={{ minWidth: '200px', maxWidth: '280px' }}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
               <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                 Equipos Activos
@@ -397,7 +397,7 @@ const DashboardPage = () => {
           </Card>
 
           {/* Aprobaciones Pendientes */}
-          <Card className="hover:shadow-md transition-shadow">
+          <Card className="hover:shadow-md transition-shadow flex-shrink-0" style={{ minWidth: '200px', maxWidth: '280px' }}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
               <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                 Aprobaciones Pendientes
