@@ -103,8 +103,13 @@ apiClient.interceptors.response.use(
           console.error('Error HTTP:', status, data.message)
       }
     } else if (error.request) {
-      // Error de red
+      // Error de red - backend no disponible
       console.error('Error de conexión:', error.message)
+      
+      // Mostrar mensaje más descriptivo si el backend no está disponible
+      if (error.code === 'ECONNREFUSED' || error.message?.includes('Failed to fetch') || error.message?.includes('Network Error')) {
+        console.error('❌ El backend no está disponible. Verifica que el servidor esté corriendo en', API_BASE_URL)
+      }
     } else {
       // Error de configuración
       console.error('Error de configuración:', error.message)

@@ -132,7 +132,17 @@ export const AuthProvider = ({ children }) => {
         return { success: false, message: response.message }
       }
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Error de conexión'
+      // Manejar diferentes tipos de errores
+      let errorMessage = 'Error de conexión'
+      
+      if (error.code === 'ECONNREFUSED' || error.message?.includes('Failed to fetch') || error.message?.includes('Network Error')) {
+        errorMessage = 'No se puede conectar al servidor. Verifica que el backend esté corriendo.'
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+      
       setError(errorMessage)
       return { success: false, message: errorMessage }
     } finally {
