@@ -424,6 +424,35 @@ def get_employee(employee_id):
         
         employee_data = employee.to_dict(include_summary=True)
         
+        # Añadir email del usuario asociado
+        if employee.user:
+            employee_data['email'] = employee.user.email
+        
+        # Mapear hours_summary a monthly_stats y annual_stats para compatibilidad con frontend
+        from datetime import datetime
+        now = datetime.utcnow()
+        current_year = now.year
+        current_month = now.month
+        
+        # Calcular estadísticas mensuales para el mes actual
+        monthly_summary = employee.get_hours_summary(current_year, current_month)
+        employee_data['monthly_stats'] = {
+            'theoretical_hours': monthly_summary.get('theoretical_hours', 0),
+            'actual_hours': monthly_summary.get('actual_hours', 0),
+            'efficiency': monthly_summary.get('efficiency', 0)
+        }
+        
+        # Calcular estadísticas anuales
+        annual_summary = employee.get_hours_summary(current_year)
+        remaining_benefits = employee.get_remaining_benefits(current_year)
+        
+        employee_data['annual_stats'] = {
+            'total_actual_hours': annual_summary.get('actual_hours', 0),
+            'total_efficiency': annual_summary.get('efficiency', 0),
+            'remaining_vacation_days': remaining_benefits.get('remaining_vacation_days', 0),
+            'remaining_hld_hours': remaining_benefits.get('remaining_hld_hours', 0)
+        }
+        
         return jsonify({
             'success': True,
             'employee': employee_data

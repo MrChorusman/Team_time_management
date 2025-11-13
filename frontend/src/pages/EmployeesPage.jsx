@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { toast } from 'sonner'
 import { 
   Users, 
   Search, 
@@ -145,7 +146,11 @@ const EmployeesPage = () => {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
         if (response.status === 409) {
-          alert('El empleado ya está aprobado o hay un conflicto. Recargando datos...')
+          toast.error('El empleado ya está aprobado o hay un conflicto', {
+            description: 'Recargando datos...'
+          })
+          loadEmployees()
+          return
         } else {
           throw new Error(errorData.message || 'Error al aprobar empleado')
         }
@@ -167,16 +172,21 @@ const EmployeesPage = () => {
         
         // Recargar datos
         loadEmployees()
+        toast.success('Empleado aprobado exitosamente')
       }
     } catch (error) {
       console.error('Error aprobando empleado:', error)
-      alert(`Error al aprobar empleado: ${error.message}. Por favor, intenta de nuevo.`)
+      toast.error('Error al aprobar empleado', {
+        description: error.message || 'Por favor, intenta de nuevo.'
+      })
     }
   }
 
   const handleChangeRole = async (employee, newRole) => {
     if (!employee.user_id) {
-      alert('No se puede cambiar el rol: usuario no encontrado')
+      toast.error('No se puede cambiar el rol', {
+        description: 'Usuario no encontrado'
+      })
       return
     }
 
@@ -202,11 +212,15 @@ const EmployeesPage = () => {
       if (data.success) {
         // Recargar datos
         loadEmployees()
-        alert('Rol actualizado exitosamente')
+        toast.success('Rol actualizado exitosamente', {
+          description: `El rol del empleado ha sido cambiado a ${newRole.charAt(0).toUpperCase() + newRole.slice(1)}`
+        })
       }
     } catch (error) {
       console.error('Error cambiando rol:', error)
-      alert(`Error al cambiar rol: ${error.message}`)
+      toast.error('Error al cambiar rol', {
+        description: error.message || 'Por favor, intenta de nuevo.'
+      })
     }
   }
 
@@ -411,9 +425,29 @@ const EmployeesPage = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => {
-                            setSelectedEmployee(employee)
-                            setShowEmployeeDetail(true)
+                          onClick={async () => {
+                            // Cargar datos completos del empleado
+                            try {
+                              const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/employees/${employee.id}`, {
+                                credentials: 'include'
+                              })
+                              if (response.ok) {
+                                const data = await response.json()
+                                if (data.success) {
+                                  setSelectedEmployee(data.employee)
+                                  setShowEmployeeDetail(true)
+                                }
+                              } else {
+                                // Si falla, usar datos de la lista
+                                setSelectedEmployee(employee)
+                                setShowEmployeeDetail(true)
+                              }
+                            } catch (error) {
+                              console.error('Error cargando detalles del empleado:', error)
+                              // Si falla, usar datos de la lista
+                              setSelectedEmployee(employee)
+                              setShowEmployeeDetail(true)
+                            }
                           }}
                         >
                           <Eye className="w-4 h-4" />
@@ -528,7 +562,7 @@ const EmployeesPage = () => {
                       </div>
                       <div className="flex items-center space-x-3">
                         <Calendar className="w-4 h-4 text-gray-400" />
-                        <span>Inicio: {new Date(selectedEmployee.start_date).toLocaleDateString('es-ES')}</span>
+                        <span>Inicio: {selectedEmployee.created_at ? new Date(selectedEmployee.created_at).toLocaleDateString('es-ES') : 'N/A'}</span>
                       </div>
                     </CardContent>
                   </Card>

@@ -363,22 +363,22 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
     return (
       <tr key={`${employee.id}-${monthDate.toISOString()}`} className="hover:bg-gray-50">
         {/* Equipo */}
-        <td className="sticky left-0 z-10 px-4 py-3 bg-white border-r border-b border-gray-300 font-medium text-sm whitespace-nowrap">
+        <td className="sticky left-0 z-10 px-4 py-3 bg-white border-r border-b border-gray-300 font-medium text-sm text-gray-900 whitespace-nowrap">
           {employee.team_name || 'Sin equipo'}
         </td>
         
         {/* Empleado */}
-        <td className="sticky left-[140px] z-10 px-4 py-3 bg-white border-r border-b border-gray-300 font-medium text-sm whitespace-nowrap">
+        <td className="sticky left-[140px] z-10 px-4 py-3 bg-white border-r border-b border-gray-300 font-medium text-sm text-gray-900 whitespace-nowrap">
           {employee.full_name}
         </td>
         
         {/* Vac (Vacaciones) */}
-        <td className="sticky left-[280px] z-10 px-3 py-3 bg-blue-50 border-r border-b border-gray-300 text-center font-semibold text-sm">
+        <td className="sticky left-[280px] z-10 px-3 py-3 bg-blue-50 border-r border-b border-gray-300 text-center font-semibold text-sm text-gray-900">
           {summary.vacation}
         </td>
         
         {/* Aus (Ausencias) */}
-        <td className="sticky left-[330px] z-10 px-3 py-3 bg-yellow-50 border-r border-b border-gray-300 text-center font-semibold text-sm">
+        <td className="sticky left-[330px] z-10 px-3 py-3 bg-yellow-50 border-r border-b border-gray-300 text-center font-semibold text-sm text-gray-900">
           {summary.absence}
         </td>
         
