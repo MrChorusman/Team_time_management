@@ -565,33 +565,27 @@ const AdminPage = () => {
         <TabsContent value="users" className="space-y-6">
           {/* Estadísticas de usuarios */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {dashboardData ? (
-              <>
-                <StatsCard
-                  title="Usuarios Totales"
-                  value={stats.users?.total || 0}
-                  subtitle={`${stats.users?.active || 0} activos`}
-                  icon={Users}
-                  variant="info"
-                />
-                <StatsCard
-                  title="Empleados"
-                  value={stats.employees?.total || 0}
-                  subtitle={`${stats.employees?.approved || 0} aprobados`}
-                  icon={Users}
-                  variant="info"
-                />
-                <StatsCard
-                  title="Aprobaciones Pendientes"
-                  value={stats.employees?.pending_approval || 0}
-                  subtitle="Empleados esperando aprobación"
-                  icon={Clock}
-                  variant="warning"
-                />
-              </>
-            ) : (
-              <div className="col-span-3 text-center py-4 text-gray-500">Cargando datos...</div>
-            )}
+            <StatsCard
+              title="Usuarios Totales"
+              value={stats.users?.total || 0}
+              subtitle={`${stats.users?.active || 0} activos`}
+              icon={Users}
+              variant="info"
+            />
+            <StatsCard
+              title="Empleados"
+              value={stats.employees?.total || 0}
+              subtitle={`${stats.employees?.approved || 0} aprobados`}
+              icon={Users}
+              variant="info"
+            />
+            <StatsCard
+              title="Aprobaciones Pendientes"
+              value={stats.employees?.pending_approval || 0}
+              subtitle="Empleados esperando aprobación"
+              icon={Clock}
+              variant="warning"
+            />
           </div>
 
           <Card>
