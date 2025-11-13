@@ -562,7 +562,7 @@ const AdminPage = () => {
         </TabsContent>
 
         {/* Pestaña de Usuarios */}
-        <TabsContent value="users" className="space-y-6">
+        <TabsContent value="users" className="space-y-6" forceMount>
           {/* Estadísticas de usuarios */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <StatsCard
