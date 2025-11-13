@@ -673,9 +673,27 @@ const TeamsPage = () => {
               <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
             </summary>
             <div className="px-4 pb-4 pt-2 border-t">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Total de equipos activos en el sistema
-              </p>
+              {teams.length > 0 ? (
+                <div className="space-y-2 mt-2">
+                  {teams.map((team) => (
+                    <div 
+                      key={team.id} 
+                      className="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded cursor-pointer"
+                      onClick={() => {
+                        setSelectedTeam(team)
+                        setShowTeamDetail(true)
+                      }}
+                    >
+                      <span className="text-sm font-medium">{team.name}</span>
+                      <Badge variant="outline">{team.employee_count || 0} miembros</Badge>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  No hay equipos registrados
+                </p>
+              )}
             </div>
           </details>
         </div>
@@ -693,9 +711,20 @@ const TeamsPage = () => {
               <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
             </summary>
             <div className="px-4 pb-4 pt-2 border-t">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Total de empleados en todos los equipos
-              </p>
+              {teams.length > 0 ? (
+                <div className="space-y-2 mt-2">
+                  {teams.map((team) => (
+                    <div key={team.id} className="flex items-center justify-between p-2">
+                      <span className="text-sm font-medium">{team.name}</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">{team.employee_count || 0} empleados</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  No hay empleados registrados
+                </p>
+              )}
             </div>
           </details>
         </div>
@@ -715,9 +744,22 @@ const TeamsPage = () => {
               <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
             </summary>
             <div className="px-4 pb-4 pt-2 border-t">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Rendimiento global de todos los equipos
-              </p>
+              {teams.length > 0 && typeof stats.averageEfficiency !== 'string' ? (
+                <div className="space-y-2 mt-2">
+                  {teams.map((team) => (
+                    <div key={team.id} className="flex items-center justify-between p-2">
+                      <span className="text-sm font-medium">{team.name}</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        {team.metrics?.average_efficiency !== undefined ? `${team.metrics.average_efficiency}%` : 'N/A'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {typeof stats.averageEfficiency === 'string' ? 'No hay datos disponibles' : 'Rendimiento global de todos los equipos'}
+                </p>
+              )}
             </div>
           </details>
         </div>
@@ -735,9 +777,20 @@ const TeamsPage = () => {
               <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
             </summary>
             <div className="px-4 pb-4 pt-2 border-t">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Proyectos en desarrollo actualmente
-              </p>
+              {teams.length > 0 ? (
+                <div className="space-y-2 mt-2">
+                  {teams.map((team) => (
+                    <div key={team.id} className="flex items-center justify-between p-2">
+                      <span className="text-sm font-medium">{team.name}</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">{team.active_projects || 0} proyectos</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  No hay proyectos activos
+                </p>
+              )}
             </div>
           </details>
         </div>
