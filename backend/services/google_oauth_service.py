@@ -1,17 +1,25 @@
 from flask import current_app, session, redirect, url_for
-from google.auth.transport import requests
-from google.oauth2 import id_token
-from google_auth_oauthlib.flow import Flow
 import os
 import logging
 from typing import Dict, Optional, Tuple
+
+# Importar Google OAuth de forma opcional
+try:
+    from google.auth.transport import requests as google_requests
+    from google.oauth2 import id_token
+    from google_auth_oauthlib.flow import Flow
+    GOOGLE_OAUTH_AVAILABLE = True
+except ImportError:
+    GOOGLE_OAUTH_AVAILABLE = False
+    logger = logging.getLogger(__name__)
+    logger.warning("Google OAuth no disponible - m?dulos no instalados")
 
 from models.user import User, Role, db
 
 logger = logging.getLogger(__name__)
 
 class GoogleOAuthService:
-    """Servicio para manejar autenticación con Google OAuth 2.0"""
+    """Servicio para manejar autenticaci?n con Google OAuth 2.0"""
     
     def __init__(self):
         self.client_id = None
@@ -20,7 +28,11 @@ class GoogleOAuthService:
         self.flow = None
     
     def init_app(self, app):
-        """Inicializa el servicio con la aplicación Flask"""
+        """Inicializa el servicio con la aplicaci?n Flask"""
+        if not GOOGLE_OAUTH_AVAILABLE:
+            logger.warning("Google OAuth no disponible - m?dulos no instalados")
+            return
+            
         self.client_id = app.config.get('GOOGLE_CLIENT_ID')
         self.client_secret = app.config.get('GOOGLE_CLIENT_SECRET')
         self.redirect_uri = app.config.get('GOOGLE_REDIRECT_URI')
@@ -49,21 +61,23 @@ class GoogleOAuthService:
         self.flow.redirect_uri = self.redirect_uri
     
     def is_configured(self) -> bool:
-        """Verifica si Google OAuth está configurado"""
+        """Verifica si Google OAuth est? configurado"""
+        if not GOOGLE_OAUTH_AVAILABLE:
+            return False
         return all([self.client_id, self.client_secret, self.redirect_uri, self.flow])
     
     def get_auth_url(self) -> str:
-        """Genera la URL de autorización de Google"""
+        """Genera la URL de autorizaci?n de Google"""
         if not self.is_configured():
-            raise ValueError("Google OAuth no está configurado")
+            raise ValueError("Google OAuth no est? configurado")
         
-        # Generar URL de autorización
+        # Generar URL de autorizaci?n
         auth_url, state = self.flow.authorization_url(
             access_type='offline',
             include_granted_scopes='true'
         )
         
-        # Guardar state en la sesión para verificación
+        # Guardar state en la sesi?n para verificaci?n
         session['oauth_state'] = state
         
         return auth_url
@@ -76,25 +90,25 @@ class GoogleOAuthService:
             Tuple[success, message, user_data]
         """
         if not self.is_configured():
-            return False, "Google OAuth no está configurado", None
+            return False, "Google OAuth no est? configurado", None
         
         # Verificar state
         if session.get('oauth_state') != state:
             logger.error("Estado OAuth no coincide")
-            return False, "Error de seguridad en la autenticación", None
+            return False, "Error de seguridad en la autenticaci?n", None
         
         try:
-            # Intercambiar código por token
+            # Intercambiar c?digo por token
             self.flow.fetch_token(code=code)
             
-            # Obtener información del usuario
+            # Obtener informaci?n del usuario
             credentials = self.flow.credentials
             request_session = requests.Request()
             id_info = id_token.verify_oauth2_token(
                 credentials.id_token, request_session, self.client_id
             )
             
-            # Extraer información del usuario
+            # Extraer informaci?n del usuario
             google_id = id_info['sub']
             email = id_info['email']
             name = id_info.get('name', '')
@@ -102,7 +116,7 @@ class GoogleOAuthService:
             family_name = id_info.get('family_name', '')
             picture = id_info.get('picture', '')
             
-            # Limpiar state de la sesión
+            # Limpiar state de la sesi?n
             session.pop('oauth_state', None)
             
             # Buscar o crear usuario
@@ -123,30 +137,30 @@ class GoogleOAuthService:
                     'picture': getattr(user, 'google_picture', None),
                     'google_id': getattr(user, 'google_id', None)
                 }
-                return True, "Autenticación exitosa", user_data
+                return True, "Autenticaci?n exitosa", user_data
             else:
                 return False, "Error creando o encontrando usuario", None
                 
         except Exception as e:
             logger.error(f"Error en callback de Google OAuth: {e}")
-            return False, f"Error en autenticación: {str(e)}", None
+            return False, f"Error en autenticaci?n: {str(e)}", None
     
     def _find_or_create_user(self, google_id: str, email: str, name: str, 
                            given_name: str, family_name: str, picture: str) -> Optional[User]:
         """
-        Busca un usuario existente o crea uno nuevo basado en información de Google
+        Busca un usuario existente o crea uno nuevo basado en informaci?n de Google
         """
         try:
             # Buscar usuario existente por email
             user = User.query.filter_by(email=email).first()
             
             if user:
-                # Actualizar información de Google si no existe
+                # Actualizar informaci?n de Google si no existe
                 if not hasattr(user, 'google_id') or not user.google_id:
                     # Agregar campos de Google si no existen
                     self._add_google_fields_to_user(user)
                 
-                # Actualizar información
+                # Actualizar informaci?n
                 user.google_id = google_id
                 user.google_picture = picture
                 if not user.first_name and given_name:
@@ -180,16 +194,16 @@ class GoogleOAuthService:
     
     def _add_google_fields_to_user(self, user: User):
         """Agrega campos de Google al modelo de usuario si no existen"""
-        # Esto requeriría una migración de base de datos
+        # Esto requerir?a una migraci?n de base de datos
         # Por ahora, usamos campos existentes o agregamos nuevos campos
         if not hasattr(user, 'google_id'):
-            # En una implementación real, esto requeriría una migración
+            # En una implementaci?n real, esto requerir?a una migraci?n
             # Por ahora, usamos el campo username para almacenar google_id
             user.username = getattr(user, 'google_id', None)
     
     def _create_user_from_google(self, google_id: str, email: str, name: str,
                                 given_name: str, family_name: str, picture: str) -> Optional[User]:
-        """Crea un nuevo usuario basado en información de Google"""
+        """Crea un nuevo usuario basado en informaci?n de Google"""
         try:
             # Obtener rol por defecto
             viewer_role = Role.query.filter_by(name='viewer').first()
@@ -200,11 +214,11 @@ class GoogleOAuthService:
             # Crear nuevo usuario
             new_user = User(
                 email=email,
-                password='',  # Sin contraseña para usuarios OAuth
+                password='',  # Sin contrase?a para usuarios OAuth
                 first_name=given_name or name.split()[0] if name else '',
                 last_name=family_name or ' '.join(name.split()[1:]) if name and len(name.split()) > 1 else '',
                 active=True,
-                confirmed_at=db.func.now(),  # Confirmar automáticamente
+                confirmed_at=db.func.now(),  # Confirmar autom?ticamente
                 username=google_id  # Usar google_id como username temporal
             )
             
@@ -245,7 +259,7 @@ class GoogleOAuthService:
             return False
     
     def get_user_info_from_token(self, token: str) -> Optional[Dict]:
-        """Obtiene información del usuario desde un token"""
+        """Obtiene informaci?n del usuario desde un token"""
         try:
             request_session = requests.Request()
             id_info = id_token.verify_oauth2_token(token, request_session, self.client_id)
@@ -260,5 +274,5 @@ class GoogleOAuthService:
             }
             
         except Exception as e:
-            logger.error(f"Error obteniendo información del usuario: {e}")
+            logger.error(f"Error obteniendo informaci?n del usuario: {e}")
             return None
