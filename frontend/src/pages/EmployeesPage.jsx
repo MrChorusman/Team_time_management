@@ -130,12 +130,38 @@ const EmployeesPage = () => {
 
   const handleApproveEmployee = async (employeeId) => {
     try {
-      // Simular aprobación
-      setEmployees(prev => prev.map(emp => 
-        emp.id === employeeId ? { ...emp, approved: 'approved' } : emp
-      ))
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/employees/${employeeId}/approve`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      
+      if (!response.ok) {
+        throw new Error('Error al aprobar empleado')
+      }
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        // Actualizar estado local
+        setEmployees(prev => prev.map(emp => 
+          emp.id === employeeId ? { ...emp, approved: true } : emp
+        ))
+        
+        // Cerrar modal si está abierto
+        if (selectedEmployee?.id === employeeId) {
+          setShowEmployeeDetail(false)
+          setSelectedEmployee(null)
+        }
+        
+        // Recargar datos
+        loadEmployees()
+      }
     } catch (error) {
       console.error('Error aprobando empleado:', error)
+      alert('Error al aprobar empleado. Por favor, intenta de nuevo.')
     }
   }
 
@@ -339,7 +365,7 @@ const EmployeesPage = () => {
                           <Eye className="w-4 h-4" />
                         </Button>
                         
-                        {(isAdmin() || isManager()) && employee.approved === 'pending' && (
+                        {(isAdmin() || isManager()) && employee.approved === false && employee.active === true && (
                           <>
                             <Button
                               variant="ghost"
@@ -573,7 +599,7 @@ const EmployeesPage = () => {
               </TabsContent>
             </Tabs>
             
-            {(isAdmin() || isManager()) && selectedEmployee.approved === 'pending' && (
+            {(isAdmin() || isManager()) && selectedEmployee.approved === false && selectedEmployee.active === true && (
               <div className="flex space-x-2 mt-6">
                 <Button 
                   onClick={() => handleApproveEmployee(selectedEmployee.id)}
