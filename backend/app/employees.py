@@ -481,6 +481,64 @@ def deactivate_employee(employee_id):
             'message': 'Error desactivando empleado'
         }), 500
 
+@employees_bp.route('/<int:employee_id>/change-team', methods=['PUT'])
+@auth_required()
+@admin_required()
+def change_employee_team(employee_id):
+    """Cambia el equipo de un empleado (solo admins)"""
+    try:
+        if not current_user.is_admin():
+            return jsonify({
+                'success': False,
+                'message': 'Solo los administradores pueden cambiar el equipo de un empleado'
+            }), 403
+        
+        employee = Employee.query.get(employee_id)
+        if not employee:
+            return jsonify({
+                'success': False,
+                'message': 'Empleado no encontrado'
+            }), 404
+        
+        data = request.get_json()
+        
+        if not data or 'team_id' not in data:
+            return jsonify({
+                'success': False,
+                'message': 'ID del equipo es requerido'
+            }), 400
+        
+        team_id = data['team_id']
+        team = Team.query.get(team_id)
+        
+        if not team:
+            return jsonify({
+                'success': False,
+                'message': 'Equipo no encontrado'
+            }), 404
+        
+        old_team_id = employee.team_id
+        employee.team_id = team_id
+        employee.updated_at = datetime.utcnow()
+        
+        db.session.commit()
+        
+        logger.info(f"Empleado {employee.full_name} movido del equipo {old_team_id} al equipo {team_id} por {current_user.email}")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Empleado movido al equipo {team.name} exitosamente',
+            'employee': employee.to_dict()
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error cambiando equipo del empleado {employee_id}: {e}")
+        return jsonify({
+            'success': False,
+            'message': 'Error cambiando equipo del empleado'
+        }), 500
+
 @employees_bp.route('/pending-approval', methods=['GET'])
 @auth_required()
 @manager_or_admin_required()

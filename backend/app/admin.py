@@ -319,6 +319,47 @@ def update_user_roles(user_id):
             'message': 'Error actualizando roles'
         }), 500
 
+@admin_bp.route('/users/<int:user_id>', methods=['DELETE'])
+@auth_required()
+@admin_required()
+def delete_user(user_id):
+    """Elimina un usuario del sistema"""
+    try:
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({
+                'success': False,
+                'message': 'Usuario no encontrado'
+            }), 404
+        
+        # No permitir eliminar al propio usuario admin
+        if user.id == current_user.id:
+            return jsonify({
+                'success': False,
+                'message': 'No puedes eliminar tu propia cuenta'
+            }), 400
+        
+        email = user.email
+        
+        # Eliminar usuario (las relaciones CASCADE eliminarán empleado, notificaciones, etc.)
+        db.session.delete(user)
+        db.session.commit()
+        
+        logger.info(f"Usuario {email} eliminado por {current_user.email}")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Usuario {email} eliminado exitosamente'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error eliminando usuario {user_id}: {e}")
+        return jsonify({
+            'success': False,
+            'message': 'Error eliminando usuario'
+        }), 500
+
 @admin_bp.route('/system/maintenance', methods=['POST'])
 @auth_required()
 @admin_required()

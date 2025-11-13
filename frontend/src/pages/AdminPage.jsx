@@ -17,7 +17,13 @@ import {
   Globe,
   HardDrive,
   Cpu,
-  BarChart3
+  BarChart3,
+  Edit,
+  XCircle,
+  Search,
+  Building,
+  UserPlus,
+  MoreVertical
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { Button } from '../components/ui/button'
@@ -32,12 +38,30 @@ import { Input } from '../components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table'
 import { Alert, AlertDescription } from '../components/ui/alert'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '../components/ui/dropdown-menu'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
+import { useToast } from '../components/ui/use-toast'
 
 const AdminPage = () => {
   const { user, isAdmin } = useAuth()
+  const { toast } = useToast()
   const [loading, setLoading] = useState(true)
-  const [systemData, setSystemData] = useState(null)
+  const [dashboardData, setDashboardData] = useState(null)
+  const [users, setUsers] = useState([])
+  const [teams, setTeams] = useState([])
+  const [roles, setRoles] = useState([])
+  const [usersLoading, setUsersLoading] = useState(false)
+  const [usersPage, setUsersPage] = useState(1)
+  const [usersPerPage] = useState(20)
+  const [usersTotal, setUsersTotal] = useState(0)
+  const [usersFilter, setUsersFilter] = useState({ role: '', active_only: false })
+  const [usersSearch, setUsersSearch] = useState('')
+  const [selectedUser, setSelectedUser] = useState(null)
+  const [showUserDialog, setShowUserDialog] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showRoleDialog, setShowRoleDialog] = useState(false)
+  const [showTeamDialog, setShowTeamDialog] = useState(false)
   const [systemSettings, setSystemSettings] = useState({
     maintenance_mode: false,
     user_registration: true,
@@ -51,101 +75,236 @@ const AdminPage = () => {
 
   useEffect(() => {
     if (!isAdmin()) {
-      // Redirigir si no es admin
       return
     }
-    loadSystemData()
+    loadDashboardData()
+    loadTeams()
+    loadRoles()
   }, [])
 
-  const loadSystemData = async () => {
+  useEffect(() => {
+    if (isAdmin()) {
+      loadUsers()
+    }
+  }, [usersPage, usersFilter])
+
+  const loadDashboardData = async () => {
     setLoading(true)
     try {
-      // Simular carga de datos del sistema
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/dashboard`, {
+        credentials: 'include'
+      })
       
-      const mockData = generateMockSystemData()
-      setSystemData(mockData)
+      if (!response.ok) {
+        throw new Error('Error cargando dashboard')
+      }
+      
+      const data = await response.json()
+      setDashboardData(data.dashboard)
     } catch (error) {
       console.error('Error cargando datos del sistema:', error)
+      toast({
+        title: 'Error',
+        description: 'No se pudieron cargar los datos del sistema',
+        variant: 'destructive'
+      })
     } finally {
       setLoading(false)
     }
   }
 
-  const generateMockSystemData = () => {
-    return {
-      system_stats: {
-        total_users: 42,
-        active_users: 35,
-        total_teams: 5,
-        pending_approvals: 3,
-        system_uptime: '99.9%',
-        database_size: '2.3 GB',
-        last_backup: '2024-01-15T02:00:00Z',
-        cpu_usage: 23.5,
-        memory_usage: 67.2,
-        disk_usage: 45.8
-      },
-      recent_activities: [
-        {
-          id: 1,
-          type: 'user_registration',
-          description: 'Nuevo usuario registrado: María González',
-          timestamp: '2024-01-15T10:30:00Z',
-          severity: 'info'
-        },
-        {
-          id: 2,
-          type: 'system_backup',
-          description: 'Backup automático completado exitosamente',
-          timestamp: '2024-01-15T02:00:00Z',
-          severity: 'success'
-        },
-        {
-          id: 3,
-          type: 'holiday_sync',
-          description: 'Sincronización de festivos actualizada para España',
-          timestamp: '2024-01-14T18:45:00Z',
-          severity: 'info'
-        },
-        {
-          id: 4,
-          type: 'security_alert',
-          description: 'Intento de acceso fallido detectado',
-          timestamp: '2024-01-14T15:20:00Z',
-          severity: 'warning'
-        },
-        {
-          id: 5,
-          type: 'data_export',
-          description: 'Reporte mensual exportado por Admin',
-          timestamp: '2024-01-14T12:10:00Z',
-          severity: 'info'
-        }
-      ],
-      user_analytics: {
-        daily_active_users: [
-          { date: '2024-01-09', users: 28 },
-          { date: '2024-01-10', users: 32 },
-          { date: '2024-01-11', users: 29 },
-          { date: '2024-01-12', users: 35 },
-          { date: '2024-01-13', users: 31 },
-          { date: '2024-01-14', users: 33 },
-          { date: '2024-01-15', users: 35 }
-        ],
-        user_roles: {
-          admin: 2,
-          manager: 8,
-          employee: 25,
-          viewer: 7
-        }
-      },
-      system_health: {
-        api_response_time: 145,
-        database_connections: 12,
-        error_rate: 0.02,
-        cache_hit_rate: 94.5
+  const loadUsers = async () => {
+    setUsersLoading(true)
+    try {
+      const params = new URLSearchParams({
+        page: usersPage.toString(),
+        per_page: usersPerPage.toString()
+      })
+      
+      if (usersFilter.role) {
+        params.append('role', usersFilter.role)
       }
+      
+      if (usersFilter.active_only) {
+        params.append('active_only', 'true')
+      }
+
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/users?${params}`, {
+        credentials: 'include'
+      })
+      
+      if (!response.ok) {
+        throw new Error('Error cargando usuarios')
+      }
+      
+      const data = await response.json()
+      setUsers(data.users)
+      setUsersTotal(data.pagination.total)
+    } catch (error) {
+      console.error('Error cargando usuarios:', error)
+      toast({
+        title: 'Error',
+        description: 'No se pudieron cargar los usuarios',
+        variant: 'destructive'
+      })
+    } finally {
+      setUsersLoading(false)
+    }
+  }
+
+  const loadTeams = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/teams`, {
+        credentials: 'include'
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setTeams(data.teams || [])
+      }
+    } catch (error) {
+      console.error('Error cargando equipos:', error)
+    }
+  }
+
+  const loadRoles = async () => {
+    // Roles comunes del sistema
+    setRoles([
+      { name: 'admin', description: 'Administrador' },
+      { name: 'manager', description: 'Manager' },
+      { name: 'employee', description: 'Empleado' },
+      { name: 'viewer', description: 'Visualizador' }
+    ])
+  }
+
+  const handleToggleUserActive = async (userId) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/users/${userId}/toggle-active`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.message || 'Error activando/desactivando usuario')
+      }
+      
+      const data = await response.json()
+      toast({
+        title: 'Éxito',
+        description: data.message
+      })
+      
+      loadUsers()
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive'
+      })
+    }
+  }
+
+  const handleUpdateRoles = async (userId, roleNames) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/users/${userId}/roles`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ role_names: roleNames })
+      })
+      
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.message || 'Error actualizando roles')
+      }
+      
+      const data = await response.json()
+      toast({
+        title: 'Éxito',
+        description: data.message
+      })
+      
+      setShowRoleDialog(false)
+      setSelectedUser(null)
+      loadUsers()
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive'
+      })
+    }
+  }
+
+  const handleDeleteUser = async () => {
+    if (!selectedUser) return
+    
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/users/${selectedUser.id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      })
+      
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.message || 'Error eliminando usuario')
+      }
+      
+      const data = await response.json()
+      toast({
+        title: 'Éxito',
+        description: data.message
+      })
+      
+      setShowDeleteDialog(false)
+      setSelectedUser(null)
+      loadUsers()
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive'
+      })
+    }
+  }
+
+  const handleChangeTeam = async (employeeId, teamId) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/employees/${employeeId}/change-team`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ team_id: teamId })
+      })
+      
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.message || 'Error cambiando equipo')
+      }
+      
+      const data = await response.json()
+      toast({
+        title: 'Éxito',
+        description: data.message
+      })
+      
+      setShowTeamDialog(false)
+      setSelectedUser(null)
+      loadUsers()
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive'
+      })
     }
   }
 
@@ -155,7 +314,7 @@ const AdminPage = () => {
       [setting]: value
     }))
     
-    // Simular guardado de configuración
+    // TODO: Implementar guardado real de configuración
     try {
       await new Promise(resolve => setTimeout(resolve, 500))
       console.log(`Configuración ${setting} actualizada a:`, value)
@@ -212,6 +371,19 @@ const AdminPage = () => {
     return icons[severity] || icons.info
   }
 
+  const filteredUsers = users.filter(u => {
+    if (usersSearch) {
+      const searchLower = usersSearch.toLowerCase()
+      return (
+        u.email?.toLowerCase().includes(searchLower) ||
+        u.full_name?.toLowerCase().includes(searchLower) ||
+        u.employee?.full_name?.toLowerCase().includes(searchLower) ||
+        u.employee?.team?.name?.toLowerCase().includes(searchLower)
+      )
+    }
+    return true
+  })
+
   if (!isAdmin()) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -225,7 +397,7 @@ const AdminPage = () => {
     )
   }
 
-  if (loading && !systemData) {
+  if (loading && !dashboardData) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -237,6 +409,10 @@ const AdminPage = () => {
       </div>
     )
   }
+
+  const stats = dashboardData?.statistics || {}
+  const recentActivity = dashboardData?.recent_activity || []
+  const roleDistribution = dashboardData?.role_distribution || []
 
   return (
     <div className="space-y-6">
@@ -254,7 +430,7 @@ const AdminPage = () => {
             {loading ? <LoadingSpinner size="sm" /> : <Download className="w-4 h-4 mr-2" />}
             Backup Manual
           </Button>
-          <Button variant="outline" onClick={() => loadSystemData()}>
+          <Button variant="outline" onClick={() => loadDashboardData()}>
             <RefreshCw className="w-4 h-4 mr-2" />
             Actualizar
           </Button>
@@ -262,35 +438,35 @@ const AdminPage = () => {
       </div>
 
       {/* Estadísticas del sistema */}
-      {systemData && (
+      {dashboardData && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatsCard
             title="Usuarios Totales"
-            value={systemData.system_stats.total_users}
-            subtitle={`${systemData.system_stats.active_users} activos`}
+            value={stats.users?.total || 0}
+            subtitle={`${stats.users?.active || 0} activos`}
             icon={Users}
             variant="info"
           />
           <StatsCard
-            title="Uptime del Sistema"
-            value={systemData.system_stats.system_uptime}
-            subtitle="Disponibilidad"
-            icon={Server}
+            title="Empleados"
+            value={stats.employees?.total || 0}
+            subtitle={`${stats.employees?.approved || 0} aprobados`}
+            icon={Users}
+            variant="info"
+          />
+          <StatsCard
+            title="Equipos"
+            value={stats.teams?.total || 0}
+            subtitle={`${stats.teams?.with_manager || 0} con manager`}
+            icon={Building}
             variant="success"
           />
           <StatsCard
-            title="Uso de CPU"
-            value={`${systemData.system_stats.cpu_usage}%`}
-            subtitle="Rendimiento actual"
-            icon={Cpu}
-            variant={systemData.system_stats.cpu_usage > 80 ? "danger" : "warning"}
-          />
-          <StatsCard
-            title="Uso de Memoria"
-            value={`${systemData.system_stats.memory_usage}%`}
-            subtitle="RAM utilizada"
-            icon={HardDrive}
-            variant={systemData.system_stats.memory_usage > 80 ? "danger" : "info"}
+            title="Aprobaciones Pendientes"
+            value={stats.employees?.pending_approval || 0}
+            subtitle="Empleados esperando aprobación"
+            icon={Clock}
+            variant="warning"
           />
         </div>
       )}
@@ -302,54 +478,38 @@ const AdminPage = () => {
           <TabsTrigger value="users">Usuarios</TabsTrigger>
           <TabsTrigger value="system">Sistema</TabsTrigger>
           <TabsTrigger value="settings">Configuración</TabsTrigger>
-          <TabsTrigger value="logs">Logs</TabsTrigger>
         </TabsList>
 
         {/* Pestaña de Resumen */}
         <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Estado del sistema */}
+            {/* Distribución de roles */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <Activity className="w-5 h-5 mr-2" />
-                  Estado del Sistema
+                  <Users className="w-5 h-5 mr-2" />
+                  Distribución de Roles
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">CPU</span>
-                    <span className="text-sm font-medium">{systemData?.system_stats.cpu_usage}%</span>
-                  </div>
-                  <Progress value={systemData?.system_stats.cpu_usage} className="h-2" />
-                  
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Memoria</span>
-                    <span className="text-sm font-medium">{systemData?.system_stats.memory_usage}%</span>
-                  </div>
-                  <Progress value={systemData?.system_stats.memory_usage} className="h-2" />
-                  
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Disco</span>
-                    <span className="text-sm font-medium">{systemData?.system_stats.disk_usage}%</span>
-                  </div>
-                  <Progress value={systemData?.system_stats.disk_usage} className="h-2" />
-                </div>
-                
-                <div className="pt-4 border-t">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-gray-500">Último Backup</p>
-                      <p className="font-medium">
-                        {new Date(systemData?.system_stats.last_backup).toLocaleDateString('es-ES')}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Tamaño BD</p>
-                      <p className="font-medium">{systemData?.system_stats.database_size}</p>
-                    </div>
-                  </div>
+              <CardContent>
+                <div className="space-y-4">
+                  {roleDistribution.length > 0 ? (
+                    roleDistribution.map((role) => {
+                      const total = stats.users?.total || 1
+                      const percentage = (role.user_count / total) * 100
+                      return (
+                        <div key={role.role} className="space-y-2">
+                          <div className="flex justify-between">
+                            <span className="text-sm capitalize">{role.description || role.role}</span>
+                            <span className="text-sm font-medium">{role.user_count} usuarios</span>
+                          </div>
+                          <Progress value={percentage} className="h-2" />
+                        </div>
+                      )
+                    })
+                  ) : (
+                    <p className="text-sm text-gray-500">No hay datos disponibles</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -364,106 +524,237 @@ const AdminPage = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {systemData?.recent_activities.slice(0, 5).map((activity) => (
-                    <div key={activity.id} className="flex items-start space-x-3">
-                      <div className={`mt-1 ${getSeverityColor(activity.severity)}`}>
-                        {getSeverityIcon(activity.severity)}
+                  {recentActivity.length > 0 ? (
+                    recentActivity.slice(0, 5).map((activity, index) => (
+                      <div key={index} className="flex items-start space-x-3">
+                        <div className={`mt-1 ${getSeverityColor(activity.severity || 'info')}`}>
+                          {getSeverityIcon(activity.severity || 'info')}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">{activity.description}</p>
+                          <p className="text-xs text-gray-500">
+                            {new Date(activity.timestamp).toLocaleString('es-ES')}
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">{activity.description}</p>
-                        <p className="text-xs text-gray-500">
-                          {new Date(activity.timestamp).toLocaleString('es-ES')}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500">No hay actividad reciente</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
           </div>
-
-          {/* Métricas de rendimiento */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <BarChart3 className="w-5 h-5 mr-2" />
-                Métricas de Rendimiento
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-blue-600">
-                    {systemData?.system_health.api_response_time}ms
-                  </p>
-                  <p className="text-sm text-gray-500">Tiempo de respuesta API</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-green-600">
-                    {systemData?.system_health.cache_hit_rate}%
-                  </p>
-                  <p className="text-sm text-gray-500">Tasa de acierto cache</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-purple-600">
-                    {systemData?.system_health.database_connections}
-                  </p>
-                  <p className="text-sm text-gray-500">Conexiones BD activas</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-orange-600">
-                    {(systemData?.system_health.error_rate * 100).toFixed(2)}%
-                  </p>
-                  <p className="text-sm text-gray-500">Tasa de errores</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
 
         {/* Pestaña de Usuarios */}
         <TabsContent value="users" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Distribución de Roles</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {Object.entries(systemData?.user_analytics.user_roles || {}).map(([role, count]) => (
-                    <div key={role} className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-sm capitalize">{role}</span>
-                        <span className="text-sm font-medium">{count} usuarios</span>
-                      </div>
-                      <Progress 
-                        value={(count / systemData?.system_stats.total_users) * 100} 
-                        className="h-2" 
-                      />
-                    </div>
-                  ))}
+          <Card>
+            <CardHeader>
+              <CardTitle>Gestión de Usuarios</CardTitle>
+              <CardDescription>
+                Administra usuarios, roles y equipos del sistema
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* Filtros y búsqueda */}
+              <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Input
+                      placeholder="Buscar por email, nombre o equipo..."
+                      value={usersSearch}
+                      onChange={(e) => setUsersSearch(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
+                
+                <Select 
+                  value={usersFilter.role} 
+                  onValueChange={(value) => setUsersFilter(prev => ({ ...prev, role: value }))}
+                >
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Filtrar por rol" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Todos los roles</SelectItem>
+                    {roles.map(role => (
+                      <SelectItem key={role.name} value={role.name}>
+                        {role.description}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                <Button
+                  variant={usersFilter.active_only ? "default" : "outline"}
+                  onClick={() => setUsersFilter(prev => ({ ...prev, active_only: !prev.active_only }))}
+                >
+                  {usersFilter.active_only ? 'Solo activos' : 'Todos'}
+                </Button>
+              </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Usuarios Activos Diarios</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {systemData?.user_analytics.daily_active_users.slice(-5).map((day, index) => (
-                    <div key={index} className="flex justify-between items-center p-2 border rounded">
-                      <span className="text-sm">
-                        {new Date(day.date).toLocaleDateString('es-ES')}
-                      </span>
-                      <Badge variant="outline">{day.users} usuarios</Badge>
-                    </div>
-                  ))}
+              {/* Tabla de usuarios */}
+              {usersLoading ? (
+                <div className="flex justify-center py-8">
+                  <LoadingSpinner />
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+              ) : filteredUsers.length === 0 ? (
+                <div className="text-center py-8">
+                  <Users className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                  <p className="text-gray-500">No se encontraron usuarios</p>
+                </div>
+              ) : (
+                <>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Usuario</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Roles</TableHead>
+                          <TableHead>Empleado</TableHead>
+                          <TableHead>Equipo</TableHead>
+                          <TableHead>Estado</TableHead>
+                          <TableHead className="text-right">Acciones</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredUsers.map((u) => (
+                          <TableRow key={u.id}>
+                            <TableCell className="font-medium">
+                              {u.full_name || u.username || 'N/A'}
+                            </TableCell>
+                            <TableCell>{u.email}</TableCell>
+                            <TableCell>
+                              <div className="flex flex-wrap gap-1">
+                                {u.roles?.map((role, idx) => (
+                                  <Badge key={idx} variant="outline">
+                                    {role}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {u.employee ? (
+                                <Badge variant="secondary">{u.employee.full_name}</Badge>
+                              ) : (
+                                <span className="text-gray-400">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {u.employee?.team?.name ? (
+                                <Badge variant="outline">{u.employee.team.name}</Badge>
+                              ) : (
+                                <span className="text-gray-400">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {u.active ? (
+                                <Badge variant="default" className="bg-green-500">Activo</Badge>
+                              ) : (
+                                <Badge variant="secondary">Inactivo</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm">
+                                    <MoreVertical className="w-4 h-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      setSelectedUser(u)
+                                      setShowRoleDialog(true)
+                                    }}
+                                  >
+                                    <Edit className="w-4 h-4 mr-2" />
+                                    Modificar Roles
+                                  </DropdownMenuItem>
+                                  {u.employee && (
+                                    <DropdownMenuItem
+                                      onClick={() => {
+                                        setSelectedUser(u)
+                                        setShowTeamDialog(true)
+                                      }}
+                                    >
+                                      <Building className="w-4 h-4 mr-2" />
+                                      Cambiar Equipo
+                                    </DropdownMenuItem>
+                                  )}
+                                  <DropdownMenuItem
+                                    onClick={() => handleToggleUserActive(u.id)}
+                                    disabled={u.id === user?.id}
+                                  >
+                                    {u.active ? (
+                                      <>
+                                        <XCircle className="w-4 h-4 mr-2" />
+                                        Desactivar
+                                      </>
+                                    ) : (
+                                      <>
+                                        <CheckCircle className="w-4 h-4 mr-2" />
+                                        Activar
+                                      </>
+                                    )}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      setSelectedUser(u)
+                                      setShowDeleteDialog(true)
+                                    }}
+                                    disabled={u.id === user?.id}
+                                    className="text-red-600"
+                                  >
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Eliminar
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  {/* Paginación */}
+                  {usersTotal > usersPerPage && (
+                    <div className="flex items-center justify-between mt-4">
+                      <p className="text-sm text-gray-500">
+                        Mostrando {((usersPage - 1) * usersPerPage) + 1} - {Math.min(usersPage * usersPerPage, usersTotal)} de {usersTotal} usuarios
+                      </p>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setUsersPage(prev => Math.max(1, prev - 1))}
+                          disabled={usersPage === 1}
+                        >
+                          Anterior
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setUsersPage(prev => prev + 1)}
+                          disabled={usersPage * usersPerPage >= usersTotal}
+                        >
+                          Siguiente
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Pestaña de Sistema */}
@@ -539,7 +830,7 @@ const AdminPage = () => {
                   </div>
                   <div>
                     <p className="text-gray-500">Servidor</p>
-                    <p className="font-medium">Ubuntu 22.04</p>
+                    <p className="font-medium">Render</p>
                   </div>
                 </div>
               </CardContent>
@@ -638,54 +929,123 @@ const AdminPage = () => {
             </CardContent>
           </Card>
         </TabsContent>
-
-        {/* Pestaña de Logs */}
-        <TabsContent value="logs" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Registro de Actividades</CardTitle>
-              <CardDescription>
-                Historial completo de eventos del sistema
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Fecha/Hora</TableHead>
-                      <TableHead>Tipo</TableHead>
-                      <TableHead>Descripción</TableHead>
-                      <TableHead>Severidad</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {systemData?.recent_activities.map((activity) => (
-                      <TableRow key={activity.id}>
-                        <TableCell className="text-sm">
-                          {new Date(activity.timestamp).toLocaleString('es-ES')}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{activity.type}</Badge>
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {activity.description}
-                        </TableCell>
-                        <TableCell>
-                          <div className={`flex items-center ${getSeverityColor(activity.severity)}`}>
-                            {getSeverityIcon(activity.severity)}
-                            <span className="ml-1 capitalize">{activity.severity}</span>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
+
+      {/* Dialog para modificar roles */}
+      <Dialog open={showRoleDialog} onOpenChange={setShowRoleDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Modificar Roles</DialogTitle>
+            <DialogDescription>
+              Selecciona los roles para {selectedUser?.email}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {roles.map(role => {
+              const isSelected = selectedUser?.roles?.includes(role.name)
+              return (
+                <div key={role.name} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id={`role-${role.name}`}
+                    checked={isSelected}
+                    onChange={(e) => {
+                      const currentRoles = selectedUser?.roles || []
+                      if (e.target.checked) {
+                        setSelectedUser({
+                          ...selectedUser,
+                          roles: [...currentRoles, role.name]
+                        })
+                      } else {
+                        setSelectedUser({
+                          ...selectedUser,
+                          roles: currentRoles.filter(r => r !== role.name)
+                        })
+                      }
+                    }}
+                    className="rounded border-gray-300"
+                  />
+                  <Label htmlFor={`role-${role.name}`} className="cursor-pointer">
+                    {role.description}
+                  </Label>
+                </div>
+              )
+            })}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRoleDialog(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => {
+                if (selectedUser) {
+                  handleUpdateRoles(selectedUser.id, selectedUser.roles || [])
+                }
+              }}
+            >
+              Guardar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog para eliminar usuario */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Eliminar Usuario</DialogTitle>
+            <DialogDescription>
+              ¿Estás seguro de que deseas eliminar a {selectedUser?.email}? Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteUser}>
+              Eliminar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog para cambiar equipo */}
+      <Dialog open={showTeamDialog} onOpenChange={setShowTeamDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cambiar Equipo</DialogTitle>
+            <DialogDescription>
+              Selecciona el nuevo equipo para {selectedUser?.employee?.full_name || selectedUser?.email}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Select
+              defaultValue={selectedUser?.employee?.team_id?.toString()}
+              onValueChange={(value) => {
+                if (selectedUser?.employee?.id) {
+                  handleChangeTeam(selectedUser.employee.id, parseInt(value))
+                }
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecciona un equipo" />
+              </SelectTrigger>
+              <SelectContent>
+                {teams.map(team => (
+                  <SelectItem key={team.id} value={team.id.toString()}>
+                    {team.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowTeamDialog(false)}>
+              Cerrar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
