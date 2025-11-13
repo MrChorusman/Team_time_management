@@ -105,9 +105,10 @@ const EmployeesPage = () => {
   }
 
   const filteredEmployees = employees.filter(employee => {
+    const teamName = employee.team_name || employee.team?.name || ''
     const matchesSearch = employee.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          employee.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (employee.team?.name || '').toLowerCase().includes(searchTerm.toLowerCase())
+                         teamName.toLowerCase().includes(searchTerm.toLowerCase())
     
     // Convertir boolean a string para comparar con el filtro
     let employeeStatus = 'pending'
@@ -118,7 +119,8 @@ const EmployeesPage = () => {
     }
     
     const matchesStatus = statusFilter === 'all' || employeeStatus === statusFilter
-    const matchesTeam = teamFilter === 'all' || (employee.team?.name || '') === teamFilter
+    const teamName = employee.team_name || employee.team?.name || ''
+    const matchesTeam = teamFilter === 'all' || teamName === teamFilter
     
     return matchesSearch && matchesStatus && matchesTeam
   })
@@ -319,7 +321,7 @@ const EmployeesPage = () => {
                     
                     <TableCell>
                       <Badge variant="outline">
-                        {employee.team.name}
+                        {employee.team_name || employee.team?.name || 'Sin equipo'}
                       </Badge>
                     </TableCell>
                     
