@@ -64,8 +64,13 @@ class NotificationService:
             # Enviar email inmediatamente si está configurado
             if notification.send_email:
                 try:
-                    from .email_service import EmailService
-                    email_service = EmailService()
+                    from flask import current_app
+                    from .email_service import email_service
+                    
+                    # Asegurar que el servicio está inicializado
+                    if not email_service.mail:
+                        email_service.init_app(current_app)
+                    
                     success = email_service.send_notification_email(notification)
                     if success:
                         notification.mark_email_sent()
