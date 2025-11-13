@@ -236,6 +236,7 @@ function App() {
         <AuthProvider>
           <NotificationProvider>
             <AppContent />
+            <Toaster position="top-right" richColors />
           </NotificationProvider>
         </AuthProvider>
       </Router>
