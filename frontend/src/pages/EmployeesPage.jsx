@@ -551,7 +551,7 @@ const EmployeesPage = () => {
                       <div className="space-y-3">
                         <div className="flex justify-between">
                           <span>Horas Totales:</span>
-                          <span className="font-medium">{selectedEmployee.annual_stats.total_actual_hours}h</span>
+                          <span className="font-medium">{selectedEmployee.annual_stats?.total_actual_hours || 0}h</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Eficiencia Anual:</span>
@@ -559,11 +559,11 @@ const EmployeesPage = () => {
                         </div>
                         <div className="flex justify-between">
                           <span>Vacaciones Restantes:</span>
-                          <span className="font-medium">{selectedEmployee.annual_stats.remaining_vacation_days} días</span>
+                          <span className="font-medium">{selectedEmployee.annual_stats?.remaining_vacation_days || 0} días</span>
                         </div>
                         <div className="flex justify-between">
                           <span>HLD Restantes:</span>
-                          <span className="font-medium">{selectedEmployee.annual_stats.remaining_hld_hours}h</span>
+                          <span className="font-medium">{selectedEmployee.annual_stats?.remaining_hld_hours || 0}h</span>
                         </div>
                       </div>
                     </CardContent>
