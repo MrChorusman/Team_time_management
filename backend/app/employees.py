@@ -164,6 +164,7 @@ def register_employee():
         NotificationService.notify_employee_registration(employee, current_user)
         
         # Crear notificación para administradores sobre nuevo empleado registrado
+        from models.notification import NotificationType, NotificationPriority
         admin_role = Role.query.filter_by(name='admin').first()
         if admin_role:
             admin_users = User.query.join(User.roles).filter(Role.id == admin_role.id).all()
@@ -172,8 +173,8 @@ def register_employee():
                     user_id=admin_user.id,
                     title="Nuevo empleado registrado",
                     message=f"{employee.full_name} se ha registrado en el equipo {team.name}. Estado: {'Aprobado' if employee.approved else 'Pendiente de aprobación'}",
-                    notification_type='employee_registration',
-                    priority='high' if not employee.approved else 'medium',
+                    notification_type=NotificationType.EMPLOYEE_REGISTRATION,
+                    priority=NotificationPriority.HIGH if not employee.approved else NotificationPriority.MEDIUM,
                     send_email=False,
                     created_by=current_user.id,
                     data={
@@ -195,12 +196,13 @@ def register_employee():
             
             if pending_count > 0:
                 for admin_user in admin_users:
+                    # Crear notificación de aprobación pendiente
                     approval_notification = Notification(
                         user_id=admin_user.id,
                         title="Aprobación pendiente",
                         message=f"Tienes {pending_count} empleado(s) pendiente(s) de aprobación",
-                        notification_type='approval_request',
-                        priority='high',
+                        notification_type=NotificationType.SYSTEM_ALERT,
+                        priority=NotificationPriority.HIGH,
                         send_email=False,
                         created_by=current_user.id,
                         data={
@@ -718,25 +720,28 @@ def invite_employee():
                 logger.info(f"✅ Invitación enviada exitosamente a {email}")
                 
                 # Crear notificación para administradores sobre la invitación enviada
-                admin_users = User.query.join(User.roles).filter(Role.name == 'admin').all()
-                for admin_user in admin_users:
-                    notification = Notification(
-                        user_id=admin_user.id,
-                        title="Invitación enviada",
-                        message=f"Se ha enviado una invitación a {email} para unirse al sistema.",
-                        notification_type='system',
-                        priority='low',
-                        send_email=False,
-                        created_by=current_user.id,
-                        data={
-                            'invitation_email': email,
-                            'invited_by': current_user.email,
-                            'expires_at': expires_at.isoformat()
-                        }
-                    )
-                    db.session.add(notification)
-                
-                db.session.commit()
+                from models.notification import NotificationType, NotificationPriority
+                admin_role = Role.query.filter_by(name='admin').first()
+                if admin_role:
+                    admin_users = User.query.join(User.roles).filter(Role.id == admin_role.id).all()
+                    for admin_user in admin_users:
+                        notification = Notification(
+                            user_id=admin_user.id,
+                            title="Invitación enviada",
+                            message=f"Se ha enviado una invitación a {email} para unirse al sistema.",
+                            notification_type=NotificationType.SYSTEM_ALERT,
+                            priority=NotificationPriority.LOW,
+                            send_email=False,
+                            created_by=current_user.id,
+                            data={
+                                'invitation_email': email,
+                                'invited_by': current_user.email,
+                                'expires_at': expires_at.isoformat()
+                            }
+                        )
+                        db.session.add(notification)
+                    
+                    db.session.commit()
             else:
                 logger.warning(f"⚠️ send_invitation_email devolvió False para {email}")
             

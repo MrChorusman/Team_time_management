@@ -3,7 +3,7 @@ Dashboard Blueprint
 Endpoint centralizado para estadísticas del dashboard según rol de usuario
 """
 from flask import Blueprint, jsonify
-from flask_login import login_required, current_user
+from flask_security import auth_required, current_user
 from sqlalchemy import func
 from models.base import db
 from models.user import User
@@ -15,7 +15,7 @@ dashboard_bp = Blueprint('dashboard', __name__, url_prefix='/api/dashboard')
 
 
 @dashboard_bp.route('/stats', methods=['GET'])
-@login_required
+@auth_required()
 def get_dashboard_stats():
     """
     Obtiene estadísticas del dashboard según el rol del usuario
@@ -78,16 +78,16 @@ def _get_admin_stats():
         total_teams = Team.query.count()
         
         # Aprobaciones pendientes (approved es boolean: False = pendiente, True = aprobado)
-        pending_approvals = Employee.query.filter_by(
-            active=True,
-            approved=False
+        pending_approvals = Employee.query.filter(
+            Employee.active == True,
+            Employee.approved == False
         ).count()
         
         # Eficiencia global (promedio de empleados aprobados con horas registradas)
         # approved es boolean: True = aprobado
-        approved_employees = Employee.query.filter_by(
-            active=True,
-            approved=True
+        approved_employees = Employee.query.filter(
+            Employee.active == True,
+            Employee.approved == True
         ).all()
         
         if approved_employees:
@@ -104,7 +104,7 @@ def _get_admin_stats():
             .all()
         
         recent_activity = [{
-            'type': notif.type,
+            'type': notif.notification_type.value if notif.notification_type else 'unknown',
             'message': notif.message,
             'timestamp': notif.created_at.isoformat() if notif.created_at else None
         } for notif in recent_notifications]
@@ -114,10 +114,10 @@ def _get_admin_stats():
         team_performance = []
         
         for team in teams:
-            team_employees = Employee.query.filter_by(
-                team_id=team.id,
-                active=True,
-                approved=True
+            team_employees = Employee.query.filter(
+                Employee.team_id == team.id,
+                Employee.active == True,
+                Employee.approved == True
             ).count()
             
             team_performance.append({
@@ -165,17 +165,17 @@ def _get_manager_stats(team_id):
     """Estadísticas para managers"""
     try:
         # Miembros del equipo (approved es boolean: True = aprobado)
-        team_members = Employee.query.filter_by(
-            team_id=team_id,
-            active=True,
-            approved=True
+        team_members = Employee.query.filter(
+            Employee.team_id == team_id,
+            Employee.active == True,
+            Employee.approved == True
         ).count()
         
         # Aprobaciones pendientes en el equipo (approved es boolean)
-        pending_approvals = Employee.query.filter_by(
-            team_id=team_id,
-            active=True,
-            approved=False
+        pending_approvals = Employee.query.filter(
+            Employee.team_id == team_id,
+            Employee.active == True,
+            Employee.approved == False
         ).count()
         
         # Eficiencia del equipo
@@ -195,7 +195,7 @@ def _get_manager_stats(team_id):
             .all()
         
         recent_activity = [{
-            'type': notif.type,
+            'type': notif.notification_type.value if notif.notification_type else 'unknown',
             'message': notif.message,
             'timestamp': notif.created_at.isoformat() if notif.created_at else None
         } for notif in recent_notifications]
@@ -266,7 +266,7 @@ def _get_employee_stats(employee_id):
             .all()
         
         recent_activity = [{
-            'type': notif.type,
+            'type': notif.notification_type.value if notif.notification_type else 'unknown',
             'message': notif.message,
             'timestamp': notif.created_at.isoformat() if notif.created_at else None
         } for notif in recent_notifications]

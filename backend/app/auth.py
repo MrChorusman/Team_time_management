@@ -175,6 +175,7 @@ def register():
         db.session.commit()
         
         # Crear notificación para administradores sobre nuevo usuario registrado
+        from models.notification import NotificationType, NotificationPriority
         admin_role = Role.query.filter_by(name='admin').first()
         if admin_role:
             admin_users = User.query.join(User.roles).filter(Role.id == admin_role.id).all()
@@ -183,8 +184,8 @@ def register():
                     user_id=admin_user.id,
                     title="Nuevo usuario registrado",
                     message=f"Un nuevo usuario se ha registrado: {email}",
-                    notification_type='system',
-                    priority='medium',
+                    notification_type=NotificationType.SYSTEM_ALERT,
+                    priority=NotificationPriority.MEDIUM,
                     send_email=False,
                     created_by=new_user.id,
                     data={

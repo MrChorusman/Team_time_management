@@ -275,6 +275,35 @@ const AdminPage = () => {
     }
   }
 
+  const handleApproveEmployee = async (employeeId) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/employees/${employeeId}/approve`, {
+        method: 'POST',
+        credentials: 'include'
+      })
+      
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.message || 'Error aprobando empleado')
+      }
+      
+      const data = await response.json()
+      toast({
+        title: 'Éxito',
+        description: data.message || 'Empleado aprobado exitosamente'
+      })
+      
+      loadUsers()
+      loadDashboardData()
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive'
+      })
+    }
+  }
+
   const handleChangeTeam = async (employeeId, teamId) => {
     try {
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/employees/${employeeId}/change-team`, {
@@ -695,16 +724,29 @@ const AdminPage = () => {
                                     Modificar Roles
                                   </DropdownMenuItem>
                                   {u.employee && (
-                                    <DropdownMenuItem
-                                      onSelect={(e) => {
-                                        e.preventDefault()
-                                        setSelectedUser(u)
-                                        setShowTeamDialog(true)
-                                      }}
-                                    >
-                                      <Building className="w-4 h-4 mr-2" />
-                                      Cambiar Equipo
-                                    </DropdownMenuItem>
+                                    <>
+                                      <DropdownMenuItem
+                                        onSelect={(e) => {
+                                          e.preventDefault()
+                                          setSelectedUser(u)
+                                          setShowTeamDialog(true)
+                                        }}
+                                      >
+                                        <Building className="w-4 h-4 mr-2" />
+                                        Cambiar Equipo
+                                      </DropdownMenuItem>
+                                      {u.employee.approved === false && (
+                                        <DropdownMenuItem
+                                          onSelect={(e) => {
+                                            e.preventDefault()
+                                            handleApproveEmployee(u.employee.id)
+                                          }}
+                                        >
+                                          <CheckCircle className="w-4 h-4 mr-2" />
+                                          Aprobar Empleado
+                                        </DropdownMenuItem>
+                                      )}
+                                    </>
                                   )}
                                   <DropdownMenuItem
                                     onSelect={(e) => {
