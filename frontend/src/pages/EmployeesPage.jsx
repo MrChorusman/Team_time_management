@@ -55,7 +55,9 @@ const EmployeesPage = () => {
   const loadEmployees = async () => {
     setLoading(true)
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/employees`, {
+      // Los administradores deben ver todos los empleados (aprobados y pendientes)
+      const approvedOnly = isAdmin() ? 'false' : 'true'
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/employees?approved_only=${approvedOnly}`, {
         credentials: 'include'
       })
       
