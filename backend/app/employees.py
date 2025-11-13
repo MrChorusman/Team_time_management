@@ -326,7 +326,10 @@ def list_employees():
         page = request.args.get('page', 1, type=int)
         per_page = min(request.args.get('per_page', 20, type=int), 100)
         team_id = request.args.get('team_id', type=int)
-        approved_only = request.args.get('approved_only', 'true').lower() == 'true'
+        # Por defecto, los admins ven todos los empleados (aprobados y pendientes)
+        # Otros roles solo ven aprobados por defecto
+        default_approved_only = 'false' if current_user.is_admin() else 'true'
+        approved_only = request.args.get('approved_only', default_approved_only).lower() == 'true'
         
         # Construir query base
         query = Employee.query.filter(Employee.active == True)
