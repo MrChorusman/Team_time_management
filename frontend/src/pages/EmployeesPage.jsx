@@ -341,17 +341,17 @@ const EmployeesPage = () => {
                     <TableCell>
                       <div className="flex items-center space-x-2">
                         <div className="w-16">
-                          <Progress value={employee.monthly_stats.efficiency} className="h-2" />
+                          <Progress value={employee.monthly_stats?.efficiency || 0} className="h-2" />
                         </div>
                         <span className="text-sm font-medium">
-                          {employee.monthly_stats.efficiency}%
+                          {employee.monthly_stats?.efficiency || 0}%
                         </span>
                       </div>
                     </TableCell>
                     
                     <TableCell>
                       <span className="text-sm text-gray-600 dark:text-gray-400">
-                        {new Date(employee.last_activity).toLocaleDateString('es-ES')}
+                        {employee.last_activity ? new Date(employee.last_activity).toLocaleDateString('es-ES') : 'Sin actividad'}
                       </span>
                     </TableCell>
                     
@@ -528,17 +528,17 @@ const EmployeesPage = () => {
                       <div className="space-y-3">
                         <div className="flex justify-between">
                           <span>Horas Teóricas:</span>
-                          <span className="font-medium">{selectedEmployee.monthly_stats.theoretical_hours}h</span>
+                          <span className="font-medium">{selectedEmployee.monthly_stats?.theoretical_hours || 0}h</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Horas Reales:</span>
-                          <span className="font-medium">{selectedEmployee.monthly_stats.actual_hours}h</span>
+                          <span className="font-medium">{selectedEmployee.monthly_stats?.actual_hours || 0}h</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Eficiencia:</span>
-                          <span className="font-medium">{selectedEmployee.monthly_stats.efficiency}%</span>
+                          <span className="font-medium">{selectedEmployee.monthly_stats?.efficiency || 0}%</span>
                         </div>
-                        <Progress value={selectedEmployee.monthly_stats.efficiency} className="h-2" />
+                        <Progress value={selectedEmployee.monthly_stats?.efficiency || 0} className="h-2" />
                       </div>
                     </CardContent>
                   </Card>
@@ -555,7 +555,7 @@ const EmployeesPage = () => {
                         </div>
                         <div className="flex justify-between">
                           <span>Eficiencia Anual:</span>
-                          <span className="font-medium">{selectedEmployee.annual_stats.total_efficiency}%</span>
+                          <span className="font-medium">{selectedEmployee.annual_stats?.total_efficiency || 0}%</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Vacaciones Restantes:</span>
@@ -592,7 +592,7 @@ const EmployeesPage = () => {
                         <div>
                           <p className="text-sm font-medium">Última actividad</p>
                           <p className="text-xs text-gray-500">
-                            {new Date(selectedEmployee.last_activity).toLocaleDateString('es-ES')}
+                            {selectedEmployee.last_activity ? new Date(selectedEmployee.last_activity).toLocaleDateString('es-ES') : 'Sin actividad'}
                           </p>
                         </div>
                       </div>
