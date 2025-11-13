@@ -479,7 +479,7 @@ const EmployeesPage = () => {
                       </div>
                       <div className="flex items-center space-x-3">
                         <Building className="w-4 h-4 text-gray-400" />
-                        <span>{selectedEmployee.team.name}</span>
+                        <span>{selectedEmployee.team_name || selectedEmployee.team?.name || 'Sin equipo'}</span>
                       </div>
                       <div className="flex items-center space-x-3">
                         <Calendar className="w-4 h-4 text-gray-400" />
