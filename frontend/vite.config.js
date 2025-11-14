@@ -56,39 +56,24 @@ export default defineConfig({
       // Mantener comentarios legales para debugging
       legalComments: 'inline'
     },
-    // Simplificar chunks - dejar que Vite maneje automáticamente para evitar problemas de inicialización
-    // rollupOptions: {
-    //   output: {
-    //     manualChunks(id) {
-    //       if (id.includes('node_modules')) {
-    //         if (id.includes('react') || id.includes('react-dom')) {
-    //           return 'react-vendor'
-    //         }
-    //         if (id.includes('react-router')) {
-    //           return 'router'
-    //         }
-    //         if (id.includes('@radix-ui')) {
-    //           return 'ui'
-    //         }
-    //         if (id.includes('lucide-react')) {
-    //           return 'icons'
-    //         }
-    //         if (id.includes('clsx') || id.includes('tailwind-merge')) {
-    //           return 'utils'
-    //         }
-    //         return 'vendor'
-    //       }
-    //       // Separar helpers del calendario en chunk propio
-    //       if (id.includes('calendarHelpers')) {
-    //         return 'calendar-helpers'
-    //       }
-    //       // Separar componentes del calendario en chunk propio
-    //       if (id.includes('CalendarTableView') || id.includes('ContextMenu') || id.includes('ActivityModal')) {
-    //         return 'calendar-components'
-    //       }
-    //     }
-    //   }
-    // }
+    // PASO 2: Activar manualChunks de forma ULTRA-CONSERVADORA
+    // Solo separar React y vendor básico, sin tocar componentes del calendario todavía
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          // Solo separar React y React-DOM (lo más crítico)
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom')) {
+              return 'react-vendor'
+            }
+            // Todo lo demás va a vendor (sin más separaciones por ahora)
+            return 'vendor'
+          }
+          // NO separar componentes del calendario todavía - dejarlos en el bundle principal
+          // Esto evita problemas de inicialización mientras probamos la minificación básica
+        }
+      }
+    }
   },
   preview: {
     port: 3000,
