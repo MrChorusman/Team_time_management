@@ -451,13 +451,18 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
   }
 
   // Calcular días y meses usando useMemo para evitar problemas de inicialización
-  const days = useMemo(() => getDaysInMonth(currentMonth), [currentMonth])
+  const days = useMemo(() => {
+    return getDaysInMonth(currentMonth)
+  }, [currentMonth])
+  
   const months = useMemo(() => {
-    if (viewMode === 'annual') {
+    const isAnnual = viewMode === 'annual'
+    if (isAnnual) {
       return getMonthsInYear(currentMonth)
-    } else {
-      return [{ date: currentMonth, name: currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }), days: getDaysInMonth(currentMonth) }]
     }
+    const monthDays = getDaysInMonth(currentMonth)
+    const monthName = currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
+    return [{ date: currentMonth, name: monthName, days: monthDays }]
   }, [currentMonth, viewMode])
 
   // Renderizar una fila de empleado
