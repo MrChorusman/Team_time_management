@@ -9,6 +9,7 @@ from models.team import Team
 from models.holiday import Holiday
 from models.calendar_activity import CalendarActivity
 from models.notification import Notification
+from models.company import Company
 from services.notification_service import NotificationService
 from services.holiday_service import HolidayService
 from services.email_service import EmailService
@@ -963,4 +964,219 @@ def test_google_oauth_configuration():
             'success': False,
             'error': f'Error probando configuración Google OAuth: {e}',
             'timestamp': datetime.now().isoformat()
+        }), 500
+
+# ==================== ENDPOINTS DE GESTIÓN DE EMPRESAS ====================
+
+@admin_bp.route('/companies', methods=['GET'])
+@auth_required()
+@admin_required()
+def list_companies():
+    """Lista todas las empresas"""
+    try:
+        active_only = request.args.get('active_only', 'false').lower() == 'true'
+        
+        query = Company.query
+        if active_only:
+            query = query.filter(Company.active == True)
+        
+        companies = query.order_by(Company.name).all()
+        
+        return jsonify({
+            'success': True,
+            'companies': [company.to_dict() for company in companies]
+        })
+    except Exception as e:
+        logger.error(f"Error listando empresas: {e}")
+        return jsonify({
+            'success': False,
+            'message': 'Error obteniendo empresas'
+        }), 500
+
+@admin_bp.route('/companies/<int:company_id>', methods=['GET'])
+@auth_required()
+@admin_required()
+def get_company(company_id):
+    """Obtiene una empresa específica"""
+    try:
+        company = Company.query.get(company_id)
+        if not company:
+            return jsonify({
+                'success': False,
+                'message': 'Empresa no encontrada'
+            }), 404
+        
+        return jsonify({
+            'success': True,
+            'company': company.to_dict()
+        })
+    except Exception as e:
+        logger.error(f"Error obteniendo empresa {company_id}: {e}")
+        return jsonify({
+            'success': False,
+            'message': 'Error obteniendo empresa'
+        }), 500
+
+@admin_bp.route('/companies', methods=['POST'])
+@auth_required()
+@admin_required()
+def create_company():
+    """Crea una nueva empresa"""
+    try:
+        data = request.get_json()
+        
+        # Validar campos requeridos
+        if not data.get('name'):
+            return jsonify({
+                'success': False,
+                'message': 'El nombre de la empresa es requerido'
+            }), 400
+        
+        billing_start = data.get('billing_period_start_day')
+        billing_end = data.get('billing_period_end_day')
+        
+        if billing_start is None or billing_end is None:
+            return jsonify({
+                'success': False,
+                'message': 'Los días de período de facturación son requeridos'
+            }), 400
+        
+        if not (1 <= billing_start <= 31) or not (1 <= billing_end <= 31):
+            return jsonify({
+                'success': False,
+                'message': 'Los días de período deben estar entre 1 y 31'
+            }), 400
+        
+        # Verificar si ya existe una empresa con ese nombre
+        existing = Company.query.filter_by(name=data['name']).first()
+        if existing:
+            return jsonify({
+                'success': False,
+                'message': 'Ya existe una empresa con ese nombre'
+            }), 409
+        
+        # Crear empresa
+        company = Company(
+            name=data['name'],
+            billing_period_start_day=billing_start,
+            billing_period_end_day=billing_end,
+            active=data.get('active', True)
+        )
+        
+        db.session.add(company)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'company': company.to_dict(),
+            'message': 'Empresa creada exitosamente'
+        }), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error creando empresa: {e}")
+        return jsonify({
+            'success': False,
+            'message': 'Error creando empresa'
+        }), 500
+
+@admin_bp.route('/companies/<int:company_id>', methods=['PUT'])
+@auth_required()
+@admin_required()
+def update_company(company_id):
+    """Actualiza una empresa"""
+    try:
+        company = Company.query.get(company_id)
+        if not company:
+            return jsonify({
+                'success': False,
+                'message': 'Empresa no encontrada'
+            }), 404
+        
+        data = request.get_json()
+        
+        # Actualizar campos
+        if 'name' in data:
+            # Verificar que no haya otra empresa con ese nombre
+            existing = Company.query.filter(
+                Company.name == data['name'],
+                Company.id != company_id
+            ).first()
+            if existing:
+                return jsonify({
+                    'success': False,
+                    'message': 'Ya existe otra empresa con ese nombre'
+                }), 409
+            company.name = data['name']
+        
+        if 'billing_period_start_day' in data:
+            billing_start = data['billing_period_start_day']
+            if not (1 <= billing_start <= 31):
+                return jsonify({
+                    'success': False,
+                    'message': 'El día de inicio debe estar entre 1 y 31'
+                }), 400
+            company.billing_period_start_day = billing_start
+        
+        if 'billing_period_end_day' in data:
+            billing_end = data['billing_period_end_day']
+            if not (1 <= billing_end <= 31):
+                return jsonify({
+                    'success': False,
+                    'message': 'El día de fin debe estar entre 1 y 31'
+                }), 400
+            company.billing_period_end_day = billing_end
+        
+        if 'active' in data:
+            company.active = data['active']
+        
+        company.updated_at = datetime.utcnow()
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'company': company.to_dict(),
+            'message': 'Empresa actualizada exitosamente'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error actualizando empresa {company_id}: {e}")
+        return jsonify({
+            'success': False,
+            'message': 'Error actualizando empresa'
+        }), 500
+
+@admin_bp.route('/companies/<int:company_id>', methods=['DELETE'])
+@auth_required()
+@admin_required()
+def delete_company(company_id):
+    """Elimina una empresa (marca como inactiva)"""
+    try:
+        company = Company.query.get(company_id)
+        if not company:
+            return jsonify({
+                'success': False,
+                'message': 'Empresa no encontrada'
+            }), 404
+        
+        # En lugar de eliminar físicamente, marcamos como inactiva
+        # Esto preserva los datos históricos de forecast
+        company.active = False
+        company.updated_at = datetime.utcnow()
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Empresa desactivada exitosamente'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error eliminando empresa {company_id}: {e}")
+        return jsonify({
+            'success': False,
+            'message': 'Error eliminando empresa'
         }), 500

@@ -29,6 +29,9 @@ class Employee(db.Model):
     annual_vacation_days = db.Column(db.Integer, nullable=False, default=22)
     annual_hld_hours = db.Column(db.Integer, nullable=False, default=40)
     
+    # Tarifa por hora (solo visible para admin)
+    hourly_rate = db.Column(db.Float, nullable=True)  # Tarifa en euros/hora
+    
     # Ubicación geográfica (estructura jerárquica global)
     country = db.Column(db.String(100), nullable=False)
     region = db.Column(db.String(100), nullable=True)  # Estado/Provincia/Comunidad
@@ -264,6 +267,7 @@ class Employee(db.Model):
             'summer_months': self.summer_months_list,
             'annual_vacation_days': self.annual_vacation_days,
             'annual_hld_hours': self.annual_hld_hours,
+            'hourly_rate': self.hourly_rate,  # Tarifa por hora (solo visible para admin)
             'country': self.country,
             'region': self.region,
             'city': self.city,
