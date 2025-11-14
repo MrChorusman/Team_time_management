@@ -133,11 +133,39 @@ class CalendarService:
         _, last_day = monthrange(year, month)
         end_date = date(year, month, last_day)
         
-        # Obtener países únicos de los empleados
-        countries = list(set(emp.country for emp in employees if emp.country))
+        # Mapeo de códigos ISO a nombres de países (como están en la tabla holiday)
+        ISO_TO_COUNTRY_NAME = {
+            'ESP': 'España',
+            'ES': 'España',
+            'USA': 'United States',
+            'US': 'United States',
+            'GBR': 'United Kingdom',
+            'GB': 'United Kingdom',
+            'FRA': 'France',
+            'FR': 'France',
+            'DEU': 'Germany',
+            'DE': 'Germany',
+            'ITA': 'Italy',
+            'IT': 'Italy',
+            'PRT': 'Portugal',
+            'PT': 'Portugal',
+            # Añadir más según sea necesario
+        }
+        
+        # Obtener países únicos de los empleados y convertir códigos ISO a nombres
+        employee_countries = list(set(emp.country for emp in employees if emp.country))
+        countries_to_search = []
+        
+        for country_code in employee_countries:
+            # Si es un código ISO, convertir a nombre de país
+            if country_code in ISO_TO_COUNTRY_NAME:
+                countries_to_search.append(ISO_TO_COUNTRY_NAME[country_code])
+            # Si ya es un nombre de país, usarlo directamente
+            elif country_code:
+                countries_to_search.append(country_code)
         
         holidays = []
-        for country in countries:
+        for country in countries_to_search:
             country_holidays = Holiday.query.filter(
                 Holiday.country == country,
                 Holiday.date >= start_date,
