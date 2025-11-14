@@ -55,27 +55,29 @@ const ForecastPage = () => {
       ])
       
       setCompaniesLoading(false)
-      
-      // Establecer vista por defecto según el rol
-      if (isEmployee() && employee) {
-        setSelectedView('employee')
-        setSelectedEmployeeId(employee.id)
-      } else if (isManager() && employee?.team_id) {
-        setSelectedView('team')
-        setSelectedTeamId(employee.team_id)
-      } else if (isAdmin()) {
-        setSelectedView('employee')
-        // Si hay empleados, seleccionar el primero por defecto
-        if (employees.length > 0) {
-          setSelectedEmployeeId(employees[0].id)
-        }
-      }
-      
       setLoading(false)
     }
     
     initializeData()
   }, [])
+
+  // Establecer vista por defecto después de cargar empleados
+  useEffect(() => {
+    if (companiesLoading) return
+    
+    // Establecer vista por defecto según el rol
+    if (isEmployee() && employee) {
+      setSelectedView('employee')
+      setSelectedEmployeeId(employee.id)
+    } else if (isManager() && employee?.team_id) {
+      setSelectedView('team')
+      setSelectedTeamId(employee.team_id)
+    } else if (isAdmin() && employees.length > 0 && !selectedEmployeeId) {
+      setSelectedView('employee')
+      // Seleccionar el primer empleado por defecto
+      setSelectedEmployeeId(employees[0].id)
+    }
+  }, [companiesLoading, employees, employee])
 
   useEffect(() => {
     if (companiesLoading) return // Esperar a que se carguen las empresas
@@ -129,14 +131,6 @@ const ForecastPage = () => {
         if (data.success) {
           const employeesList = data.employees || []
           setEmployees(employeesList)
-          // Si es empleado, seleccionar su propio ID
-          if (isEmployee() && employee && !selectedEmployeeId) {
-            setSelectedEmployeeId(employee.id)
-          }
-          // Si es admin y no hay empleado seleccionado, seleccionar el primero
-          if (isAdmin() && !isEmployee() && employeesList.length > 0 && !selectedEmployeeId) {
-            setSelectedEmployeeId(employeesList[0].id)
-          }
         }
       }
     } catch (error) {
@@ -380,16 +374,34 @@ const ForecastPage = () => {
       </Card>
 
       {/* Contenido del Forecast */}
-      {!selectedCompanyId ? (
+      {companiesLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <LoadingSpinner text="Cargando empresas..." />
+        </div>
+      ) : !selectedCompanyId ? (
         <Alert>
           <AlertCircle className="w-4 h-4" />
           <AlertDescription>
             No hay empresas disponibles. Un administrador debe crear empresas primero.
           </AlertDescription>
         </Alert>
+      ) : selectedView === 'employee' && !selectedEmployeeId && !isEmployee() ? (
+        <Alert>
+          <AlertCircle className="w-4 h-4" />
+          <AlertDescription>
+            Por favor, selecciona un empleado para ver su forecast.
+          </AlertDescription>
+        </Alert>
+      ) : selectedView === 'team' && !selectedTeamId ? (
+        <Alert>
+          <AlertCircle className="w-4 h-4" />
+          <AlertDescription>
+            Por favor, selecciona un equipo para ver su forecast.
+          </AlertDescription>
+        </Alert>
       ) : loading ? (
         <div className="flex items-center justify-center py-12">
-          <LoadingSpinner />
+          <LoadingSpinner text="Calculando forecast..." />
         </div>
       ) : forecastData ? (
         <div className="space-y-6">
