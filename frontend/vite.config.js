@@ -47,8 +47,9 @@ export default defineConfig({
     esbuild: {
       // CRÍTICO: NO renombrar identificadores - esto causaba el error original
       minifyIdentifiers: false,
-      // Minificar solo sintaxis (eliminar código muerto, optimizar expresiones)
-      minifySyntax: true,
+      // TEMPORALMENTE desactivado: minifySyntax causaba errores de inicialización
+      // minifySyntax: true,
+      minifySyntax: false,
       // Minificar solo espacios en blanco (reducir tamaño sin cambiar lógica)
       minifyWhitespace: true,
       // Preservar nombres de funciones para debugging
