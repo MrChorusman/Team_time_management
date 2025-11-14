@@ -450,22 +450,6 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
     )
   }
 
-  // Calcular días y meses - usar cálculo directo en lugar de useMemo para evitar problemas de inicialización
-  // Asegurar que months siempre sea un array válido
-  let months = []
-  try {
-    if (viewMode === 'annual') {
-      months = getMonthsInYear(currentMonth) || []
-    } else {
-      const monthDays = getDaysInMonth(currentMonth)
-      const monthName = currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
-      months = [{ date: currentMonth, name: monthName, days: monthDays }]
-    }
-  } catch (error) {
-    console.error('Error calculando meses:', error)
-    months = []
-  }
-
   // Renderizar una fila de empleado
   const renderEmployeeRow = (employee, monthDate) => {
     if (!employee || !monthDate) return null
@@ -654,8 +638,24 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto overflow-y-auto max-h-[600px] relative">
-            {months && Array.isArray(months) && months.length > 0 ? (
-              months.map((month) => (
+            {(() => {
+              // Calcular meses directamente en el render para evitar problemas de inicialización
+              let calculatedMonths = []
+              try {
+                if (viewMode === 'annual') {
+                  calculatedMonths = getMonthsInYear(currentMonth) || []
+                } else {
+                  const monthDays = getDaysInMonth(currentMonth)
+                  const monthName = currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
+                  calculatedMonths = [{ date: currentMonth, name: monthName, days: monthDays }]
+                }
+              } catch (error) {
+                console.error('Error calculando meses:', error)
+                calculatedMonths = []
+              }
+              
+              return calculatedMonths && Array.isArray(calculatedMonths) && calculatedMonths.length > 0 ? (
+                calculatedMonths.map((month) => (
                 <div key={month.date.toISOString()} className="mb-8">
                   {viewMode === 'annual' && (
                     <div className="sticky left-0 z-10 px-4 py-2 bg-gray-50 border-b border-gray-300">
@@ -697,12 +697,13 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
                     </div>
                   </div>
                 </div>
-              ))
-            ) : (
-              <div className="px-4 py-8 text-center text-gray-500">
-                No hay datos de calendario para mostrar.
-              </div>
-            )}
+                ))
+              ) : (
+                <div className="px-4 py-8 text-center text-gray-500">
+                  No hay datos de calendario para mostrar.
+                </div>
+              )
+            })()}
           </div>
         </CardContent>
       </Card>
