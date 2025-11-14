@@ -8,18 +8,7 @@ import ContextMenu from './ContextMenu'
 import ActivityModal from './ActivityModal'
 import calendarHelpers from './calendarHelpers'
 
-// Destructurar funciones helper del objeto exportado
-const {
-  getDaysInMonth,
-  getMonthsInYear,
-  isHolidayHelper,
-  getActivityForDayHelper,
-  getActivityCodeHelper,
-  getCellBackgroundColorHelper,
-  getCellTextColorHelper,
-  getMonthSummaryHelper,
-  getMonthHolidaysHelper
-} = calendarHelpers
+// NO destructurar al inicio - usar directamente desde el objeto para evitar problemas de inicialización
 
 /**
  * CalendarTableView - Calendario tipo tabla/spreadsheet
@@ -39,12 +28,13 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
   const { toast } = useToast()
 
   // Calcular meses usando useMemo en lugar de IIFE para mejor compatibilidad con minificación
+  // Usar funciones directamente desde calendarHelpers sin destructurar
   const calculatedMonths = useMemo(() => {
     try {
       if (viewMode === 'annual') {
-        return getMonthsInYear(currentMonth) || []
+        return calendarHelpers.getMonthsInYear(currentMonth) || []
       } else {
-        const monthDays = getDaysInMonth(currentMonth)
+        const monthDays = calendarHelpers.getDaysInMonth(currentMonth)
         const monthName = currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
         return [{ date: currentMonth, name: monthName, days: monthDays }]
       }
@@ -94,11 +84,11 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
 
     const employee = employees.find(emp => emp.id === employeeId)
     const employeeLocation = employee?.location || { country: employee?.country, region: employee?.region, city: employee?.city }
-    const isHolidayDay = isHolidayHelper(dateString, employeeLocation, holidays)
+    const isHolidayDay = calendarHelpers.isHolidayHelper(dateString, employeeLocation, holidays)
     const isWeekendDay = dayInfo.isWeekend
 
     // Buscar si ya hay actividad en este día
-    const existingActivity = getActivityForDayHelper(employeeId, dateString, activities)
+    const existingActivity = calendarHelpers.getActivityForDayHelper(employeeId, dateString, activities)
 
     // Abrir menú contextual con información del día
     setContextMenu({
@@ -322,8 +312,8 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
                       {employees && employees.length > 0 ? (
                         employees.map(employee => {
                           if (!employee || !month.date) return null
-                          const summary = getMonthSummaryHelper(employee.id, month.date, activities)
-                          const monthDays = getDaysInMonth(month.date)
+                          const summary = calendarHelpers.getMonthSummaryHelper(employee.id, month.date, activities)
+                          const monthDays = calendarHelpers.getDaysInMonth(month.date)
                           
                           return (
                             <tr key={`${employee.id}-${month.date.toISOString()}`} className="hover:bg-gray-50">
@@ -349,12 +339,12 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
                               
                               {/* Días del mes (1-31) */}
                               {monthDays.map((dayInfo) => {
-                                const activity = getActivityForDayHelper(employee.id, dayInfo.dateString, activities)
+                                const activity = calendarHelpers.getActivityForDayHelper(employee.id, dayInfo.dateString, activities)
                                 const employeeLocation = employee.location || { country: employee.country, region: employee.region, city: employee.city }
-                                const isHolidayDay = isHolidayHelper(dayInfo.dateString, employeeLocation, holidays)
-                                const bgColor = getCellBackgroundColorHelper(activity, dayInfo.isWeekend, isHolidayDay)
-                                const textColor = getCellTextColorHelper(activity, dayInfo.isWeekend, isHolidayDay)
-                                const code = getActivityCodeHelper(activity)
+                                const isHolidayDay = calendarHelpers.isHolidayHelper(dayInfo.dateString, employeeLocation, holidays)
+                                const bgColor = calendarHelpers.getCellBackgroundColorHelper(activity, dayInfo.isWeekend, isHolidayDay)
+                                const textColor = calendarHelpers.getCellTextColorHelper(activity, dayInfo.isWeekend, isHolidayDay)
+                                const code = calendarHelpers.getActivityCodeHelper(activity)
                                 
                                 return (
                                   <td
@@ -388,8 +378,8 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
                   <div className="px-4 py-3 bg-gray-50 border-t border-gray-300">
                     <h4 className="text-xs font-semibold text-gray-700 uppercase mb-2">Festivos del mes</h4>
                     <div className="flex flex-wrap gap-2">
-                      {getMonthHolidaysHelper(month.date, holidays).length > 0 ? (
-                        getMonthHolidaysHelper(month.date, holidays).map((holiday) => {
+                      {calendarHelpers.getMonthHolidaysHelper(month.date, holidays).length > 0 ? (
+                        calendarHelpers.getMonthHolidaysHelper(month.date, holidays).map((holiday) => {
                           const day = new Date(holiday.date).getDate()
                           return (
                             <Badge key={holiday.id} variant="outline" className="bg-red-50 text-red-700 border-red-300">
