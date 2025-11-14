@@ -62,7 +62,23 @@ const CalendarPage = () => {
       if (response.ok) {
         const data = await response.json()
         if (data.success && data.calendar) {
-          setCalendarData(data.calendar)
+          // El backend devuelve calendar.employees[], calendar.holidays[], etc.
+          // Necesitamos aplanar las actividades de todos los empleados
+          const allActivities = []
+          if (data.calendar.employees) {
+            data.calendar.employees.forEach(emp => {
+              if (emp.activities) {
+                allActivities.push(...emp.activities)
+              }
+            })
+          }
+          
+          setCalendarData({
+            ...data.calendar,
+            activities: allActivities, // Actividades aplanadas para compatibilidad
+            employees: data.calendar.employees || [],
+            holidays: data.calendar.holidays || []
+          })
         } else {
           console.error('Error en respuesta del calendario:', data)
         }
