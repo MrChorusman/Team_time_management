@@ -40,18 +40,18 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
-    // Usar configuración más conservadora de minificación
-    minify: 'esbuild',
-    esbuild: {
-      // Desactivar TODA la minificación de identificadores para evitar problemas de inicialización
-      // Esto preserva los nombres originales de variables y funciones en todo el código
-      minifyIdentifiers: false,
-      minifySyntax: true,
-      minifyWhitespace: true,
-      // Asegurar que el código se procese de forma más conservadora
-      legalComments: 'inline',
-      keepNames: true
-    },
+    // TEMPORALMENTE desactivar minificación para debugging del error de inicialización
+    // TODO: Re-activar minificación una vez resuelto el problema
+    minify: false,
+    // Configuración comentada hasta resolver el problema
+    // minify: 'esbuild',
+    // esbuild: {
+    //   minifyIdentifiers: false,
+    //   minifySyntax: true,
+    //   minifyWhitespace: true,
+    //   legalComments: 'inline',
+    //   keepNames: true
+    // },
     rollupOptions: {
       output: {
         manualChunks(id) {
