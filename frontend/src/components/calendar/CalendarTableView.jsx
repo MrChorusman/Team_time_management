@@ -79,9 +79,6 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
     return months
   }
 
-  const days = getDaysInMonth(currentMonth)
-  const months = viewMode === 'annual' ? getMonthsInYear(currentMonth) : [{ date: currentMonth, name: currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }), days }]
-
   // Manejo de menú contextual (click derecho)
   const handleContextMenu = (e, employeeId, employeeName, dateString, dayInfo) => {
     e.preventDefault()
