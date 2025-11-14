@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { ChevronLeft, ChevronRight, CalendarDays, List } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -451,9 +451,15 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
     )
   }
 
-  // Calcular días y meses (después de definir todas las funciones helper)
-  const days = getDaysInMonth(currentMonth)
-  const months = viewMode === 'annual' ? getMonthsInYear(currentMonth) : [{ date: currentMonth, name: currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }), days }]
+  // Calcular días y meses usando useMemo para evitar problemas de inicialización
+  const days = useMemo(() => getDaysInMonth(currentMonth), [currentMonth])
+  const months = useMemo(() => {
+    if (viewMode === 'annual') {
+      return getMonthsInYear(currentMonth)
+    } else {
+      return [{ date: currentMonth, name: currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }), days: getDaysInMonth(currentMonth) }]
+    }
+  }, [currentMonth, viewMode])
 
   // Renderizar una fila de empleado
   const renderEmployeeRow = (employee, monthDate) => {
