@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { ChevronLeft, ChevronRight, CalendarDays, List } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -320,34 +320,34 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
   const longPressTimer = useRef(null)
   const { toast } = useToast()
 
-  // Wrappers para las funciones helper usando useCallback para evitar problemas de inicialización
-  const isHoliday = useCallback((dateString, employeeLocation) => {
+  // Wrappers para las funciones helper (funciones normales, no useCallback para evitar problemas de inicialización)
+  const isHoliday = (dateString, employeeLocation) => {
     return isHolidayHelper(dateString, employeeLocation, holidays)
-  }, [holidays])
+  }
   
-  const getActivityForDay = useCallback((employeeId, dateString) => {
+  const getActivityForDay = (employeeId, dateString) => {
     return getActivityForDayHelper(employeeId, dateString, activities)
-  }, [activities])
+  }
   
-  const getActivityCode = useCallback((activity) => {
+  const getActivityCode = (activity) => {
     return getActivityCodeHelper(activity)
-  }, [])
+  }
   
-  const getCellBackgroundColor = useCallback((activity, isWeekend, isHolidayDay) => {
+  const getCellBackgroundColor = (activity, isWeekend, isHolidayDay) => {
     return getCellBackgroundColorHelper(activity, isWeekend, isHolidayDay)
-  }, [])
+  }
   
-  const getCellTextColor = useCallback((activity, isWeekend, isHolidayDay) => {
+  const getCellTextColor = (activity, isWeekend, isHolidayDay) => {
     return getCellTextColorHelper(activity, isWeekend, isHolidayDay)
-  }, [])
+  }
   
-  const getMonthSummary = useCallback((employeeId, monthDate) => {
+  const getMonthSummary = (employeeId, monthDate) => {
     return getMonthSummaryHelper(employeeId, monthDate, activities)
-  }, [activities])
+  }
   
-  const getMonthHolidays = useCallback((monthDate) => {
+  const getMonthHolidays = (monthDate) => {
     return getMonthHolidaysHelper(monthDate, holidays)
-  }, [holidays])
+  }
 
   // Renderizar encabezado de la tabla
   const renderTableHeader = (daysInMonth) => {
@@ -384,7 +384,7 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
   // ===== HANDLERS (definidos después de las funciones helper) =====
 
   // Manejo de menú contextual (click derecho)
-  const handleContextMenu = useCallback((e, employeeId, employeeName, dateString, dayInfo) => {
+  const handleContextMenu = (e, employeeId, employeeName, dateString, dayInfo) => {
     e.preventDefault()
 
     const employee = employees.find(emp => emp.id === employeeId)
@@ -407,10 +407,10 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
       isHoliday: isHolidayDay,
       isWeekend: isWeekendDay
     })
-  }, [employees, isHoliday, getActivityForDay])
+  }
 
   // Manejo de long press para móvil
-  const handleTouchStart = useCallback((e, employeeId, employeeName, dateString, dayInfo) => {
+  const handleTouchStart = (e, employeeId, employeeName, dateString, dayInfo) => {
     longPressTimer.current = setTimeout(() => {
       // Simular click derecho después de 500ms
       const touch = e.touches[0]
@@ -426,16 +426,16 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
         navigator.vibrate(50)
       }
     }, 500)
-  }, [handleContextMenu])
+  }
 
-  const handleTouchEnd = useCallback(() => {
+  const handleTouchEnd = () => {
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current)
     }
-  }, [])
+  }
 
   // Manejo de selección en menú contextual
-  const handleMenuSelect = useCallback((option) => {
+  const handleMenuSelect = (option) => {
     if (option === 'delete') {
       handleDeleteActivity()
       return
@@ -462,10 +462,10 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
       employeeId: contextMenu.employeeId,
       employeeName: contextMenu.employeeName
     })
-  }, [contextMenu, toast])
+  }
 
   // Guardar actividad desde el modal
-  const handleSaveActivity = useCallback(async (activityData) => {
+  const handleSaveActivity = async (activityData) => {
     try {
       // Callback al componente padre para guardar en backend
       if (onActivityCreate) {
@@ -493,10 +493,10 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
         variant: "destructive"
       })
     }
-  }, [activityModal, onActivityCreate, toast])
+  }
 
   // Eliminar actividad
-  const handleDeleteActivity = useCallback(async () => {
+  const handleDeleteActivity = async () => {
     if (!contextMenu.activity) return
 
     // Confirmación
@@ -521,7 +521,7 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
         variant: "destructive"
       })
     }
-  }, [contextMenu, onActivityDelete, toast])
+  }
 
   return (
     <div className="space-y-4">
