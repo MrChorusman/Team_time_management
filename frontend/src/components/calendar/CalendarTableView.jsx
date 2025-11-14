@@ -6,8 +6,29 @@ import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/components/ui/use-toast'
 import ContextMenu from './ContextMenu'
 import ActivityModal from './ActivityModal'
+import {
+  getDaysInMonth,
+  getMonthsInYear,
+  isHolidayHelper,
+  getActivityForDayHelper,
+  getActivityCodeHelper,
+  getCellBackgroundColorHelper,
+  getCellTextColorHelper,
+  getMonthSummaryHelper,
+  getMonthHolidaysHelper
+} from './calendarHelpers'
 
-// Mapeo de códigos ISO a nombres de países (fuera del componente para evitar problemas de scope)
+/**
+ * CalendarTableView - Calendario tipo tabla/spreadsheet
+ * 
+ * Estructura:
+ * - Filas: Empleados
+ * - Columnas: Equipo | Empleado | Vac | Aus | 1 | 2 | 3 | ... | 31
+ * - Vista mensual o anual
+ */
+// Las funciones helper están ahora en calendarHelpers.js para evitar problemas de inicialización
+
+// Mapeo de códigos ISO a nombres de países (DEPRECADO - ahora en calendarHelpers.js)
 const ISO_TO_COUNTRY_NAME = {
   'ESP': 'España',
   'ES': 'España',
