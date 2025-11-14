@@ -78,146 +78,8 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
   const longPressTimer = useRef(null)
   const { toast } = useToast()
 
-  // Manejo de menú contextual (click derecho)
-  const handleContextMenu = (e, employeeId, employeeName, dateString, dayInfo) => {
-    e.preventDefault()
-
-    const employee = employees.find(emp => emp.id === employeeId)
-    const employeeLocation = employee?.location || { country: employee?.country, region: employee?.region, city: employee?.city }
-    const isHolidayDay = isHoliday(dateString, employeeLocation)
-    const isWeekendDay = dayInfo.isWeekend
-
-    // Buscar si ya hay actividad en este día
-    const existingActivity = getActivityForDay(employeeId, dateString)
-
-    // Abrir menú contextual con información del día
-    setContextMenu({
-      visible: true,
-      x: e.clientX,
-      y: e.clientY,
-      employeeId,
-      employeeName,
-      date: dateString,
-      activity: existingActivity,
-      isHoliday: isHolidayDay,
-      isWeekend: isWeekendDay
-    })
-  }
-
-  // Manejo de long press para móvil
-  const handleTouchStart = (e, employeeId, employeeName, dateString, dayInfo) => {
-    longPressTimer.current = setTimeout(() => {
-      // Simular click derecho después de 500ms
-      const touch = e.touches[0]
-      const fakeEvent = {
-        preventDefault: () => {},
-        clientX: touch.clientX,
-        clientY: touch.clientY
-      }
-      handleContextMenu(fakeEvent, employeeId, employeeName, dateString, dayInfo)
-      
-      // Feedback háptico si está disponible
-      if (navigator.vibrate) {
-        navigator.vibrate(50)
-      }
-    }, 500)
-  }
-
-  const handleTouchEnd = () => {
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current)
-    }
-  }
-
-  // Manejo de selección en menú contextual
-  const handleMenuSelect = (option) => {
-    if (option === 'delete') {
-      handleDeleteActivity()
-      return
-    }
-
-    // Validar si el tipo de actividad está permitido en este día
-    const isGuard = option === 'guard'
-    
-    // Solo guardias se permiten en festivos/fines de semana
-    if ((contextMenu.isHoliday || contextMenu.isWeekend) && !isGuard) {
-      toast({
-        title: "⚠️ Día no laborable",
-        description: "Solo puedes marcar Guardias en festivos o fines de semana",
-        variant: "destructive"
-      })
-      return
-    }
-
-    // Abrir modal para crear actividad
-    setActivityModal({
-      visible: true,
-      type: option,
-      date: contextMenu.date,
-      employeeId: contextMenu.employeeId,
-      employeeName: contextMenu.employeeName
-    })
-  }
-
-  // Guardar actividad desde el modal
-  const handleSaveActivity = async (activityData) => {
-    try {
-      // Callback al componente padre para guardar en backend
-      if (onActivityCreate) {
-        await onActivityCreate({
-          employee_id: activityModal.employeeId,
-          date: activityModal.date,
-          activity_type: activityData.activityType,
-          hours: activityData.hours || null,
-          start_time: activityData.startTime || null,
-          end_time: activityData.endTime || null,
-          description: activityData.notes
-        })
-      }
-
-      toast({
-        title: "✅ Actividad guardada",
-        description: `${activityData.activityType.toUpperCase()} marcado correctamente`,
-      })
-
-      setActivityModal({ visible: false, type: null, date: null, employeeId: null, employeeName: null })
-    } catch (error) {
-      toast({
-        title: "❌ Error",
-        description: error.message || "No se pudo guardar la actividad",
-        variant: "destructive"
-      })
-    }
-  }
-
-  // Eliminar actividad
-  const handleDeleteActivity = async () => {
-    if (!contextMenu.activity) return
-
-    // Confirmación
-    if (!window.confirm(`¿Eliminar ${contextMenu.activity.type.toUpperCase()} del ${new Date(contextMenu.date).toLocaleDateString('es-ES')}?`)) {
-      return
-    }
-
-    try {
-      // Callback al componente padre para eliminar en backend
-      if (onActivityDelete) {
-        await onActivityDelete(contextMenu.activity.id)
-      }
-
-      toast({
-        title: "🗑️ Actividad eliminada",
-        description: "La actividad ha sido eliminada correctamente",
-      })
-    } catch (error) {
-      toast({
-        title: "❌ Error",
-        description: error.message || "No se pudo eliminar la actividad",
-        variant: "destructive"
-      })
-    }
-  }
-
+  // ===== FUNCIONES HELPER (definidas primero para evitar problemas de hoisting) =====
+  
   // Verificar si un día es festivo para un empleado específico según su ubicación
   const isHoliday = (dateString, employeeLocation) => {
     if (!holidays || !Array.isArray(holidays) || !employeeLocation) return false
@@ -450,6 +312,38 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
     )
   }
 
+  // Renderizar encabezado de la tabla
+  const renderTableHeader = (daysInMonth) => {
+    const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+    
+    return (
+      <thead>
+        <tr>
+          <th className="sticky left-0 z-20 px-4 py-2 bg-gray-100 border-r border-b border-gray-300 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-[140px]">
+            Equipo
+          </th>
+          <th className="sticky left-[140px] z-20 px-4 py-2 bg-gray-100 border-r border-b border-gray-300 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-[140px]">
+            Empleado
+          </th>
+          <th className="sticky left-[280px] z-20 px-3 py-2 bg-blue-100 border-r border-b border-gray-300 text-center text-xs font-semibold text-blue-800 uppercase tracking-wider w-[50px]">
+            Vac
+          </th>
+          <th className="sticky left-[330px] z-20 px-3 py-2 bg-yellow-100 border-r border-b border-gray-300 text-center text-xs font-semibold text-yellow-800 uppercase tracking-wider w-[50px]">
+            Aus
+          </th>
+          {daysInMonth.map((dayInfo) => (
+            <th 
+              key={dayInfo.day} 
+              className={`px-2 py-2 border-r border-b border-gray-300 text-center text-xs font-semibold uppercase tracking-wider ${dayInfo.isWeekend ? 'bg-gray-200 text-gray-600' : 'bg-gray-100 text-gray-700'}`}
+            >
+              {dayInfo.day} <br /> {dayNames[dayInfo.dayOfWeek]}
+            </th>
+          ))}
+        </tr>
+      </thead>
+    )
+  }
+
   // Renderizar una fila de empleado
   const renderEmployeeRow = (employee, monthDate) => {
     if (!employee || !monthDate) return null
@@ -505,58 +399,146 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
     )
   }
 
-  // Renderizar cabecera de la tabla
-  const renderTableHeader = (monthDays) => {
-    return (
-      <thead className="bg-gray-100 sticky top-0 z-20">
-        {/* Primera fila: Números de días (1-31) */}
-        <tr>
-          {/* Columnas fijas: Equipo, Empleado, Vac, Aus en primera fila */}
-          <th className="sticky left-0 z-30 px-4 py-3 bg-gray-100 border-r border-gray-300 text-left text-xs font-semibold text-gray-700 uppercase" rowSpan="2">
-            Equipo
-          </th>
-          <th className="sticky left-[140px] z-30 px-4 py-3 bg-gray-100 border-r border-gray-300 text-left text-xs font-semibold text-gray-700 uppercase" rowSpan="2">
-            Empleado
-          </th>
-          <th className="sticky left-[280px] z-30 px-3 py-3 bg-blue-100 border-r border-gray-300 text-center text-xs font-semibold text-blue-700 uppercase" rowSpan="2">
-            Vac
-          </th>
-          <th className="sticky left-[330px] z-30 px-3 py-3 bg-yellow-100 border-r border-gray-300 text-center text-xs font-semibold text-yellow-700 uppercase" rowSpan="2">
-            Aus
-          </th>
-          
-          {/* Días del mes */}
-          {monthDays.map((dayInfo) => (
-            <th
-              key={dayInfo.day}
-              className={`px-2 py-3 border-r border-gray-200 text-center text-xs font-semibold ${
-                dayInfo.isWeekend ? 'bg-gray-200 text-gray-600' : 'bg-gray-100 text-gray-700'
-              }`}
-            >
-              {dayInfo.day}
-            </th>
-          ))}
-        </tr>
-        
-        {/* Segunda fila: Días de la semana (L, M, X, J, V, S, D) */}
-        <tr className="bg-gray-50">
-          {/* Días de la semana */}
-          {monthDays.map((dayInfo) => {
-            const dayName = ['D', 'L', 'M', 'X', 'J', 'V', 'S'][dayInfo.dayOfWeek]
-            return (
-              <th
-                key={`day-${dayInfo.day}`}
-                className={`px-2 py-1 border-r border-gray-200 text-center text-xs ${
-                  dayInfo.isWeekend ? 'bg-gray-200 text-gray-600 font-semibold' : 'text-gray-600'
-                }`}
-              >
-                {dayName}
-              </th>
-            )
-          })}
-        </tr>
-      </thead>
-    )
+  // ===== HANDLERS (definidos después de las funciones helper) =====
+
+  // Manejo de menú contextual (click derecho)
+  const handleContextMenu = (e, employeeId, employeeName, dateString, dayInfo) => {
+    e.preventDefault()
+
+    const employee = employees.find(emp => emp.id === employeeId)
+    const employeeLocation = employee?.location || { country: employee?.country, region: employee?.region, city: employee?.city }
+    const isHolidayDay = isHoliday(dateString, employeeLocation)
+    const isWeekendDay = dayInfo.isWeekend
+
+    // Buscar si ya hay actividad en este día
+    const existingActivity = getActivityForDay(employeeId, dateString)
+
+    // Abrir menú contextual con información del día
+    setContextMenu({
+      visible: true,
+      x: e.clientX,
+      y: e.clientY,
+      employeeId,
+      employeeName,
+      date: dateString,
+      activity: existingActivity,
+      isHoliday: isHolidayDay,
+      isWeekend: isWeekendDay
+    })
+  }
+
+  // Manejo de long press para móvil
+  const handleTouchStart = (e, employeeId, employeeName, dateString, dayInfo) => {
+    longPressTimer.current = setTimeout(() => {
+      // Simular click derecho después de 500ms
+      const touch = e.touches[0]
+      const fakeEvent = {
+        preventDefault: () => {},
+        clientX: touch.clientX,
+        clientY: touch.clientY
+      }
+      handleContextMenu(fakeEvent, employeeId, employeeName, dateString, dayInfo)
+      
+      // Feedback háptico si está disponible
+      if (navigator.vibrate) {
+        navigator.vibrate(50)
+      }
+    }, 500)
+  }
+
+  const handleTouchEnd = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current)
+    }
+  }
+
+  // Manejo de selección en menú contextual
+  const handleMenuSelect = (option) => {
+    if (option === 'delete') {
+      handleDeleteActivity()
+      return
+    }
+
+    // Validar si el tipo de actividad está permitido en este día
+    const isGuard = option === 'guard'
+    
+    // Solo guardias se permiten en festivos/fines de semana
+    if ((contextMenu.isHoliday || contextMenu.isWeekend) && !isGuard) {
+      toast({
+        title: "⚠️ Día no laborable",
+        description: "Solo puedes marcar Guardias en festivos o fines de semana",
+        variant: "destructive"
+      })
+      return
+    }
+
+    // Abrir modal para crear actividad
+    setActivityModal({
+      visible: true,
+      type: option,
+      date: contextMenu.date,
+      employeeId: contextMenu.employeeId,
+      employeeName: contextMenu.employeeName
+    })
+  }
+
+  // Guardar actividad desde el modal
+  const handleSaveActivity = async (activityData) => {
+    try {
+      // Callback al componente padre para guardar en backend
+      if (onActivityCreate) {
+        await onActivityCreate({
+          employee_id: activityModal.employeeId,
+          date: activityModal.date,
+          activity_type: activityData.activityType,
+          hours: activityData.hours || null,
+          start_time: activityData.startTime || null,
+          end_time: activityData.endTime || null,
+          description: activityData.notes
+        })
+      }
+
+      toast({
+        title: "✅ Actividad guardada",
+        description: `${activityData.activityType.toUpperCase()} marcado correctamente`,
+      })
+
+      setActivityModal({ visible: false, type: null, date: null, employeeId: null, employeeName: null })
+    } catch (error) {
+      toast({
+        title: "❌ Error",
+        description: error.message || "No se pudo guardar la actividad",
+        variant: "destructive"
+      })
+    }
+  }
+
+  // Eliminar actividad
+  const handleDeleteActivity = async () => {
+    if (!contextMenu.activity) return
+
+    // Confirmación
+    if (!window.confirm(`¿Eliminar ${contextMenu.activity.type.toUpperCase()} del ${new Date(contextMenu.date).toLocaleDateString('es-ES')}?`)) {
+      return
+    }
+
+    try {
+      // Callback al componente padre para eliminar en backend
+      if (onActivityDelete) {
+        await onActivityDelete(contextMenu.activity.id)
+      }
+
+      toast({
+        title: "🗑️ Actividad eliminada",
+        description: "La actividad ha sido eliminada correctamente",
+      })
+    } catch (error) {
+      toast({
+        title: "❌ Error",
+        description: error.message || "No se pudo eliminar la actividad",
+        variant: "destructive"
+      })
+    }
   }
 
   return (
