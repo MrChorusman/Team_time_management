@@ -233,23 +233,23 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
       // Verificar que la fecha coincida
       if (holiday.date !== dateString) return false
       
-      // Usar holiday_type o hierarchy_level para determinar el tipo
-      const holidayType = holiday.holiday_type || holiday.hierarchy_level || holiday.type
+      // Usar holiday_type (la columna hierarchy_level no existe en BD)
+      const holidayType = holiday.holiday_type || holiday.type || ''
       
       // Festivos nacionales se aplican a todos del mismo país
-      if (holidayType === 'national' || holiday.hierarchy_level === 'national') {
+      if (holidayType === 'national') {
         return holiday.country === employeeCountry || 
                holiday.country === employeeLocation?.country
       }
       
       // Festivos regionales solo para la misma región
-      if (holidayType === 'regional' || holiday.hierarchy_level === 'regional') {
+      if (holidayType === 'regional') {
         return (holiday.country === employeeCountry || holiday.country === employeeLocation?.country) && 
                holiday.region === employeeLocation?.region
       }
       
       // Festivos locales solo para la misma ciudad
-      if (holidayType === 'local' || holiday.hierarchy_level === 'local') {
+      if (holidayType === 'local') {
         return (holiday.country === employeeCountry || holiday.country === employeeLocation?.country) && 
                holiday.region === employeeLocation?.region &&
                holiday.city === employeeLocation?.city
@@ -336,16 +336,24 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
     
     if (!activity) return 'bg-white border-gray-200'
     
-    const colors = {
-      vacation: 'bg-green-100 border-green-300',
-      sick_leave: 'bg-yellow-100 border-yellow-300',
-      hld: 'bg-green-200 border-green-400',
-      guard: 'bg-blue-100 border-blue-300',
-      training: 'bg-purple-100 border-purple-300',
-      other: 'bg-sky-100 border-sky-300'
+    // Usar activity_type o type según disponibilidad
+    const activityType = (activity.activity_type || activity.type || '').toLowerCase()
+    
+    if (activityType === 'vacation' || activityType === 'v') {
+      return 'bg-green-100 border-green-300'
+    } else if (activityType === 'sick_leave' || activityType === 'absence' || activityType === 'a') {
+      return 'bg-yellow-100 border-yellow-300'
+    } else if (activityType === 'hld') {
+      return 'bg-green-200 border-green-400'
+    } else if (activityType === 'guard' || activityType === 'g') {
+      return 'bg-blue-100 border-blue-300'
+    } else if (activityType === 'training' || activityType === 'f') {
+      return 'bg-purple-100 border-purple-300'
+    } else if (activityType === 'other' || activityType === 'c') {
+      return 'bg-sky-100 border-sky-300'
     }
     
-    return colors[activity.type] || 'bg-gray-100 border-gray-300'
+    return 'bg-gray-100 border-gray-300'
   }
 
   // Obtener color de texto según el tipo de actividad
@@ -355,16 +363,24 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
     
     if (!activity) return 'text-gray-900'
     
-    const colors = {
-      vacation: 'text-green-700',
-      sick_leave: 'text-yellow-700',
-      hld: 'text-green-800',
-      guard: 'text-blue-700',
-      training: 'text-purple-700',
-      other: 'text-sky-700'
+    // Usar activity_type o type según disponibilidad
+    const activityType = (activity.activity_type || activity.type || '').toLowerCase()
+    
+    if (activityType === 'vacation' || activityType === 'v') {
+      return 'text-green-700'
+    } else if (activityType === 'sick_leave' || activityType === 'absence' || activityType === 'a') {
+      return 'text-yellow-700'
+    } else if (activityType === 'hld') {
+      return 'text-green-800'
+    } else if (activityType === 'guard' || activityType === 'g') {
+      return 'text-blue-700'
+    } else if (activityType === 'training' || activityType === 'f') {
+      return 'text-purple-700'
+    } else if (activityType === 'other' || activityType === 'c') {
+      return 'text-sky-700'
     }
     
-    return colors[activity.type] || 'text-gray-700'
+    return 'text-gray-700'
   }
 
   // Calcular días de vacaciones y ausencias del mes para un empleado
