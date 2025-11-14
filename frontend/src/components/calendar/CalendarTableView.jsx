@@ -653,7 +653,7 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto overflow-y-auto max-h-[600px] relative">
-            {months.map((month) => (
+            {months && Array.isArray(months) && months.length > 0 ? months.map((month) => (
               <div key={month.date.toISOString()} className="mb-8">
                 {viewMode === 'annual' && (
                   <div className="sticky left-0 z-10 px-4 py-2 bg-gray-50 border-b border-gray-300">
