@@ -7,6 +7,24 @@ import { useToast } from '@/components/ui/use-toast'
 import ContextMenu from './ContextMenu'
 import ActivityModal from './ActivityModal'
 
+// Mapeo de códigos ISO a nombres de países (fuera del componente para evitar problemas de scope)
+const ISO_TO_COUNTRY_NAME = {
+  'ESP': 'España',
+  'ES': 'España',
+  'USA': 'United States',
+  'US': 'United States',
+  'GBR': 'United Kingdom',
+  'GB': 'United Kingdom',
+  'FRA': 'France',
+  'FR': 'France',
+  'DEU': 'Germany',
+  'DE': 'Germany',
+  'ITA': 'Italy',
+  'IT': 'Italy',
+  'PRT': 'Portugal',
+  'PT': 'Portugal'
+}
+
 /**
  * CalendarTableView - Calendario tipo tabla/spreadsheet
  * 
@@ -202,24 +220,6 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
         variant: "destructive"
       })
     }
-  }
-
-  // Mapeo de códigos ISO a nombres de países
-  const ISO_TO_COUNTRY_NAME = {
-    'ESP': 'España',
-    'ES': 'España',
-    'USA': 'United States',
-    'US': 'United States',
-    'GBR': 'United Kingdom',
-    'GB': 'United Kingdom',
-    'FRA': 'France',
-    'FR': 'France',
-    'DEU': 'Germany',
-    'DE': 'Germany',
-    'ITA': 'Italy',
-    'IT': 'Italy',
-    'PRT': 'Portugal',
-    'PT': 'Portugal'
   }
 
   // Verificar si un día es festivo para un empleado específico según su ubicación
