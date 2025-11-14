@@ -439,7 +439,7 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
 
   // Obtener festivos del mes
   const getMonthHolidays = (monthDate) => {
-    if (!holidays) return []
+    if (!holidays || !Array.isArray(holidays)) return []
     
     const year = monthDate.getFullYear()
     const month = monthDate.getMonth()
@@ -447,9 +447,13 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
     const monthEnd = new Date(year, month + 1, 0).toISOString().split('T')[0]
     
     return holidays.filter(holiday => 
-      holiday.date >= monthStart && holiday.date <= monthEnd
+      holiday && holiday.date >= monthStart && holiday.date <= monthEnd
     )
   }
+
+  // Calcular días y meses (después de definir todas las funciones helper)
+  const days = getDaysInMonth(currentMonth)
+  const months = viewMode === 'annual' ? getMonthsInYear(currentMonth) : [{ date: currentMonth, name: currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }), days }]
 
   // Renderizar una fila de empleado
   const renderEmployeeRow = (employee, monthDate) => {
