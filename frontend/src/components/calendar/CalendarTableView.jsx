@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { ChevronLeft, ChevronRight, CalendarDays, List } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -6,7 +6,10 @@ import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/components/ui/use-toast'
 import ContextMenu from './ContextMenu'
 import ActivityModal from './ActivityModal'
-import {
+import calendarHelpers from './calendarHelpers'
+
+// Destructurar funciones helper del objeto exportado
+const {
   getDaysInMonth,
   getMonthsInYear,
   isHolidayHelper,
@@ -16,7 +19,7 @@ import {
   getCellTextColorHelper,
   getMonthSummaryHelper,
   getMonthHolidaysHelper
-} from './calendarHelpers'
+} = calendarHelpers
 
 /**
  * CalendarTableView - Calendario tipo tabla/spreadsheet
@@ -35,8 +38,21 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
   const longPressTimer = useRef(null)
   const { toast } = useToast()
 
-  // NO usar funciones wrapper - llamar directamente a las funciones helper externas pasando props como parámetros
-  // Esto evita problemas de inicialización durante minificación
+  // Calcular meses usando useMemo en lugar de IIFE para mejor compatibilidad con minificación
+  const calculatedMonths = useMemo(() => {
+    try {
+      if (viewMode === 'annual') {
+        return getMonthsInYear(currentMonth) || []
+      } else {
+        const monthDays = getDaysInMonth(currentMonth)
+        const monthName = currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
+        return [{ date: currentMonth, name: monthName, days: monthDays }]
+      }
+    } catch (error) {
+      console.error('Error calculando meses:', error)
+      return []
+    }
+  }, [viewMode, currentMonth])
 
   // Renderizar encabezado de la tabla
   const renderTableHeader = (daysInMonth) => {
@@ -291,24 +307,8 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto overflow-y-auto max-h-[600px] relative">
-            {(() => {
-              // Calcular meses directamente en el render para evitar problemas de inicialización
-              let calculatedMonths = []
-              try {
-                if (viewMode === 'annual') {
-                  calculatedMonths = getMonthsInYear(currentMonth) || []
-                } else {
-                  const monthDays = getDaysInMonth(currentMonth)
-                  const monthName = currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
-                  calculatedMonths = [{ date: currentMonth, name: monthName, days: monthDays }]
-                }
-              } catch (error) {
-                console.error('Error calculando meses:', error)
-                calculatedMonths = []
-              }
-              
-              return calculatedMonths && Array.isArray(calculatedMonths) && calculatedMonths.length > 0 ? (
-                calculatedMonths.map((month) => (
+            {calculatedMonths && Array.isArray(calculatedMonths) && calculatedMonths.length > 0 ? (
+              calculatedMonths.map((month) => (
                 <div key={month.date.toISOString()} className="mb-8">
                   {viewMode === 'annual' && (
                     <div className="sticky left-0 z-10 px-4 py-2 bg-gray-50 border-b border-gray-300">
@@ -403,13 +403,12 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
                     </div>
                   </div>
                 </div>
-                ))
-              ) : (
-                <div className="px-4 py-8 text-center text-gray-500">
-                  No hay datos de calendario para mostrar.
-                </div>
-              )
-            })()}
+              ))
+            ) : (
+              <div className="px-4 py-8 text-center text-gray-500">
+                No hay datos de calendario para mostrar.
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

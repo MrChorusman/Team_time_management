@@ -41,12 +41,19 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: true,
     minify: 'esbuild',
+    esbuild: {
+      // Desactivar minificación de identificadores para evitar problemas de inicialización
+      // Esto preserva los nombres originales de variables y funciones
+      minifyIdentifiers: false,
+      minifySyntax: true,
+      minifyWhitespace: true
+    },
     rollupOptions: {
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
             if (id.includes('react') || id.includes('react-dom')) {
-              return 'vendor'
+              return 'react-vendor'
             }
             if (id.includes('react-router')) {
               return 'router'
@@ -60,9 +67,15 @@ export default defineConfig({
             if (id.includes('clsx') || id.includes('tailwind-merge')) {
               return 'utils'
             }
+            return 'vendor'
           }
-          if (id.includes('CalendarTableView')) {
-            return 'calendar'
+          // Separar helpers del calendario en chunk propio
+          if (id.includes('calendarHelpers')) {
+            return 'calendar-helpers'
+          }
+          // Separar componentes del calendario en chunk propio
+          if (id.includes('CalendarTableView') || id.includes('ContextMenu') || id.includes('ActivityModal')) {
+            return 'calendar-components'
           }
         }
       }
