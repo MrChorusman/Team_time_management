@@ -33,6 +33,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Alert, AlertDescription } from '../components/ui/alert'
 import { Progress } from '../components/ui/progress'
 import { StatsCard } from '../components/ui/stats-card'
+import { Label } from '../components/ui/label'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import InviteEmployeeModal from '../components/employees/InviteEmployeeModal'
 
