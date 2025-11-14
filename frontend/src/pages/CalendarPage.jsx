@@ -46,11 +46,29 @@ const CalendarPage = () => {
   const loadCalendarData = async () => {
     setLoading(true)
     try {
-      // Simular carga de datos del calendario
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Cargar datos reales del backend
+      let url = `${import.meta.env.VITE_API_BASE_URL}/calendar?year=${currentMonth.getFullYear()}&month=${currentMonth.getMonth() + 1}`
       
-      const mockData = generateMockCalendarData()
-      setCalendarData(mockData)
+      if (employee) {
+        url += `&employee_id=${employee.id}`
+      } else if (isManager() && employee?.team_id) {
+        url += `&team_id=${employee.team_id}`
+      }
+      
+      const response = await fetch(url, {
+        credentials: 'include'
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success && data.calendar) {
+          setCalendarData(data.calendar)
+        } else {
+          console.error('Error en respuesta del calendario:', data)
+        }
+      } else {
+        console.error('Error cargando calendario:', response.statusText)
+      }
     } catch (error) {
       console.error('Error cargando datos del calendario:', error)
     } finally {

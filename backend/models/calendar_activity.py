@@ -214,7 +214,7 @@ class CalendarActivity(db.Model):
             'start_time': self.start_time.isoformat() if self.start_time else None,
             'end_time': self.end_time.isoformat() if self.end_time else None,
             'description': self.description,
-            'notes': self.notes,
+            'notes': getattr(self, 'notes', None),  # Usar getattr por si la columna no existe
             'display_text': self.get_display_text(),
             'color': self.get_color(),
             'hours_impact': self.calculate_hours_impact(),
