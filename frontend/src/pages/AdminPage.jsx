@@ -62,6 +62,17 @@ const AdminPage = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [showRoleDialog, setShowRoleDialog] = useState(false)
   const [showTeamDialog, setShowTeamDialog] = useState(false)
+  const [companies, setCompanies] = useState([])
+  const [companiesLoading, setCompaniesLoading] = useState(false)
+  const [selectedCompany, setSelectedCompany] = useState(null)
+  const [showCompanyDialog, setShowCompanyDialog] = useState(false)
+  const [showDeleteCompanyDialog, setShowDeleteCompanyDialog] = useState(false)
+  const [companyForm, setCompanyForm] = useState({
+    name: '',
+    billing_period_start_day: 1,
+    billing_period_end_day: 31,
+    active: true
+  })
   const [activeTab, setActiveTab] = useState('overview')
   const [systemSettings, setSystemSettings] = useState({
     maintenance_mode: false,
@@ -81,6 +92,7 @@ const AdminPage = () => {
     loadDashboardData()
     loadTeams()
     loadRoles()
+    loadCompanies()
   }, [])
 
   useEffect(() => {
@@ -176,6 +188,165 @@ const AdminPage = () => {
       { name: 'employee', description: 'Empleado' },
       { name: 'viewer', description: 'Visualizador' }
     ])
+  }
+
+  const loadCompanies = async () => {
+    setCompaniesLoading(true)
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/companies`, {
+        credentials: 'include'
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success) {
+          setCompanies(data.companies || [])
+        }
+      }
+    } catch (error) {
+      console.error('Error cargando empresas:', error)
+      toast({
+        title: 'Error',
+        description: 'Error cargando empresas',
+        variant: 'destructive'
+      })
+    } finally {
+      setCompaniesLoading(false)
+    }
+  }
+
+  const handleCreateCompany = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/companies`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(companyForm)
+      })
+      
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.message || 'Error creando empresa')
+      }
+      
+      const data = await response.json()
+      toast({
+        title: 'Éxito',
+        description: data.message || 'Empresa creada exitosamente'
+      })
+      
+      setShowCompanyDialog(false)
+      setCompanyForm({
+        name: '',
+        billing_period_start_day: 1,
+        billing_period_end_day: 31,
+        active: true
+      })
+      loadCompanies()
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive'
+      })
+    }
+  }
+
+  const handleUpdateCompany = async () => {
+    if (!selectedCompany) return
+    
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/companies/${selectedCompany.id}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(companyForm)
+      })
+      
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.message || 'Error actualizando empresa')
+      }
+      
+      const data = await response.json()
+      toast({
+        title: 'Éxito',
+        description: data.message || 'Empresa actualizada exitosamente'
+      })
+      
+      setShowCompanyDialog(false)
+      setSelectedCompany(null)
+      setCompanyForm({
+        name: '',
+        billing_period_start_day: 1,
+        billing_period_end_day: 31,
+        active: true
+      })
+      loadCompanies()
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive'
+      })
+    }
+  }
+
+  const handleDeleteCompany = async () => {
+    if (!selectedCompany) return
+    
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/companies/${selectedCompany.id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      })
+      
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.message || 'Error eliminando empresa')
+      }
+      
+      const data = await response.json()
+      toast({
+        title: 'Éxito',
+        description: data.message || 'Empresa desactivada exitosamente'
+      })
+      
+      setShowDeleteCompanyDialog(false)
+      setSelectedCompany(null)
+      loadCompanies()
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive'
+      })
+    }
+  }
+
+  const openCompanyDialog = (company = null) => {
+    if (company) {
+      setSelectedCompany(company)
+      setCompanyForm({
+        name: company.name,
+        billing_period_start_day: company.billing_period_start_day,
+        billing_period_end_day: company.billing_period_end_day,
+        active: company.active
+      })
+    } else {
+      setSelectedCompany(null)
+      setCompanyForm({
+        name: '',
+        billing_period_start_day: 1,
+        billing_period_end_day: 31,
+        active: true
+      })
+    }
+    setShowCompanyDialog(true)
   }
 
   const handleToggleUserActive = async (userId) => {
@@ -472,6 +643,7 @@ const AdminPage = () => {
         <TabsList>
           <TabsTrigger value="overview">Resumen</TabsTrigger>
           <TabsTrigger value="users">Usuarios</TabsTrigger>
+          <TabsTrigger value="companies">Empresas</TabsTrigger>
           <TabsTrigger value="system">Sistema</TabsTrigger>
           <TabsTrigger value="settings">Configuración</TabsTrigger>
         </TabsList>
@@ -862,6 +1034,98 @@ const AdminPage = () => {
           </Card>
         </TabsContent>
 
+        {/* Pestaña de Empresas */}
+        <TabsContent value="companies" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Gestión de Empresas</CardTitle>
+                  <CardDescription>
+                    Administra las empresas/clientes y sus períodos de facturación para el cálculo de forecast
+                  </CardDescription>
+                </div>
+                <Button onClick={() => openCompanyDialog()}>
+                  <Building className="w-4 h-4 mr-2" />
+                  Nueva Empresa
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {companiesLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <LoadingSpinner />
+                </div>
+              ) : companies.length === 0 ? (
+                <Alert>
+                  <AlertTriangle className="w-4 h-4" />
+                  <AlertDescription>
+                    No hay empresas registradas. Crea una nueva empresa para comenzar a usar el sistema de forecast.
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nombre</TableHead>
+                      <TableHead>Período de Facturación</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead className="text-right">Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {companies.map((company) => (
+                      <TableRow key={company.id}>
+                        <TableCell className="font-medium">{company.name}</TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            Día {company.billing_period_start_day} - Día {company.billing_period_end_day}
+                            {company.billing_period_start_day > company.billing_period_end_day && (
+                              <span className="text-gray-500 ml-1">(cruza meses)</span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={company.active ? 'default' : 'secondary'}>
+                            {company.active ? 'Activa' : 'Inactiva'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreVertical className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onSelect={() => openCompanyDialog(company)}>
+                                <Edit className="w-4 h-4 mr-2" />
+                                Editar
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onSelect={() => {
+                                  setSelectedCompany(company)
+                                  setShowDeleteCompanyDialog(true)
+                                }}
+                                className="text-red-600"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Desactivar
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Pestaña de Sistema */}
         <TabsContent value="system" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1147,6 +1411,106 @@ const AdminPage = () => {
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowTeamDialog(false)}>
               Cerrar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog para crear/editar empresa */}
+      <Dialog open={showCompanyDialog} onOpenChange={setShowCompanyDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{selectedCompany ? 'Editar Empresa' : 'Nueva Empresa'}</DialogTitle>
+            <DialogDescription>
+              {selectedCompany 
+                ? 'Modifica los datos de la empresa y su período de facturación'
+                : 'Crea una nueva empresa con su período de facturación personalizado'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="company-name">Nombre de la Empresa</Label>
+              <Input
+                id="company-name"
+                value={companyForm.name}
+                onChange={(e) => setCompanyForm({ ...companyForm, name: e.target.value })}
+                placeholder="Ej: Cliente ABC S.L."
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="billing-start">Día de Inicio</Label>
+                <Input
+                  id="billing-start"
+                  type="number"
+                  min="1"
+                  max="31"
+                  value={companyForm.billing_period_start_day}
+                  onChange={(e) => setCompanyForm({ ...companyForm, billing_period_start_day: parseInt(e.target.value) || 1 })}
+                />
+                <p className="text-xs text-gray-500">Día del mes (1-31)</p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="billing-end">Día de Fin</Label>
+                <Input
+                  id="billing-end"
+                  type="number"
+                  min="1"
+                  max="31"
+                  value={companyForm.billing_period_end_day}
+                  onChange={(e) => setCompanyForm({ ...companyForm, billing_period_end_day: parseInt(e.target.value) || 31 })}
+                />
+                <p className="text-xs text-gray-500">Día del mes (1-31)</p>
+              </div>
+            </div>
+            
+            {companyForm.billing_period_start_day > companyForm.billing_period_end_day && (
+              <Alert>
+                <AlertTriangle className="w-4 h-4" />
+                <AlertDescription>
+                  El período cruza meses. Ejemplo: Día {companyForm.billing_period_start_day} del mes anterior al Día {companyForm.billing_period_end_day} del mes actual.
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="company-active"
+                checked={companyForm.active}
+                onCheckedChange={(checked) => setCompanyForm({ ...companyForm, active: checked })}
+              />
+              <Label htmlFor="company-active">Empresa activa</Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCompanyDialog(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={selectedCompany ? handleUpdateCompany : handleCreateCompany}>
+              {selectedCompany ? 'Actualizar' : 'Crear'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog para eliminar empresa */}
+      <Dialog open={showDeleteCompanyDialog} onOpenChange={setShowDeleteCompanyDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Desactivar Empresa</DialogTitle>
+            <DialogDescription>
+              ¿Estás seguro de que deseas desactivar la empresa "{selectedCompany?.name}"? 
+              Esta acción no eliminará los datos históricos de forecast, pero la empresa no aparecerá en los listados activos.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteCompanyDialog(false)}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteCompany}>
+              Desactivar
             </Button>
           </DialogFooter>
         </DialogContent>

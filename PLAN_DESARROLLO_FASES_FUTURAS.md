@@ -74,6 +74,7 @@ Este documento establece el plan estratégico de desarrollo para las siguientes 
 | `fix-auth-blueprint-regression` | Sistema de notificaciones completo (6 columnas restauradas) | 03/11/2025 | 03/11/2025 | ✅ Completado |
 | `fix-auth-blueprint-regression` | Pruebas end-to-end flujo de notificaciones | 03/11/2025 | 03/11/2025 | ✅ Completado |
 | `Formatear-Calendario` | Reimplementación del calendario como tabla tipo spreadsheet + funcionalidad completa de marcado de actividades con click derecho, modal con 3 variantes, guardias con horario inicio/fin y cálculo automático, long press móvil, actualizaciones optimistas | 07/11/2025 | 07/11/2025 | ✅ Completado |
+| `feature-forecast-system` | Sistema completo de Forecast con períodos de facturación personalizados por empresa, cálculo de horas teóricas/reales (excluyendo guardias), eficiencia, valor económico, gestión de empresas (CRUD), campo hourly_rate en empleados, página ForecastPage con vistas employee/team/global | 25/01/2025 | 25/01/2025 | ✅ Completado |
 
 ---
 
