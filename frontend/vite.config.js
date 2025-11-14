@@ -52,38 +52,39 @@ export default defineConfig({
     //   legalComments: 'inline',
     //   keepNames: true
     // },
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom')) {
-              return 'react-vendor'
-            }
-            if (id.includes('react-router')) {
-              return 'router'
-            }
-            if (id.includes('@radix-ui')) {
-              return 'ui'
-            }
-            if (id.includes('lucide-react')) {
-              return 'icons'
-            }
-            if (id.includes('clsx') || id.includes('tailwind-merge')) {
-              return 'utils'
-            }
-            return 'vendor'
-          }
-          // Separar helpers del calendario en chunk propio
-          if (id.includes('calendarHelpers')) {
-            return 'calendar-helpers'
-          }
-          // Separar componentes del calendario en chunk propio
-          if (id.includes('CalendarTableView') || id.includes('ContextMenu') || id.includes('ActivityModal')) {
-            return 'calendar-components'
-          }
-        }
-      }
-    }
+    // Simplificar chunks - dejar que Vite maneje automáticamente para evitar problemas de inicialización
+    // rollupOptions: {
+    //   output: {
+    //     manualChunks(id) {
+    //       if (id.includes('node_modules')) {
+    //         if (id.includes('react') || id.includes('react-dom')) {
+    //           return 'react-vendor'
+    //         }
+    //         if (id.includes('react-router')) {
+    //           return 'router'
+    //         }
+    //         if (id.includes('@radix-ui')) {
+    //           return 'ui'
+    //         }
+    //         if (id.includes('lucide-react')) {
+    //           return 'icons'
+    //         }
+    //         if (id.includes('clsx') || id.includes('tailwind-merge')) {
+    //           return 'utils'
+    //         }
+    //         return 'vendor'
+    //       }
+    //       // Separar helpers del calendario en chunk propio
+    //       if (id.includes('calendarHelpers')) {
+    //         return 'calendar-helpers'
+    //       }
+    //       // Separar componentes del calendario en chunk propio
+    //       if (id.includes('CalendarTableView') || id.includes('ContextMenu') || id.includes('ActivityModal')) {
+    //         return 'calendar-components'
+    //       }
+    //     }
+    //   }
+    // }
   },
   preview: {
     port: 3000,
