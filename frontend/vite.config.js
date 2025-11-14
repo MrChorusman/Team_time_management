@@ -40,6 +40,16 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: false,
+        passes: 1
+      },
+      format: {
+        comments: false
+      }
+    },
     rollupOptions: {
       output: {
         manualChunks: {
@@ -47,7 +57,8 @@ export default defineConfig({
           router: ['react-router-dom'],
           ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-label', '@radix-ui/react-select', '@radix-ui/react-slot'],
           icons: ['lucide-react'],
-          utils: ['clsx', 'tailwind-merge']
+          utils: ['clsx', 'tailwind-merge'],
+          calendar: ['./src/components/calendar/CalendarTableView']
         }
       }
     }
