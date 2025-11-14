@@ -12,7 +12,8 @@ import {
   ChevronRight,
   User,
   Shield,
-  LogOut
+  LogOut,
+  TrendingUp
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useNotifications } from '../../contexts/NotificationContext'
@@ -36,6 +37,12 @@ const Sidebar = ({ isOpen, onToggle }) => {
       title: 'Calendario',
       icon: Calendar,
       path: '/calendar',
+      show: employee?.approved
+    },
+    {
+      title: 'Forecast',
+      icon: TrendingUp,
+      path: '/forecast',
       show: employee?.approved
     },
     {

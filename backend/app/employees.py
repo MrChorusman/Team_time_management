@@ -570,6 +570,56 @@ def deactivate_employee(employee_id):
             'message': 'Error desactivando empleado'
         }), 500
 
+@employees_bp.route('/<int:employee_id>/hourly-rate', methods=['PUT'])
+@auth_required()
+@admin_required()
+def update_employee_hourly_rate(employee_id):
+    """Actualiza la tarifa por hora de un empleado (solo admins)"""
+    try:
+        employee = Employee.query.get(employee_id)
+        if not employee:
+            return jsonify({
+                'success': False,
+                'message': 'Empleado no encontrado'
+            }), 404
+        
+        data = request.get_json()
+        hourly_rate = data.get('hourly_rate')
+        
+        # Validar que hourly_rate sea un número positivo o null
+        if hourly_rate is not None:
+            try:
+                hourly_rate = float(hourly_rate)
+                if hourly_rate < 0:
+                    return jsonify({
+                        'success': False,
+                        'message': 'La tarifa debe ser un número positivo'
+                    }), 400
+            except (ValueError, TypeError):
+                return jsonify({
+                    'success': False,
+                    'message': 'La tarifa debe ser un número válido'
+                }), 400
+        
+        employee.hourly_rate = hourly_rate
+        employee.updated_at = datetime.utcnow()
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'employee': employee.to_dict(),
+            'message': 'Tarifa actualizada exitosamente'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error actualizando tarifa del empleado {employee_id}: {e}")
+        return jsonify({
+            'success': False,
+            'message': 'Error actualizando tarifa'
+        }), 500
+
 @employees_bp.route('/<int:employee_id>/change-team', methods=['PUT'])
 @auth_required()
 @admin_required()

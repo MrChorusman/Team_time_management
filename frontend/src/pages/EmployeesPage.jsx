@@ -593,6 +593,16 @@ const EmployeesPage = () => {
                           <span className="ml-1">{getStatusLabel(selectedEmployee)}</span>
                         </Badge>
                       </div>
+                      {isAdmin() && (
+                        <div className="flex items-center justify-between border-t pt-2">
+                          <span>Tarifa por hora:</span>
+                          <span className="font-medium">
+                            {selectedEmployee.hourly_rate 
+                              ? new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(selectedEmployee.hourly_rate)
+                              : 'No configurada'}
+                          </span>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 </div>

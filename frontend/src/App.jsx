@@ -17,6 +17,7 @@ import VerifyEmailPage from './pages/auth/VerifyEmailPage'
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage'
 import DashboardPage from './pages/DashboardPage'
 import CalendarPage from './pages/CalendarPage'
+import ForecastPage from './pages/ForecastPage'
 import EmployeesPage from './pages/EmployeesPage'
 import TeamsPage from './pages/TeamsPage'
 import ReportsPage from './pages/ReportsPage'
@@ -141,6 +142,14 @@ function AppContent() {
         <ProtectedRoute>
           <AppLayout>
             <CalendarPage />
+          </AppLayout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/forecast" element={
+        <ProtectedRoute>
+          <AppLayout>
+            <ForecastPage />
           </AppLayout>
         </ProtectedRoute>
       } />
