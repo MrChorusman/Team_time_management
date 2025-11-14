@@ -56,25 +56,17 @@ export default defineConfig({
       // Mantener comentarios legales para debugging
       legalComments: 'inline'
     },
-    // REVERTIDO: Volver a PASO 2 - Separación mínima que funcionaba
-    // La separación adicional causó problemas de inicialización entre chunks
-    // Mantener solo React separado hasta investigar mejor el problema
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          // Solo separar React y React-DOM (lo más crítico y seguro)
-          if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom')) {
-              return 'react-vendor'
-            }
-            // Todo lo demás va a vendor (sin más separaciones)
-            // Esto evita problemas de orden de inicialización entre chunks
-            return 'vendor'
-          }
-          // NO separar componentes del calendario - dejarlos en el bundle principal
-        }
-      }
-    }
+    // DESACTIVADO: manualChunks causó problemas de inicialización
+    // Mantener solo minificación conservadora que funcionaba correctamente
+    // Dejar que Vite maneje automáticamente la separación de chunks
+    // rollupOptions: {
+    //   output: {
+    //     manualChunks(id) {
+    //       // Separación manual desactivada temporalmente
+    //       // Vite manejará automáticamente la separación de chunks
+    //     }
+    //   }
+    // }
   },
   preview: {
     port: 3000,
