@@ -52,13 +52,27 @@ export default defineConfig({
     },
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          router: ['react-router-dom'],
-          ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-label', '@radix-ui/react-select', '@radix-ui/react-slot'],
-          icons: ['lucide-react'],
-          utils: ['clsx', 'tailwind-merge'],
-          calendar: ['./src/components/calendar/CalendarTableView']
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom')) {
+              return 'vendor'
+            }
+            if (id.includes('react-router')) {
+              return 'router'
+            }
+            if (id.includes('@radix-ui')) {
+              return 'ui'
+            }
+            if (id.includes('lucide-react')) {
+              return 'icons'
+            }
+            if (id.includes('clsx') || id.includes('tailwind-merge')) {
+              return 'utils'
+            }
+          }
+          if (id.includes('CalendarTableView')) {
+            return 'calendar'
+          }
         }
       }
     }
