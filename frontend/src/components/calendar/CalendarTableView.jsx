@@ -224,10 +224,11 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
 
   // Verificar si un día es festivo para un empleado específico según su ubicación
   const isHoliday = (dateString, employeeLocation) => {
-    if (!holidays || !employeeLocation) return false
+    if (!holidays || !Array.isArray(holidays) || !employeeLocation) return false
     
     // Convertir código ISO a nombre de país si es necesario
-    const employeeCountry = ISO_TO_COUNTRY_NAME[employeeLocation?.country] || employeeLocation?.country
+    const employeeCountryCode = employeeLocation?.country || ''
+    const employeeCountry = ISO_TO_COUNTRY_NAME[employeeCountryCode] || employeeCountryCode
     
     return holidays.some(holiday => {
       // Verificar que la fecha coincida
