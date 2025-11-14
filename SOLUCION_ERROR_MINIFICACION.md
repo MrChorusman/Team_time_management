@@ -113,3 +113,5 @@ La aplicación está lista para uso, aunque con minificación desactivada tempor
 **Fecha de resolución**: 14 de noviembre de 2025  
 **Última verificación**: Calendario funcionando correctamente en producción
 
+
+

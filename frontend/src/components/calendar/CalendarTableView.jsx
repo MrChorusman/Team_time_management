@@ -19,8 +19,15 @@ import calendarHelpers from './calendarHelpers'
  * - Vista mensual o anual
  */
 // Las funciones helper están ahora en calendarHelpers.js para evitar problemas de inicialización
-const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMonthChange, onActivityCreate, onActivityDelete }) => {
+const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMonthChange, onActivityCreate, onActivityDelete, onViewModeChange }) => {
   const [viewMode, setViewMode] = useState('monthly') // 'monthly' o 'annual'
+  
+  // Notificar al padre cuando cambia el modo de vista
+  useEffect(() => {
+    if (onViewModeChange) {
+      onViewModeChange(viewMode)
+    }
+  }, [viewMode, onViewModeChange])
   const [hoveredDay, setHoveredDay] = useState(null)
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, employeeId: null, date: null, activity: null })
   const [activityModal, setActivityModal] = useState({ visible: false, type: null, date: null, employeeId: null, employeeName: null })
@@ -302,7 +309,7 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
                 <div key={month.date.toISOString()} className="mb-8">
                   {viewMode === 'annual' && (
                     <div className="sticky left-0 z-10 px-4 py-2 bg-gray-50 border-b border-gray-300">
-                      <h3 className="text-lg font-semibold capitalize">{month.name}</h3>
+                      <h3 className="text-lg font-semibold capitalize text-gray-900">{month.name}</h3>
                     </div>
                   )}
                   

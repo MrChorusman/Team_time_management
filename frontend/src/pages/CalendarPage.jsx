@@ -38,16 +38,90 @@ const CalendarPage = () => {
   const [selectedActivity, setSelectedActivity] = useState(null)
   const [showNewActivityDialog, setShowNewActivityDialog] = useState(false)
   const [activityFilter, setActivityFilter] = useState('all')
+  const [calendarViewMode, setCalendarViewMode] = useState('monthly') // Modo de vista del calendario (monthly/annual)
 
   useEffect(() => {
     loadCalendarData()
-  }, [currentMonth, activityFilter])
+  }, [currentMonth, activityFilter, calendarViewMode])
 
   const loadCalendarData = async () => {
     setLoading(true)
     try {
-      // Cargar datos reales del backend
-      let url = `${import.meta.env.VITE_API_BASE_URL}/calendar?year=${currentMonth.getFullYear()}&month=${currentMonth.getMonth() + 1}`
+      const year = currentMonth.getFullYear()
+      const month = currentMonth.getMonth() + 1
+      
+      // Para vista anual, cargar festivos de todo el año
+      if (calendarViewMode === 'annual') {
+        try {
+          const holidaysResponse = await fetch(
+            `${import.meta.env.VITE_API_BASE_URL}/holidays?year=${year}`,
+            { credentials: 'include' }
+          )
+          if (holidaysResponse.ok) {
+            const holidaysData = await holidaysResponse.json()
+            if (holidaysData.success && holidaysData.holidays) {
+              // Filtrar festivos por país del empleado si existe
+              let relevantHolidays = holidaysData.holidays
+              if (employee?.country) {
+                const ISO_TO_COUNTRY_NAME = {
+                  'ESP': 'España', 'ES': 'España',
+                  'USA': 'United States', 'US': 'United States',
+                  'GBR': 'United Kingdom', 'GB': 'United Kingdom',
+                  'FRA': 'France', 'FR': 'France',
+                  'DEU': 'Germany', 'DE': 'Germany',
+                  'ITA': 'Italy', 'IT': 'Italy',
+                  'PRT': 'Portugal', 'PT': 'Portugal'
+                }
+                const countryName = ISO_TO_COUNTRY_NAME[employee.country] || employee.country
+                relevantHolidays = holidaysData.holidays.filter(h => 
+                  h.country === countryName || h.country === employee.country
+                )
+              }
+              
+              // Cargar actividades de todos los meses
+              const allActivities = []
+              for (let m = 1; m <= 12; m++) {
+                let url = `${import.meta.env.VITE_API_BASE_URL}/calendar?year=${year}&month=${m}`
+                if (employee) {
+                  url += `&employee_id=${employee.id}`
+                } else if (isManager() && employee?.team_id) {
+                  url += `&team_id=${employee.team_id}`
+                }
+                
+                const response = await fetch(url, { credentials: 'include' })
+                if (response.ok) {
+                  const data = await response.json()
+                  if (data.success && data.calendar?.employees) {
+                    data.calendar.employees.forEach(emp => {
+                      if (emp.activities) {
+                        Object.values(emp.activities).forEach(activity => {
+                          allActivities.push({
+                            ...activity,
+                            employee_id: emp.employee?.id || emp.id
+                          })
+                        })
+                      }
+                    })
+                  }
+                }
+              }
+              
+              setCalendarData({
+                employees: calendarData?.employees || [],
+                activities: allActivities,
+                holidays: relevantHolidays
+              })
+              setLoading(false)
+              return
+            }
+          }
+        } catch (error) {
+          console.error('Error cargando festivos del año:', error)
+        }
+      }
+      
+      // Vista mensual - cargar datos del mes actual
+      let url = `${import.meta.env.VITE_API_BASE_URL}/calendar?year=${year}&month=${month}`
       
       if (employee) {
         url += `&employee_id=${employee.id}`
@@ -99,82 +173,58 @@ const CalendarPage = () => {
     }
   }
 
-  // Crear actividad (actualización optimista)
+  // Crear actividad - conectada al backend
   const handleCreateActivity = async (activityData) => {
-    // Actualización optimista: actualizar UI inmediatamente
-    const tempId = `temp-${Date.now()}`
-    const newActivity = {
-      id: tempId,
-      employee_id: activityData.employee_id,
-      type: activityData.activity_type,
-      start_date: activityData.date,
-      end_date: activityData.date,
-      hours: activityData.hours,
-      start_time: activityData.start_time,
-      end_time: activityData.end_time,
-      notes: activityData.description,
-      status: 'approved'
-    }
-
-    // Actualizar estado inmediatamente
-    setCalendarData(prev => ({
-      ...prev,
-      activities: [...(prev.activities || []), newActivity]
-    }))
-
     try {
-      // TODO: Enviar al backend cuando esté conectado
-      // const response = await api.post('/calendar/activities', activityData)
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/calendar/activities`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify(activityData)
+        }
+      )
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Error al crear la actividad')
+      }
+
+      const result = await response.json()
       
-      // Simular respuesta del backend
-      await new Promise(resolve => setTimeout(resolve, 500))
+      // Recargar datos del calendario después de crear
+      await loadCalendarData()
       
-      console.log('✅ Actividad creada:', activityData)
-      
-      // En producción: reemplazar actividad temporal con la real del backend
-      // setCalendarData(prev => ({
-      //   ...prev,
-      //   activities: prev.activities.map(a => 
-      //     a.id === tempId ? { ...newActivity, id: response.data.id } : a
-      //   )
-      // }))
+      return result
     } catch (error) {
-      // Si falla, revertir el cambio optimista
-      setCalendarData(prev => ({
-        ...prev,
-        activities: prev.activities.filter(a => a.id !== tempId)
-      }))
+      console.error('Error creando actividad:', error)
       throw error
     }
   }
 
-  // Eliminar actividad (actualización optimista)
+  // Eliminar actividad - conectada al backend
   const handleDeleteActivity = async (activityId) => {
-    // Guardar actividad para poder revertir si falla
-    const activityToDelete = calendarData.activities.find(a => a.id === activityId)
-    
-    // Actualización optimista: remover de UI inmediatamente
-    setCalendarData(prev => ({
-      ...prev,
-      activities: prev.activities.filter(a => a.id !== activityId)
-    }))
-
     try {
-      // TODO: Enviar al backend cuando esté conectado
-      // await api.delete(`/calendar/activities/${activityId}`)
-      
-      // Simular respuesta del backend
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      console.log('🗑️ Actividad eliminada:', activityId)
-    } catch (error) {
-      // Si falla, restaurar la actividad
-      if (activityToDelete) {
-        setCalendarData(prev => ({
-          ...prev,
-          activities: [...prev.activities, activityToDelete]
-        }))
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/calendar/activities/${activityId}`,
+        {
+          method: 'DELETE',
+          credentials: 'include'
+        }
+      )
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Error al eliminar la actividad')
       }
+
+      // Recargar datos del calendario después de eliminar
+      await loadCalendarData()
+    } catch (error) {
+      console.error('Error eliminando actividad:', error)
       throw error
     }
   }
@@ -539,6 +589,7 @@ const CalendarPage = () => {
           onMonthChange={setCurrentMonth}
           onActivityCreate={handleCreateActivity}
           onActivityDelete={handleDeleteActivity}
+          onViewModeChange={setCalendarViewMode}
         />
       )}
 

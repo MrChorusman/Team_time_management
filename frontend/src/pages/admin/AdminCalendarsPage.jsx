@@ -27,6 +27,7 @@ const AdminCalendarsPage = () => {
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1)
   const [view, setView] = useState('monthly') // 'monthly' o 'annual'
+  const [calendarViewMode, setCalendarViewMode] = useState('monthly') // Modo de vista del calendario (monthly/annual)
   const [activities, setActivities] = useState([])
   const [holidays, setHolidays] = useState([])
 
@@ -57,7 +58,7 @@ const AdminCalendarsPage = () => {
     if (selectedEmployeeData || (selectedEmployee === 'all' && selectedTeam === 'all' && filteredEmployees.length > 0)) {
       loadCalendarData()
     }
-  }, [selectedEmployee, selectedTeam, currentYear, currentMonth, filteredEmployees.length, selectedEmployeeData])
+  }, [selectedEmployee, selectedTeam, currentYear, currentMonth, filteredEmployees.length, selectedEmployeeData, calendarViewMode])
 
   const loadData = async () => {
     setLoading(true)
@@ -93,34 +94,76 @@ const AdminCalendarsPage = () => {
       const allActivities = []
       const allHolidays = []
       
-      for (const emp of filteredEmployees) {
+      // Para vista anual, cargar festivos de todo el año
+      if (calendarViewMode === 'annual') {
+        // Cargar festivos de todo el año (solo una vez, son los mismos para todos)
         try {
-          const response = await fetch(
-            `${import.meta.env.VITE_API_BASE_URL}/calendar?employee_id=${emp.id}&year=${currentYear}&month=${currentMonth}`,
+          const holidaysResponse = await fetch(
+            `${import.meta.env.VITE_API_BASE_URL}/holidays?year=${currentYear}`,
             { credentials: 'include' }
           )
-          
-          if (response.ok) {
-            const data = await response.json()
-            if (data.success && data.calendar) {
-              const employeeData = data.calendar.employees?.[0]
-              if (employeeData?.activities) {
-                const activitiesArray = Object.values(employeeData.activities).map(act => ({
-                  ...act,
-                  employee_id: emp.id,
-                  start_date: act.date,
-                  end_date: act.date
-                }))
-                allActivities.push(...activitiesArray)
-              }
-              // Recopilar festivos (solo una vez, son los mismos para todos)
-              if (data.calendar.holidays && allHolidays.length === 0) {
-                allHolidays.push(...data.calendar.holidays)
-              }
+          if (holidaysResponse.ok) {
+            const holidaysData = await holidaysResponse.json()
+            if (holidaysData.success && holidaysData.holidays) {
+              // Filtrar festivos por país de los empleados
+              const employeeCountries = [...new Set(filteredEmployees.map(emp => emp.country).filter(Boolean))]
+              const relevantHolidays = holidaysData.holidays.filter(h => 
+                employeeCountries.some(country => {
+                  // Mapear códigos ISO a nombres de países
+                  const ISO_TO_COUNTRY_NAME = {
+                    'ESP': 'España', 'ES': 'España',
+                    'USA': 'United States', 'US': 'United States',
+                    'GBR': 'United Kingdom', 'GB': 'United Kingdom',
+                    'FRA': 'France', 'FR': 'France',
+                    'DEU': 'Germany', 'DE': 'Germany',
+                    'ITA': 'Italy', 'IT': 'Italy',
+                    'PRT': 'Portugal', 'PT': 'Portugal'
+                  }
+                  const countryName = ISO_TO_COUNTRY_NAME[country] || country
+                  return h.country === countryName || h.country === country
+                })
+              )
+              allHolidays.push(...relevantHolidays)
             }
           }
         } catch (error) {
-          console.error(`Error cargando calendario para empleado ${emp.id}:`, error)
+          console.error('Error cargando festivos del año:', error)
+        }
+      }
+      
+      // Cargar actividades y festivos por mes para cada empleado
+      const monthsToLoad = calendarViewMode === 'annual' ? [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] : [currentMonth]
+      
+      for (const emp of filteredEmployees) {
+        for (const month of monthsToLoad) {
+          try {
+            const response = await fetch(
+              `${import.meta.env.VITE_API_BASE_URL}/calendar?employee_id=${emp.id}&year=${currentYear}&month=${month}`,
+              { credentials: 'include' }
+            )
+            
+            if (response.ok) {
+              const data = await response.json()
+              if (data.success && data.calendar) {
+                const employeeData = data.calendar.employees?.[0]
+                if (employeeData?.activities) {
+                  const activitiesArray = Object.values(employeeData.activities).map(act => ({
+                    ...act,
+                    employee_id: emp.id,
+                    start_date: act.date,
+                    end_date: act.date
+                  }))
+                  allActivities.push(...activitiesArray)
+                }
+                // Recopilar festivos del mes (solo si no estamos en vista anual, ya que los cargamos antes)
+                if (calendarViewMode === 'monthly' && data.calendar.holidays && allHolidays.length === 0) {
+                  allHolidays.push(...data.calendar.holidays)
+                }
+              }
+            }
+          } catch (error) {
+            console.error(`Error cargando calendario para empleado ${emp.id}, mes ${month}:`, error)
+          }
         }
       }
       
@@ -133,31 +176,148 @@ const AdminCalendarsPage = () => {
     if (!selectedEmployeeData) return
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/calendar?employee_id=${selectedEmployeeData.id}&year=${currentYear}&month=${currentMonth}`,
-        { credentials: 'include' }
-      )
-      
-      if (response.ok) {
-        const data = await response.json()
-        if (data.success && data.calendar) {
-          // El backend devuelve los datos en calendar.employees[0].activities y calendar.holidays
-          const employeeData = data.calendar.employees?.[0]
-          // activities viene como diccionario {fecha: actividad}, convertir a array
-          const activitiesArray = employeeData?.activities 
-            ? Object.values(employeeData.activities).map(act => ({
-                ...act,
-                employee_id: selectedEmployeeData.id,
-                start_date: act.date,
-                end_date: act.date
-              }))
-            : []
-          setActivities(activitiesArray)
-          setHolidays(data.calendar.holidays || [])
+      // Para vista anual, cargar festivos de todo el año
+      if (calendarViewMode === 'annual') {
+        try {
+          const holidaysResponse = await fetch(
+            `${import.meta.env.VITE_API_BASE_URL}/holidays?year=${currentYear}`,
+            { credentials: 'include' }
+          )
+          if (holidaysResponse.ok) {
+            const holidaysData = await holidaysResponse.json()
+            if (holidaysData.success && holidaysData.holidays) {
+              // Filtrar festivos por país del empleado
+              const employeeCountry = selectedEmployeeData.country
+              const ISO_TO_COUNTRY_NAME = {
+                'ESP': 'España', 'ES': 'España',
+                'USA': 'United States', 'US': 'United States',
+                'GBR': 'United Kingdom', 'GB': 'United Kingdom',
+                'FRA': 'France', 'FR': 'France',
+                'DEU': 'Germany', 'DE': 'Germany',
+                'ITA': 'Italy', 'IT': 'Italy',
+                'PRT': 'Portugal', 'PT': 'Portugal'
+              }
+              const countryName = ISO_TO_COUNTRY_NAME[employeeCountry] || employeeCountry
+              const relevantHolidays = holidaysData.holidays.filter(h => 
+                h.country === countryName || h.country === employeeCountry
+              )
+              setHolidays(relevantHolidays)
+            }
+          }
+        } catch (error) {
+          console.error('Error cargando festivos del año:', error)
+        }
+        
+        // Cargar actividades de todos los meses
+        const allActivities = []
+        for (let month = 1; month <= 12; month++) {
+          try {
+            const response = await fetch(
+              `${import.meta.env.VITE_API_BASE_URL}/calendar?employee_id=${selectedEmployeeData.id}&year=${currentYear}&month=${month}`,
+              { credentials: 'include' }
+            )
+            if (response.ok) {
+              const data = await response.json()
+              if (data.success && data.calendar) {
+                const employeeData = data.calendar.employees?.[0]
+                if (employeeData?.activities) {
+                  const activitiesArray = Object.values(employeeData.activities).map(act => ({
+                    ...act,
+                    employee_id: selectedEmployeeData.id,
+                    start_date: act.date,
+                    end_date: act.date
+                  }))
+                  allActivities.push(...activitiesArray)
+                }
+              }
+            }
+          } catch (error) {
+            console.error(`Error cargando actividades del mes ${month}:`, error)
+          }
+        }
+        setActivities(allActivities)
+      } else {
+        // Vista mensual - cargar solo el mes actual
+        const response = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}/calendar?employee_id=${selectedEmployeeData.id}&year=${currentYear}&month=${currentMonth}`,
+          { credentials: 'include' }
+        )
+        
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success && data.calendar) {
+            const employeeData = data.calendar.employees?.[0]
+            const activitiesArray = employeeData?.activities 
+              ? Object.values(employeeData.activities).map(act => ({
+                  ...act,
+                  employee_id: selectedEmployeeData.id,
+                  start_date: act.date,
+                  end_date: act.date
+                }))
+              : []
+            setActivities(activitiesArray)
+            setHolidays(data.calendar.holidays || [])
+          }
         }
       }
     } catch (error) {
       console.error('Error cargando datos del calendario:', error)
+    }
+  }
+
+  // Función para crear actividad - conectada al backend
+  const handleCreateActivity = async (activityData) => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/calendar/activities`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify(activityData)
+        }
+      )
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Error al crear la actividad')
+      }
+
+      const result = await response.json()
+      
+      // Recargar datos del calendario después de crear
+      await loadCalendarData()
+      
+      return result
+    } catch (error) {
+      console.error('Error creando actividad:', error)
+      throw error
+    }
+  }
+
+  // Función para eliminar actividad - conectada al backend
+  const handleDeleteActivity = async (activityId) => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/calendar/activities/${activityId}`,
+        {
+          method: 'DELETE',
+          credentials: 'include'
+        }
+      )
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Error al eliminar la actividad')
+      }
+
+      // Recargar datos del calendario después de eliminar
+      await loadCalendarData()
+    } catch (error) {
+      console.error('Error eliminando actividad:', error)
+      throw error
     }
   }
 
@@ -276,8 +436,9 @@ const AdminCalendarsPage = () => {
               setCurrentYear(date.getFullYear())
               setCurrentMonth(date.getMonth() + 1)
             }}
-            onActivityCreate={loadCalendarData}
-            onActivityDelete={loadCalendarData}
+            onActivityCreate={handleCreateActivity}
+            onActivityDelete={handleDeleteActivity}
+            onViewModeChange={setCalendarViewMode}
           />
         </Suspense>
       ) : (
