@@ -385,20 +385,31 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
 
   // Calcular días de vacaciones y ausencias del mes para un empleado
   const getMonthSummary = (employeeId, monthDate) => {
-    if (!activities) return { vacation: 0, absence: 0 }
+    if (!activities || !Array.isArray(activities)) return { vacation: 0, absence: 0 }
     
     const year = monthDate.getFullYear()
     const month = monthDate.getMonth()
     const monthStart = new Date(year, month, 1).toISOString().split('T')[0]
     const monthEnd = new Date(year, month + 1, 0).toISOString().split('T')[0]
     
-    const monthActivities = activities.filter(activity => 
-      activity.employee_id === employeeId &&
-      activity.status === 'approved' &&
-      ((activity.start_date >= monthStart && activity.start_date <= monthEnd) ||
-       (activity.end_date >= monthStart && activity.end_date <= monthEnd) ||
-       (activity.start_date <= monthStart && activity.end_date >= monthEnd))
-    )
+    const monthActivities = activities.filter(activity => {
+      if (!activity || activity.employee_id !== employeeId) return false
+      
+      // Usar date, start_date o end_date según disponibilidad
+      const activityDate = activity.date || activity.start_date || activity.end_date
+      if (!activityDate) return false
+      
+      // Verificar si la actividad está en el rango del mes
+      if (activity.date) {
+        return activity.date >= monthStart && activity.date <= monthEnd
+      } else if (activity.start_date && activity.end_date) {
+        return (activity.start_date >= monthStart && activity.start_date <= monthEnd) ||
+               (activity.end_date >= monthStart && activity.end_date <= monthEnd) ||
+               (activity.start_date <= monthStart && activity.end_date >= monthEnd)
+      }
+      
+      return false
+    })
     
     let vacationDays = 0
     let absenceDays = 0
@@ -661,7 +672,7 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
                         const day = new Date(holiday.date).getDate()
                         return (
                           <Badge key={holiday.id} variant="outline" className="bg-red-50 text-red-700 border-red-300">
-                            Día {day}: {holiday.name} ({holiday.type === 'national' ? 'Nacional' : holiday.type === 'regional' ? 'Regional' : 'Local'})
+                            Día {day}: {holiday.name} ({holiday.holiday_type === 'national' ? 'Nacional' : holiday.holiday_type === 'regional' ? 'Regional' : 'Local'})
                           </Badge>
                         )
                       })
