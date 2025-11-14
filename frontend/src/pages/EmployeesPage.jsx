@@ -549,10 +549,12 @@ const EmployeesPage = () => {
                       <CardTitle className="text-lg">Información Personal</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <div className="flex items-center space-x-3">
-                        <Mail className="w-4 h-4 text-gray-400" />
-                        <span>{selectedEmployee.email}</span>
-                      </div>
+                      {selectedEmployee.email && (
+                        <div className="flex items-center space-x-3">
+                          <Mail className="w-4 h-4 text-gray-400" />
+                          <span>{selectedEmployee.email}</span>
+                        </div>
+                      )}
                       <div className="flex items-center space-x-3">
                         <MapPin className="w-4 h-4 text-gray-400" />
                         <span>{selectedEmployee.city}, {selectedEmployee.region}, {selectedEmployee.country}</span>

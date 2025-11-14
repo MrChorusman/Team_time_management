@@ -31,6 +31,7 @@ import { toast } from 'sonner'
 const ForecastPage = () => {
   const { user, employee, isAdmin, isManager, isEmployee } = useAuth()
   const [loading, setLoading] = useState(true)
+  const [companiesLoading, setCompaniesLoading] = useState(true)
   const [companies, setCompanies] = useState([])
   const [selectedCompanyId, setSelectedCompanyId] = useState(null)
   const [selectedView, setSelectedView] = useState('employee') // 'employee', 'team', 'global'
@@ -43,34 +44,59 @@ const ForecastPage = () => {
   const [teams, setTeams] = useState([])
 
   useEffect(() => {
-    loadCompanies()
-    loadEmployees()
-    loadTeams()
-    
-    // Establecer vista por defecto según el rol
-    if (isEmployee() && employee) {
-      setSelectedView('employee')
-      setSelectedEmployeeId(employee.id)
-    } else if (isManager() && employee?.team_id) {
-      setSelectedView('team')
-      setSelectedTeamId(employee.team_id)
-    } else if (isAdmin()) {
-      setSelectedView('employee')
+    const initializeData = async () => {
+      setLoading(true)
+      setCompaniesLoading(true)
+      
+      await Promise.all([
+        loadCompanies(),
+        loadEmployees(),
+        loadTeams()
+      ])
+      
+      setCompaniesLoading(false)
+      
+      // Establecer vista por defecto según el rol
+      if (isEmployee() && employee) {
+        setSelectedView('employee')
+        setSelectedEmployeeId(employee.id)
+      } else if (isManager() && employee?.team_id) {
+        setSelectedView('team')
+        setSelectedTeamId(employee.team_id)
+      } else if (isAdmin()) {
+        setSelectedView('employee')
+        // Si hay empleados, seleccionar el primero por defecto
+        if (employees.length > 0) {
+          setSelectedEmployeeId(employees[0].id)
+        }
+      }
+      
+      setLoading(false)
     }
+    
+    initializeData()
   }, [])
 
   useEffect(() => {
+    if (companiesLoading) return // Esperar a que se carguen las empresas
+    
     if (selectedCompanyId && selectedView) {
       // Validar que se haya seleccionado empleado/equipo según la vista
-      if (selectedView === 'employee' && !selectedEmployeeId && !isEmployee()) {
-        return // Esperar a que se seleccione un empleado
+      if (selectedView === 'employee') {
+        if (!selectedEmployeeId && !isEmployee()) {
+          setLoading(false)
+          return // Esperar a que se seleccione un empleado
+        }
       }
       if (selectedView === 'team' && !selectedTeamId) {
+        setLoading(false)
         return // Esperar a que se seleccione un equipo
       }
       loadForecast()
+    } else {
+      setLoading(false)
     }
-  }, [selectedCompanyId, selectedView, selectedEmployeeId, selectedTeamId, currentYear, currentMonth])
+  }, [selectedCompanyId, selectedView, selectedEmployeeId, selectedTeamId, currentYear, currentMonth, companiesLoading])
 
   const loadCompanies = async () => {
     try {
@@ -79,10 +105,10 @@ const ForecastPage = () => {
       })
       if (response.ok) {
         const data = await response.json()
-        if (data.success && data.companies.length > 0) {
-          setCompanies(data.companies)
-          // Seleccionar la primera empresa por defecto
-          if (!selectedCompanyId) {
+        if (data.success) {
+          setCompanies(data.companies || [])
+          // Seleccionar la primera empresa por defecto si hay empresas
+          if (data.companies && data.companies.length > 0 && !selectedCompanyId) {
             setSelectedCompanyId(data.companies[0].id)
           }
         }
@@ -101,10 +127,15 @@ const ForecastPage = () => {
       if (response.ok) {
         const data = await response.json()
         if (data.success) {
-          setEmployees(data.employees || [])
+          const employeesList = data.employees || []
+          setEmployees(employeesList)
           // Si es empleado, seleccionar su propio ID
           if (isEmployee() && employee && !selectedEmployeeId) {
             setSelectedEmployeeId(employee.id)
+          }
+          // Si es admin y no hay empleado seleccionado, seleccionar el primero
+          if (isAdmin() && !isEmployee() && employeesList.length > 0 && !selectedEmployeeId) {
+            setSelectedEmployeeId(employeesList[0].id)
           }
         }
       }

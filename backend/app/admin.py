@@ -1069,18 +1069,21 @@ def create_company():
         # Crear notificación para administradores sobre la nueva empresa
         try:
             from models.notification import NotificationType, NotificationPriority
-            admin_users = User.query.join(User.roles).filter(Role.name == 'admin').all()
-            for admin in admin_users:
-                notification = Notification(
-                    user_id=admin.id,
-                    title='Nueva Empresa Creada',
-                    message=f'Se ha creado la empresa "{company.name}" con período de facturación del día {company.billing_period_start_day} al {company.billing_period_end_day}.',
-                    notification_type=NotificationType.SYSTEM_ALERT,
-                    priority=NotificationPriority.MEDIUM,
-                    created_by=current_user.id
-                )
-                db.session.add(notification)
-            db.session.commit()
+            # Buscar usuarios con rol admin usando la relación roles_users
+            admin_role = Role.query.filter_by(name='admin').first()
+            if admin_role:
+                admin_users = User.query.join(User.roles).filter(Role.id == admin_role.id).all()
+                for admin_user in admin_users:
+                    notification = Notification(
+                        user_id=admin_user.id,
+                        title='Nueva Empresa Creada',
+                        message=f'Se ha creado la empresa "{company.name}" con período de facturación del día {company.billing_period_start_day} al {company.billing_period_end_day}.',
+                        notification_type=NotificationType.SYSTEM_ALERT,
+                        priority=NotificationPriority.MEDIUM,
+                        created_by=current_user.id
+                    )
+                    db.session.add(notification)
+                db.session.commit()
         except Exception as e:
             logger.error(f"Error creando notificación de empresa: {e}")
             # No fallar si la notificación no se puede crear
