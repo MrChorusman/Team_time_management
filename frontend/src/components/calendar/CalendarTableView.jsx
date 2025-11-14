@@ -69,7 +69,8 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
     e.preventDefault()
 
     const employee = employees.find(emp => emp.id === employeeId)
-    const isHolidayDay = isHoliday(dateString, employee?.location)
+    const employeeLocation = employee?.location || { country: employee?.country, region: employee?.region, city: employee?.city }
+    const isHolidayDay = isHoliday(dateString, employeeLocation)
     const isWeekendDay = dayInfo.isWeekend
 
     // Buscar si ya hay actividad en este día
@@ -437,7 +438,7 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
         {/* Días del mes (1-31) */}
         {monthDays.map((dayInfo) => {
           const activity = getActivityForDay(employee.id, dayInfo.dateString)
-          const isHolidayDay = isHoliday(dayInfo.dateString, employee.location)
+          const isHolidayDay = isHoliday(dayInfo.dateString, employee.location || { country: employee.country, region: employee.region, city: employee.city })
           const bgColor = getCellBackgroundColor(activity, dayInfo.isWeekend, isHolidayDay)
           const textColor = getCellTextColor(activity, dayInfo.isWeekend, isHolidayDay)
           const code = getActivityCode(activity)
