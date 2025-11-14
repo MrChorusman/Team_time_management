@@ -40,18 +40,22 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
-    // TEMPORALMENTE desactivar minificación para debugging del error de inicialización
-    // TODO: Re-activar minificación una vez resuelto el problema
-    minify: false,
-    // Configuración comentada hasta resolver el problema
-    // minify: 'esbuild',
-    // esbuild: {
-    //   minifyIdentifiers: false,
-    //   minifySyntax: true,
-    //   minifyWhitespace: true,
-    //   legalComments: 'inline',
-    //   keepNames: true
-    // },
+    // PASO 1: Reactivar minificación con configuración ULTRA-CONSERVADORA
+    // Solo minificar sintaxis y espacios, NO renombrar identificadores
+    // Esto reduce el tamaño sin tocar nombres de variables/funciones
+    minify: 'esbuild',
+    esbuild: {
+      // CRÍTICO: NO renombrar identificadores - esto causaba el error original
+      minifyIdentifiers: false,
+      // Minificar solo sintaxis (eliminar código muerto, optimizar expresiones)
+      minifySyntax: true,
+      // Minificar solo espacios en blanco (reducir tamaño sin cambiar lógica)
+      minifyWhitespace: true,
+      // Preservar nombres de funciones para debugging
+      keepNames: true,
+      // Mantener comentarios legales para debugging
+      legalComments: 'inline'
+    },
     // Simplificar chunks - dejar que Vite maneje automáticamente para evitar problemas de inicialización
     // rollupOptions: {
     //   output: {
