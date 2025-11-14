@@ -451,15 +451,19 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
   }
 
   // Calcular días y meses - usar cálculo directo en lugar de useMemo para evitar problemas de inicialización
-  const days = getDaysInMonth(currentMonth)
-  
-  let months
-  if (viewMode === 'annual') {
-    months = getMonthsInYear(currentMonth)
-  } else {
-    const monthDays = getDaysInMonth(currentMonth)
-    const monthName = currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
-    months = [{ date: currentMonth, name: monthName, days: monthDays }]
+  // Asegurar que months siempre sea un array válido
+  let months = []
+  try {
+    if (viewMode === 'annual') {
+      months = getMonthsInYear(currentMonth) || []
+    } else {
+      const monthDays = getDaysInMonth(currentMonth)
+      const monthName = currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
+      months = [{ date: currentMonth, name: monthName, days: monthDays }]
+    }
+  } catch (error) {
+    console.error('Error calculando meses:', error)
+    months = []
   }
 
   // Renderizar una fila de empleado
