@@ -20,7 +20,7 @@ export const ISO_TO_COUNTRY_NAME = {
 }
 
 // Obtener días del mes
-export const getDaysInMonth = (date) => {
+export function getDaysInMonth(date) {
   const year = date.getFullYear()
   const month = date.getMonth()
   const daysInMonth = new Date(year, month + 1, 0).getDate()
@@ -41,7 +41,7 @@ export const getDaysInMonth = (date) => {
 }
 
 // Obtener meses del año
-export const getMonthsInYear = (date) => {
+export function getMonthsInYear(date) {
   const year = date.getFullYear()
   const months = []
   
@@ -58,7 +58,7 @@ export const getMonthsInYear = (date) => {
 }
 
 // Verificar si un día es festivo para un empleado específico según su ubicación
-export const isHolidayHelper = (dateString, employeeLocation, holidays) => {
+export function isHolidayHelper(dateString, employeeLocation, holidays) {
   if (!holidays || !Array.isArray(holidays) || !employeeLocation) return false
   
   // Convertir código ISO a nombre de país si es necesario
@@ -101,7 +101,7 @@ export const isHolidayHelper = (dateString, employeeLocation, holidays) => {
 }
 
 // Obtener actividades para un empleado en un día específico
-export const getActivityForDayHelper = (employeeId, dateString, activities) => {
+export function getActivityForDayHelper(employeeId, dateString, activities) {
   if (!activities || !Array.isArray(activities)) return null
     
   return activities.find(activity => {
@@ -124,7 +124,7 @@ export const getActivityForDayHelper = (employeeId, dateString, activities) => {
 }
 
 // Obtener código de actividad para mostrar en la celda
-export const getActivityCodeHelper = (activity) => {
+export function getActivityCodeHelper(activity) {
   if (!activity) return ''
   
   // Usar activity_type o type según lo que esté disponible
@@ -166,7 +166,7 @@ export const getActivityCodeHelper = (activity) => {
 }
 
 // Obtener color de fondo según el tipo de actividad
-export const getCellBackgroundColorHelper = (activity, isWeekend, isHolidayDay) => {
+export function getCellBackgroundColorHelper(activity, isWeekend, isHolidayDay) {
   if (isHolidayDay) return 'bg-red-50 border-red-200'
   if (isWeekend) return 'bg-gray-100 border-gray-200'
   
@@ -193,7 +193,7 @@ export const getCellBackgroundColorHelper = (activity, isWeekend, isHolidayDay) 
 }
 
 // Obtener color de texto según el tipo de actividad
-export const getCellTextColorHelper = (activity, isWeekend, isHolidayDay) => {
+export function getCellTextColorHelper(activity, isWeekend, isHolidayDay) {
   if (isHolidayDay) return 'text-red-700'
   if (isWeekend) return 'text-gray-500'
   
@@ -220,7 +220,7 @@ export const getCellTextColorHelper = (activity, isWeekend, isHolidayDay) => {
 }
 
 // Calcular días de vacaciones y ausencias del mes para un empleado
-export const getMonthSummaryHelper = (employeeId, monthDate, activities) => {
+export function getMonthSummaryHelper(employeeId, monthDate, activities) {
   if (!activities || !Array.isArray(activities)) return { vacation: 0, absence: 0 }
   
   const year = monthDate.getFullYear()
@@ -276,7 +276,7 @@ export const getMonthSummaryHelper = (employeeId, monthDate, activities) => {
 }
 
 // Obtener festivos del mes
-export const getMonthHolidaysHelper = (monthDate, holidays) => {
+export function getMonthHolidaysHelper(monthDate, holidays) {
   if (!holidays || !Array.isArray(holidays)) return []
   
   const year = monthDate.getFullYear()
