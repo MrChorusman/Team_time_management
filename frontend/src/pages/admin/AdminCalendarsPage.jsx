@@ -36,10 +36,10 @@ const AdminCalendarsPage = () => {
   }, [])
 
   useEffect(() => {
-    if (selectedEmployeeData) {
+    if (selectedEmployeeData || (selectedEmployee === 'all' && selectedTeam === 'all' && filteredEmployees.length > 0)) {
       loadCalendarData()
     }
-  }, [selectedEmployee, currentYear, currentMonth])
+  }, [selectedEmployee, selectedTeam, currentYear, currentMonth, filteredEmployees.length])
 
   const loadData = async () => {
     setLoading(true)
@@ -69,6 +69,49 @@ const AdminCalendarsPage = () => {
   }
 
   const loadCalendarData = async () => {
+    // Si ambos filtros están en "all", cargar todos los empleados
+    if (selectedEmployee === 'all' && selectedTeam === 'all') {
+      // Cargar datos para todos los empleados
+      const allActivities = []
+      const allHolidays = []
+      
+      for (const emp of filteredEmployees) {
+        try {
+          const response = await fetch(
+            `${import.meta.env.VITE_API_BASE_URL}/calendar?employee_id=${emp.id}&year=${currentYear}&month=${currentMonth}`,
+            { credentials: 'include' }
+          )
+          
+          if (response.ok) {
+            const data = await response.json()
+            if (data.success && data.calendar) {
+              const employeeData = data.calendar.employees?.[0]
+              if (employeeData?.activities) {
+                const activitiesArray = Object.values(employeeData.activities).map(act => ({
+                  ...act,
+                  employee_id: emp.id,
+                  start_date: act.date,
+                  end_date: act.date
+                }))
+                allActivities.push(...activitiesArray)
+              }
+              // Recopilar festivos (solo una vez, son los mismos para todos)
+              if (data.calendar.holidays && allHolidays.length === 0) {
+                allHolidays.push(...data.calendar.holidays)
+              }
+            }
+          }
+        } catch (error) {
+          console.error(`Error cargando calendario para empleado ${emp.id}:`, error)
+        }
+      }
+      
+      setActivities(allActivities)
+      setHolidays(allHolidays)
+      return
+    }
+    
+    // Si hay un empleado específico seleccionado
     if (!selectedEmployeeData) return
 
     try {
@@ -82,7 +125,16 @@ const AdminCalendarsPage = () => {
         if (data.success && data.calendar) {
           // El backend devuelve los datos en calendar.employees[0].activities y calendar.holidays
           const employeeData = data.calendar.employees?.[0]
-          setActivities(employeeData?.activities || [])
+          // activities viene como diccionario {fecha: actividad}, convertir a array
+          const activitiesArray = employeeData?.activities 
+            ? Object.values(employeeData.activities).map(act => ({
+                ...act,
+                employee_id: selectedEmployeeData.id,
+                start_date: act.date,
+                end_date: act.date
+              }))
+            : []
+          setActivities(activitiesArray)
           setHolidays(data.calendar.holidays || [])
         }
       }
@@ -96,8 +148,9 @@ const AdminCalendarsPage = () => {
     return emp.team?.id === parseInt(selectedTeam)
   })
 
+  // Si ambos filtros están en "all", mostrar todos los empleados
   const selectedEmployeeData = selectedEmployee === 'all' 
-    ? null 
+    ? (selectedTeam === 'all' ? filteredEmployees[0] || null : null) // Si ambos "all", mostrar primer empleado; si solo employee "all", null
     : filteredEmployees.find(emp => emp.id === parseInt(selectedEmployee))
 
   if (!isAdmin()) {
@@ -200,7 +253,7 @@ const AdminCalendarsPage = () => {
       {/* Calendario */}
       {selectedEmployeeData ? (
         <CalendarTableView
-          employees={[selectedEmployeeData]}
+          employees={selectedEmployee === 'all' && selectedTeam === 'all' ? filteredEmployees : [selectedEmployeeData]}
           activities={activities}
           holidays={holidays}
           currentMonth={new Date(currentYear, currentMonth - 1, 1)}

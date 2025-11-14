@@ -203,30 +203,60 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
     }
   }
 
+  // Mapeo de códigos ISO a nombres de países
+  const ISO_TO_COUNTRY_NAME = {
+    'ESP': 'España',
+    'ES': 'España',
+    'USA': 'United States',
+    'US': 'United States',
+    'GBR': 'United Kingdom',
+    'GB': 'United Kingdom',
+    'FRA': 'France',
+    'FR': 'France',
+    'DEU': 'Germany',
+    'DE': 'Germany',
+    'ITA': 'Italy',
+    'IT': 'Italy',
+    'PRT': 'Portugal',
+    'PT': 'Portugal'
+  }
+
   // Verificar si un día es festivo para un empleado específico según su ubicación
   const isHoliday = (dateString, employeeLocation) => {
     if (!holidays || !employeeLocation) return false
+    
+    // Convertir código ISO a nombre de país si es necesario
+    const employeeCountry = ISO_TO_COUNTRY_NAME[employeeLocation?.country] || employeeLocation?.country
     
     return holidays.some(holiday => {
       // Verificar que la fecha coincida
       if (holiday.date !== dateString) return false
       
+      // Usar holiday_type o hierarchy_level para determinar el tipo
+      const holidayType = holiday.holiday_type || holiday.hierarchy_level || holiday.type
+      
       // Festivos nacionales se aplican a todos del mismo país
-      if (holiday.type === 'national') {
-        return holiday.country === employeeLocation.country
+      if (holidayType === 'national' || holiday.hierarchy_level === 'national') {
+        return holiday.country === employeeCountry || 
+               holiday.country === employeeLocation?.country
       }
       
       // Festivos regionales solo para la misma región
-      if (holiday.type === 'regional') {
-        return holiday.country === employeeLocation.country && 
-               holiday.region === employeeLocation.region
+      if (holidayType === 'regional' || holiday.hierarchy_level === 'regional') {
+        return (holiday.country === employeeCountry || holiday.country === employeeLocation?.country) && 
+               holiday.region === employeeLocation?.region
       }
       
       // Festivos locales solo para la misma ciudad
-      if (holiday.type === 'local') {
-        return holiday.country === employeeLocation.country && 
-               holiday.region === employeeLocation.region &&
-               holiday.city === employeeLocation.city
+      if (holidayType === 'local' || holiday.hierarchy_level === 'local') {
+        return (holiday.country === employeeCountry || holiday.country === employeeLocation?.country) && 
+               holiday.region === employeeLocation?.region &&
+               holiday.city === employeeLocation?.city
+      }
+      
+      // Si no tiene tipo específico pero coincide el país, considerarlo festivo nacional
+      if (holiday.country === employeeCountry || holiday.country === employeeLocation?.country) {
+        return true
       }
       
       return false
@@ -235,13 +265,25 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
 
   // Obtener actividades para un empleado en un día específico
   const getActivityForDay = (employeeId, dateString) => {
-    if (!activities) return null
-    return activities.find(activity => 
-      activity.employee_id === employeeId && 
-      activity.start_date <= dateString && 
-      activity.end_date >= dateString &&
-      activity.status === 'approved'
-    )
+    if (!activities || !Array.isArray(activities)) return null
+    
+    return activities.find(activity => {
+      if (!activity || activity.employee_id !== employeeId) return false
+      
+      // Usar date, start_date o end_date según lo que esté disponible
+      const activityDate = activity.date || activity.start_date || activity.end_date
+      if (!activityDate) return false
+      
+      // Si tiene date exacto, comparar directamente
+      if (activity.date === dateString) return true
+      
+      // Si tiene rango de fechas, verificar si la fecha está en el rango
+      if (activity.start_date && activity.end_date) {
+        return activity.start_date <= dateString && activity.end_date >= dateString
+      }
+      
+      return false
+    })
   }
 
   // Obtener código de actividad para mostrar en la celda
@@ -327,15 +369,25 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
     let absenceDays = 0
     
     monthActivities.forEach(activity => {
-      const activityStart = new Date(activity.start_date)
-      const activityEnd = new Date(activity.end_date)
-      const rangeStart = new Date(Math.max(activityStart, new Date(monthStart)))
-      const rangeEnd = new Date(Math.min(activityEnd, new Date(monthEnd)))
+      // Usar activity_type o type según lo que esté disponible
+      const activityType = activity.activity_type || activity.type
       
-      const days = Math.ceil((rangeEnd - rangeStart) / (1000 * 60 * 60 * 24)) + 1
-      
-      if (activity.type === 'vacation') vacationDays += days
-      if (activity.type === 'sick_leave') absenceDays += days
+      // Para actividades de un solo día, usar date
+      if (activity.date) {
+        if (activityType === 'V' || activityType === 'vacation') vacationDays += 1
+        if (activityType === 'A' || activityType === 'absence' || activityType === 'sick_leave') absenceDays += 1
+      } else if (activity.start_date && activity.end_date) {
+        // Para rangos de fechas
+        const activityStart = new Date(activity.start_date)
+        const activityEnd = new Date(activity.end_date)
+        const rangeStart = new Date(Math.max(activityStart, new Date(monthStart)))
+        const rangeEnd = new Date(Math.min(activityEnd, new Date(monthEnd)))
+        
+        const days = Math.ceil((rangeEnd - rangeStart) / (1000 * 60 * 60 * 24)) + 1
+        
+        if (activityType === 'V' || activityType === 'vacation') vacationDays += days
+        if (activityType === 'A' || activityType === 'absence' || activityType === 'sick_leave') absenceDays += days
+      }
     })
     
     return { vacation: vacationDays, absence: absenceDays }

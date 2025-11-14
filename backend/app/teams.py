@@ -62,13 +62,8 @@ def list_teams():
                 if include_employees:
                     team_data = team.to_dict(include_employees=True)
                 else:
-                    # Respuesta mínima y segura para combos
-                    team_data = {
-                        'id': team.id,
-                        'name': team.name,
-                        'description': team.description,
-                        'active': True  # Hardcoded porque no existe columna active en team
-                    }
+                    # Respuesta mínima pero incluyendo employee_count
+                    team_data = team.to_dict(include_employees=False)
                 teams_data.append(team_data)
             except Exception as e:
                 logger.exception(f"Error serializando equipo id={getattr(team, 'id', None)}: {e}")
