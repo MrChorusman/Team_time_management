@@ -40,16 +40,7 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: false,
-        passes: 1
-      },
-      format: {
-        comments: false
-      }
-    },
+    minify: 'esbuild',
     rollupOptions: {
       output: {
         manualChunks(id) {
