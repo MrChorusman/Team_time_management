@@ -457,6 +457,7 @@ def get_employee(employee_id):
         remaining_benefits = employee.get_remaining_benefits(current_year)
         
         employee_data['annual_stats'] = {
+            'total_theoretical_hours': annual_summary.get('theoretical_hours', 0),
             'total_actual_hours': annual_summary.get('actual_hours', 0),
             'total_efficiency': annual_summary.get('efficiency', 0),
             'remaining_vacation_days': remaining_benefits.get('remaining_vacation_days', 0),
