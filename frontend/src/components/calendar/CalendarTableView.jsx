@@ -413,13 +413,21 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
   const renderTableHeader = (monthDays) => {
     return (
       <thead className="bg-gray-100 sticky top-0 z-20">
-        {/* Primera fila: Solo números de días */}
+        {/* Primera fila: Números de días (1-31) */}
         <tr>
-          {/* Columnas fijas vacías en primera fila */}
-          <th className="sticky left-0 z-30 px-4 py-3 bg-gray-100 border-r border-gray-300" rowSpan="2"></th>
-          <th className="sticky left-[140px] z-30 px-4 py-3 bg-gray-100 border-r border-gray-300" rowSpan="2"></th>
-          <th className="sticky left-[280px] z-30 px-3 py-3 bg-gray-100 border-r border-gray-300" rowSpan="2"></th>
-          <th className="sticky left-[330px] z-30 px-3 py-3 bg-gray-100 border-r border-gray-300" rowSpan="2"></th>
+          {/* Columnas fijas: Equipo, Empleado, Vac, Aus en primera fila */}
+          <th className="sticky left-0 z-30 px-4 py-3 bg-gray-100 border-r border-gray-300 text-left text-xs font-semibold text-gray-700 uppercase" rowSpan="2">
+            Equipo
+          </th>
+          <th className="sticky left-[140px] z-30 px-4 py-3 bg-gray-100 border-r border-gray-300 text-left text-xs font-semibold text-gray-700 uppercase" rowSpan="2">
+            Empleado
+          </th>
+          <th className="sticky left-[280px] z-30 px-3 py-3 bg-blue-100 border-r border-gray-300 text-center text-xs font-semibold text-blue-700 uppercase" rowSpan="2">
+            Vac
+          </th>
+          <th className="sticky left-[330px] z-30 px-3 py-3 bg-yellow-100 border-r border-gray-300 text-center text-xs font-semibold text-yellow-700 uppercase" rowSpan="2">
+            Aus
+          </th>
           
           {/* Días del mes */}
           {monthDays.map((dayInfo) => (
@@ -434,22 +442,8 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
           ))}
         </tr>
         
-        {/* Segunda fila: Equipo, Empleado, Vac, Aus y días de la semana */}
+        {/* Segunda fila: Días de la semana (L, M, X, J, V, S, D) */}
         <tr className="bg-gray-50">
-          {/* Columnas fijas con etiquetas */}
-          <th className="sticky left-0 z-30 px-4 py-3 bg-gray-50 border-r border-gray-300 text-left text-xs font-semibold text-gray-700 uppercase">
-            Equipo
-          </th>
-          <th className="sticky left-[140px] z-30 px-4 py-3 bg-gray-50 border-r border-gray-300 text-left text-xs font-semibold text-gray-700 uppercase">
-            Empleado
-          </th>
-          <th className="sticky left-[280px] z-30 px-3 py-3 bg-blue-100 border-r border-gray-300 text-center text-xs font-semibold text-blue-700 uppercase">
-            Vac
-          </th>
-          <th className="sticky left-[330px] z-30 px-3 py-3 bg-yellow-100 border-r border-gray-300 text-center text-xs font-semibold text-yellow-700 uppercase">
-            Aus
-          </th>
-          
           {/* Días de la semana */}
           {monthDays.map((dayInfo) => {
             const dayName = ['D', 'L', 'M', 'X', 'J', 'V', 'S'][dayInfo.dayOfWeek]
