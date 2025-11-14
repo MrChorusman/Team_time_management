@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from 'react'
+import { useState, useEffect, useMemo, lazy, Suspense } from 'react'
 import { 
   Calendar as CalendarIcon, 
   Users, 
@@ -30,6 +30,22 @@ const AdminCalendarsPage = () => {
   const [activities, setActivities] = useState([])
   const [holidays, setHolidays] = useState([])
 
+  // Calcular filteredEmployees ANTES de los useEffect que lo usan
+  const filteredEmployees = useMemo(() => {
+    return employees.filter(emp => {
+      if (selectedTeam === 'all') return true
+      return emp.team?.id === parseInt(selectedTeam)
+    })
+  }, [employees, selectedTeam])
+
+  // Calcular selectedEmployeeData ANTES de los useEffect que lo usan
+  const selectedEmployeeData = useMemo(() => {
+    if (selectedEmployee === 'all') {
+      return selectedTeam === 'all' ? filteredEmployees[0] || null : null
+    }
+    return filteredEmployees.find(emp => emp.id === parseInt(selectedEmployee)) || null
+  }, [selectedEmployee, selectedTeam, filteredEmployees])
+
   useEffect(() => {
     if (!isAdmin()) {
       return
@@ -41,7 +57,7 @@ const AdminCalendarsPage = () => {
     if (selectedEmployeeData || (selectedEmployee === 'all' && selectedTeam === 'all' && filteredEmployees.length > 0)) {
       loadCalendarData()
     }
-  }, [selectedEmployee, selectedTeam, currentYear, currentMonth, filteredEmployees.length])
+  }, [selectedEmployee, selectedTeam, currentYear, currentMonth, filteredEmployees.length, selectedEmployeeData])
 
   const loadData = async () => {
     setLoading(true)
@@ -144,16 +160,6 @@ const AdminCalendarsPage = () => {
       console.error('Error cargando datos del calendario:', error)
     }
   }
-
-  const filteredEmployees = employees.filter(emp => {
-    if (selectedTeam === 'all') return true
-    return emp.team?.id === parseInt(selectedTeam)
-  })
-
-  // Si ambos filtros están en "all", mostrar todos los empleados
-  const selectedEmployeeData = selectedEmployee === 'all' 
-    ? (selectedTeam === 'all' ? filteredEmployees[0] || null : null) // Si ambos "all", mostrar primer empleado; si solo employee "all", null
-    : filteredEmployees.find(emp => emp.id === parseInt(selectedEmployee))
 
   if (!isAdmin()) {
     return (
