@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { 
   Calendar as CalendarIcon, 
   Users, 
@@ -13,7 +13,9 @@ import { Button } from '../../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
-import CalendarTableView from '../../components/calendar/CalendarTableView'
+
+// Lazy load CalendarTableView para evitar problemas de inicialización
+const CalendarTableView = lazy(() => import('../../components/calendar/CalendarTableView'))
 
 const AdminCalendarsPage = () => {
   const { isAdmin } = useAuth()
@@ -252,18 +254,26 @@ const AdminCalendarsPage = () => {
 
       {/* Calendario */}
       {selectedEmployeeData ? (
-        <CalendarTableView
-          employees={selectedEmployee === 'all' && selectedTeam === 'all' ? filteredEmployees : [selectedEmployeeData]}
-          activities={activities}
-          holidays={holidays}
-          currentMonth={new Date(currentYear, currentMonth - 1, 1)}
-          onMonthChange={(date) => {
-            setCurrentYear(date.getFullYear())
-            setCurrentMonth(date.getMonth() + 1)
-          }}
-          onActivityCreate={loadCalendarData}
-          onActivityDelete={loadCalendarData}
-        />
+        <Suspense fallback={
+          <Card>
+            <CardContent className="p-12 text-center">
+              <LoadingSpinner size="lg" text="Cargando calendario..." />
+            </CardContent>
+          </Card>
+        }>
+          <CalendarTableView
+            employees={selectedEmployee === 'all' && selectedTeam === 'all' ? filteredEmployees : [selectedEmployeeData]}
+            activities={activities}
+            holidays={holidays}
+            currentMonth={new Date(currentYear, currentMonth - 1, 1)}
+            onMonthChange={(date) => {
+              setCurrentYear(date.getFullYear())
+              setCurrentMonth(date.getMonth() + 1)
+            }}
+            onActivityCreate={loadCalendarData}
+            onActivityDelete={loadCalendarData}
+          />
+        </Suspense>
       ) : (
         <Card>
           <CardContent className="p-12 text-center">
