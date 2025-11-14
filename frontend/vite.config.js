@@ -56,21 +56,39 @@ export default defineConfig({
       // Mantener comentarios legales para debugging
       legalComments: 'inline'
     },
-    // PASO 2: Activar manualChunks de forma ULTRA-CONSERVADORA
-    // Solo separar React y vendor básico, sin tocar componentes del calendario todavía
+    // PASO 3: Expandir manualChunks de forma CONSERVADORA
+    // Separar React, Router, UI libraries e Icons, pero mantener calendario en bundle principal
     rollupOptions: {
       output: {
         manualChunks(id) {
-          // Solo separar React y React-DOM (lo más crítico)
+          // Separar dependencias de node_modules en chunks lógicos
           if (id.includes('node_modules')) {
+            // React y React-DOM (crítico, se carga primero)
             if (id.includes('react') || id.includes('react-dom')) {
               return 'react-vendor'
             }
-            // Todo lo demás va a vendor (sin más separaciones por ahora)
+            // React Router (navegación, se carga temprano)
+            if (id.includes('react-router')) {
+              return 'router'
+            }
+            // UI libraries (Radix UI, componentes grandes)
+            if (id.includes('@radix-ui')) {
+              return 'ui'
+            }
+            // Iconos (Lucide, puede ser grande)
+            if (id.includes('lucide-react')) {
+              return 'icons'
+            }
+            // Utilidades pequeñas (clsx, tailwind-merge)
+            if (id.includes('clsx') || id.includes('tailwind-merge')) {
+              return 'utils'
+            }
+            // Todo lo demás va a vendor
             return 'vendor'
           }
-          // NO separar componentes del calendario todavía - dejarlos en el bundle principal
-          // Esto evita problemas de inicialización mientras probamos la minificación básica
+          // IMPORTANTE: NO separar componentes del calendario todavía
+          // Mantenerlos en el bundle principal para evitar problemas de inicialización
+          // Esto incluye: CalendarTableView, calendarHelpers, ContextMenu, ActivityModal
         }
       }
     }
