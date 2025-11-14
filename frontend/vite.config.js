@@ -56,39 +56,22 @@ export default defineConfig({
       // Mantener comentarios legales para debugging
       legalComments: 'inline'
     },
-    // PASO 3: Expandir manualChunks de forma CONSERVADORA
-    // Separar React, Router, UI libraries e Icons, pero mantener calendario en bundle principal
+    // REVERTIDO: Volver a PASO 2 - Separación mínima que funcionaba
+    // La separación adicional causó problemas de inicialización entre chunks
+    // Mantener solo React separado hasta investigar mejor el problema
     rollupOptions: {
       output: {
         manualChunks(id) {
-          // Separar dependencias de node_modules en chunks lógicos
+          // Solo separar React y React-DOM (lo más crítico y seguro)
           if (id.includes('node_modules')) {
-            // React y React-DOM (crítico, se carga primero)
             if (id.includes('react') || id.includes('react-dom')) {
               return 'react-vendor'
             }
-            // React Router (navegación, se carga temprano)
-            if (id.includes('react-router')) {
-              return 'router'
-            }
-            // UI libraries (Radix UI, componentes grandes)
-            if (id.includes('@radix-ui')) {
-              return 'ui'
-            }
-            // Iconos (Lucide, puede ser grande)
-            if (id.includes('lucide-react')) {
-              return 'icons'
-            }
-            // Utilidades pequeñas (clsx, tailwind-merge)
-            if (id.includes('clsx') || id.includes('tailwind-merge')) {
-              return 'utils'
-            }
-            // Todo lo demás va a vendor
+            // Todo lo demás va a vendor (sin más separaciones)
+            // Esto evita problemas de orden de inicialización entre chunks
             return 'vendor'
           }
-          // IMPORTANTE: NO separar componentes del calendario todavía
-          // Mantenerlos en el bundle principal para evitar problemas de inicialización
-          // Esto incluye: CalendarTableView, calendarHelpers, ContextMenu, ActivityModal
+          // NO separar componentes del calendario - dejarlos en el bundle principal
         }
       }
     }
