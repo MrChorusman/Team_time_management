@@ -654,49 +654,55 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto overflow-y-auto max-h-[600px] relative">
-            {months && Array.isArray(months) && months.length > 0 ? months.map((month) => (
-              <div key={month.date.toISOString()} className="mb-8">
-                {viewMode === 'annual' && (
-                  <div className="sticky left-0 z-10 px-4 py-2 bg-gray-50 border-b border-gray-300">
-                    <h3 className="text-lg font-semibold capitalize">{month.name}</h3>
-                  </div>
-                )}
-                
-                <table className="w-full border-collapse text-sm">
-                  {renderTableHeader(month.days)}
-                  <tbody>
-                    {employees && employees.length > 0 ? (
-                      employees.map(employee => renderEmployeeRow(employee, month.date))
-                    ) : (
-                      <tr>
-                        <td colSpan={month.days.length + 4} className="px-4 py-8 text-center text-gray-500">
-                          No hay empleados para mostrar
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-                
-                {/* Leyenda de festivos del mes (en ambas vistas) */}
-                <div className="px-4 py-3 bg-gray-50 border-t border-gray-300">
-                  <h4 className="text-xs font-semibold text-gray-700 uppercase mb-2">Festivos del mes</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {getMonthHolidays(month.date).length > 0 ? (
-                      getMonthHolidays(month.date).map((holiday) => {
-                        const day = new Date(holiday.date).getDate()
-                        return (
-                          <Badge key={holiday.id} variant="outline" className="bg-red-50 text-red-700 border-red-300">
-                            Día {day}: {holiday.name} ({holiday.holiday_type === 'national' ? 'Nacional' : holiday.holiday_type === 'regional' ? 'Regional' : 'Local'})
-                          </Badge>
-                        )
-                      })
-                    ) : (
-                      <span className="text-xs text-gray-500">No hay festivos este mes</span>
-                    )}
+            {months && Array.isArray(months) && months.length > 0 ? (
+              months.map((month) => (
+                <div key={month.date.toISOString()} className="mb-8">
+                  {viewMode === 'annual' && (
+                    <div className="sticky left-0 z-10 px-4 py-2 bg-gray-50 border-b border-gray-300">
+                      <h3 className="text-lg font-semibold capitalize">{month.name}</h3>
+                    </div>
+                  )}
+                  
+                  <table className="w-full border-collapse text-sm">
+                    {renderTableHeader(month.days)}
+                    <tbody>
+                      {employees && employees.length > 0 ? (
+                        employees.map(employee => renderEmployeeRow(employee, month.date))
+                      ) : (
+                        <tr>
+                          <td colSpan={month.days.length + 4} className="px-4 py-8 text-center text-gray-500">
+                            No hay empleados para mostrar
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                  
+                  {/* Leyenda de festivos del mes (en ambas vistas) */}
+                  <div className="px-4 py-3 bg-gray-50 border-t border-gray-300">
+                    <h4 className="text-xs font-semibold text-gray-700 uppercase mb-2">Festivos del mes</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {getMonthHolidays(month.date).length > 0 ? (
+                        getMonthHolidays(month.date).map((holiday) => {
+                          const day = new Date(holiday.date).getDate()
+                          return (
+                            <Badge key={holiday.id} variant="outline" className="bg-red-50 text-red-700 border-red-300">
+                              Día {day}: {holiday.name} ({holiday.holiday_type === 'national' ? 'Nacional' : holiday.holiday_type === 'regional' ? 'Regional' : 'Local'})
+                            </Badge>
+                          )
+                        })
+                      ) : (
+                        <span className="text-xs text-gray-500">No hay festivos este mes</span>
+                      )}
+                    </div>
                   </div>
                 </div>
+              ))
+            ) : (
+              <div className="px-4 py-8 text-center text-gray-500">
+                No hay datos de calendario para mostrar.
               </div>
-            ))}
+            )}
           </div>
         </CardContent>
       </Card>
