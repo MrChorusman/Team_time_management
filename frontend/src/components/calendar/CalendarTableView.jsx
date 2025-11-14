@@ -467,6 +467,7 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
 
   // Renderizar una fila de empleado
   const renderEmployeeRow = (employee, monthDate) => {
+    if (!employee || !monthDate) return null
     const summary = getMonthSummary(employee.id, monthDate)
     const monthDays = getDaysInMonth(monthDate)
     
