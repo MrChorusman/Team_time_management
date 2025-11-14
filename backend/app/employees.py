@@ -405,7 +405,11 @@ def list_employees():
 def get_employee(employee_id):
     """Obtiene un empleado específico"""
     try:
-        employee = Employee.query.get(employee_id)
+        from models.user import User
+        from sqlalchemy.orm import joinedload
+        
+        # Cargar empleado con relación de usuario explícitamente
+        employee = Employee.query.options(joinedload(Employee.user)).get(employee_id)
         if not employee:
             return jsonify({
                 'success': False,
@@ -424,9 +428,15 @@ def get_employee(employee_id):
         
         employee_data = employee.to_dict(include_summary=True)
         
-        # Añadir email del usuario asociado
-        if employee.user:
-            employee_data['email'] = employee.user.email
+        # Añadir email del usuario asociado (asegurarse de que user está cargado)
+        if employee.user_id:
+            user = User.query.get(employee.user_id)
+            if user:
+                employee_data['email'] = user.email
+            else:
+                employee_data['email'] = None
+        else:
+            employee_data['email'] = None
         
         # Mapear hours_summary a monthly_stats y annual_stats para compatibilidad con frontend
         from datetime import datetime

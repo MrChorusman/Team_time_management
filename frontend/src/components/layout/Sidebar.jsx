@@ -43,7 +43,7 @@ const Sidebar = ({ isOpen, onToggle }) => {
       title: 'Forecast',
       icon: TrendingUp,
       path: '/forecast',
-      show: employee?.approved
+      show: isAdmin() || employee?.approved
     },
     {
       title: 'Empleados',

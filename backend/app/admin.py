@@ -1066,6 +1066,25 @@ def create_company():
         db.session.add(company)
         db.session.commit()
         
+        # Crear notificación para administradores sobre la nueva empresa
+        try:
+            from models.notification import NotificationType, NotificationPriority
+            admin_users = User.query.join(User.roles).filter(Role.name == 'admin').all()
+            for admin in admin_users:
+                notification = Notification(
+                    user_id=admin.id,
+                    title='Nueva Empresa Creada',
+                    message=f'Se ha creado la empresa "{company.name}" con período de facturación del día {company.billing_period_start_day} al {company.billing_period_end_day}.',
+                    notification_type=NotificationType.SYSTEM_ALERT,
+                    priority=NotificationPriority.MEDIUM,
+                    created_by=current_user.id
+                )
+                db.session.add(notification)
+            db.session.commit()
+        except Exception as e:
+            logger.error(f"Error creando notificación de empresa: {e}")
+            # No fallar si la notificación no se puede crear
+        
         return jsonify({
             'success': True,
             'company': company.to_dict(),

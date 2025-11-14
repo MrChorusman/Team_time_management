@@ -595,12 +595,47 @@ const EmployeesPage = () => {
                       </div>
                       {isAdmin() && (
                         <div className="flex items-center justify-between border-t pt-2">
-                          <span>Tarifa por hora:</span>
-                          <span className="font-medium">
-                            {selectedEmployee.hourly_rate 
-                              ? new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(selectedEmployee.hourly_rate)
-                              : 'No configurada'}
-                          </span>
+                          <Label htmlFor="hourly-rate">Tarifa por hora:</Label>
+                          <div className="flex items-center space-x-2">
+                            <Input
+                              id="hourly-rate"
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              className="w-32"
+                              value={selectedEmployee.hourly_rate || ''}
+                              onChange={async (e) => {
+                                const newRate = e.target.value === '' ? null : parseFloat(e.target.value)
+                                try {
+                                  const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/employees/${selectedEmployee.id}/hourly-rate`, {
+                                    method: 'PUT',
+                                    credentials: 'include',
+                                    headers: {
+                                      'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({ hourly_rate: newRate })
+                                  })
+                                  
+                                  if (response.ok) {
+                                    const data = await response.json()
+                                    if (data.success) {
+                                      setSelectedEmployee({ ...selectedEmployee, hourly_rate: newRate })
+                                      toast.success('Tarifa actualizada exitosamente')
+                                    }
+                                  } else {
+                                    throw new Error('Error actualizando tarifa')
+                                  }
+                                } catch (error) {
+                                  console.error('Error actualizando tarifa:', error)
+                                  toast.error('Error al actualizar tarifa', {
+                                    description: error.message || 'Por favor, intenta de nuevo.'
+                                  })
+                                }
+                              }}
+                              placeholder="0.00"
+                            />
+                            <span className="text-sm text-gray-500">€/h</span>
+                          </div>
                         </div>
                       )}
                     </CardContent>
@@ -641,7 +676,7 @@ const EmployeesPage = () => {
                       <div className="space-y-3">
                         <div className="flex justify-between">
                           <span>Horas Totales:</span>
-                          <span className="font-medium">{selectedEmployee.annual_stats?.total_actual_hours || 0}h</span>
+                          <span className="font-medium">{selectedEmployee.annual_stats?.total_actual_hours || selectedEmployee.annual_stats?.total_theoretical_hours || 0}h</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Eficiencia Anual:</span>

@@ -150,10 +150,12 @@ class Employee(db.Model):
             start_date = date(year, 1, 1)
             end_date = date(year, 12, 31)
         
-        # Obtener actividades del período
-        activities = self.calendar_activities.filter(
-            self.calendar_activities.c.date >= start_date,
-            self.calendar_activities.c.date <= end_date
+        # Obtener actividades del período usando la relación directamente
+        from models.calendar_activity import CalendarActivity
+        activities = CalendarActivity.query.filter(
+            CalendarActivity.employee_id == self.id,
+            CalendarActivity.date >= start_date,
+            CalendarActivity.date <= end_date
         ).all()
         
         # Crear diccionario de actividades por fecha
