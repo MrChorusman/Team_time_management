@@ -314,8 +314,12 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
     
     // Para actividades con horas, mostrar el número
     const activityTypeLower = activityType.toLowerCase()
-    if (activity.hours && (activityTypeLower === 'hld' || activityTypeLower === 'guard' || activityTypeLower === 'training' || activityType === 'G' || activityType === 'HLD' || activityType === 'F')) {
-      const sign = (activityTypeLower === 'guard' || activityType === 'G') ? '+' : '-'
+    const isGuard = activityTypeLower === 'guard' || activityType === 'G'
+    const isHld = activityTypeLower === 'hld' || activityType === 'HLD'
+    const isTraining = activityTypeLower === 'training' || activityType === 'F'
+    
+    if (activity.hours && (isHld || isGuard || isTraining)) {
+      const sign = isGuard ? '+' : '-'
       return `${code} ${sign}${activity.hours}h`
     }
     
