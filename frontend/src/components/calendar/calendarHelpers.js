@@ -20,6 +20,14 @@ const ISO_TO_COUNTRY_NAME = {
   'PT': 'Portugal'
 }
 
+// Función helper para formatear fecha como YYYY-MM-DD sin problemas de zona horaria
+function formatDateLocal(year, month, day) {
+  // Usar padStart para asegurar formato de 2 dígitos
+  const monthStr = String(month + 1).padStart(2, '0')
+  const dayStr = String(day).padStart(2, '0')
+  return `${year}-${monthStr}-${dayStr}`
+}
+
 // Obtener días del mes
 function getDaysInMonth(date) {
   const year = date.getFullYear()
@@ -29,12 +37,14 @@ function getDaysInMonth(date) {
   
   for (let day = 1; day <= daysInMonth; day++) {
     const currentDate = new Date(year, month, day)
+    // Usar formato local en lugar de toISOString() para evitar problemas de zona horaria
+    const dateString = formatDateLocal(year, month, day)
     days.push({
       day,
       date: currentDate,
       dayOfWeek: currentDate.getDay(),
       isWeekend: currentDate.getDay() === 0 || currentDate.getDay() === 6,
-      dateString: currentDate.toISOString().split('T')[0]
+      dateString: dateString
     })
   }
   
@@ -226,8 +236,10 @@ function getMonthSummaryHelper(employeeId, monthDate, activities) {
   
   const year = monthDate.getFullYear()
   const month = monthDate.getMonth()
-  const monthStart = new Date(year, month, 1).toISOString().split('T')[0]
-  const monthEnd = new Date(year, month + 1, 0).toISOString().split('T')[0]
+  // Usar formatDateLocal para evitar problemas de zona horaria
+  const monthStart = formatDateLocal(year, month, 1)
+  const lastDay = new Date(year, month + 1, 0).getDate()
+  const monthEnd = formatDateLocal(year, month, lastDay)
   
   const monthActivities = activities.filter(activity => {
     if (!activity || activity.employee_id !== employeeId) return false
@@ -282,8 +294,10 @@ function getMonthHolidaysHelper(monthDate, holidays) {
   
   const year = monthDate.getFullYear()
   const month = monthDate.getMonth()
-  const monthStart = new Date(year, month, 1).toISOString().split('T')[0]
-  const monthEnd = new Date(year, month + 1, 0).toISOString().split('T')[0]
+  // Usar formatDateLocal para evitar problemas de zona horaria
+  const monthStart = formatDateLocal(year, month, 1)
+  const lastDay = new Date(year, month + 1, 0).getDate()
+  const monthEnd = formatDateLocal(year, month, lastDay)
   
   return holidays.filter(holiday => 
     holiday && holiday.date >= monthStart && holiday.date <= monthEnd
