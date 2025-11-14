@@ -64,11 +64,18 @@ const CalendarPage = () => {
         if (data.success && data.calendar) {
           // El backend devuelve calendar.employees[], calendar.holidays[], etc.
           // Necesitamos aplanar las actividades de todos los empleados
+          // El backend devuelve activities como un diccionario por fecha, necesitamos convertirlo a array
           const allActivities = []
           if (data.calendar.employees) {
             data.calendar.employees.forEach(emp => {
               if (emp.activities) {
-                allActivities.push(...emp.activities)
+                // activities es un diccionario {fecha: actividad}, convertir a array
+                Object.values(emp.activities).forEach(activity => {
+                  allActivities.push({
+                    ...activity,
+                    employee_id: emp.employee?.id || emp.id
+                  })
+                })
               }
             })
           }
