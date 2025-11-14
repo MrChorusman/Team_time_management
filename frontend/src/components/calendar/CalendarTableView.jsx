@@ -293,34 +293,37 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
     
     // Usar activity_type o type según lo que esté disponible
     const activityType = activity.activity_type || activity.type || ''
+    if (!activityType) return ''
     
-    const codes = {
-      'V': 'V',
-      'vacation': 'V',
-      'A': 'A',
-      'absence': 'A',
-      'sick_leave': 'A',
-      'HLD': 'HLD',
-      'hld': 'HLD',
-      'G': 'G',
-      'guard': 'G',
-      'F': 'F',
-      'training': 'F',
-      'C': 'C',
-      'other': 'C'
+    // Mapeo de tipos de actividad a códigos
+    let code = ''
+    const typeUpper = activityType.toUpperCase()
+    const typeLower = activityType.toLowerCase()
+    
+    if (typeUpper === 'V' || typeLower === 'vacation') {
+      code = 'V'
+    } else if (typeUpper === 'A' || typeLower === 'absence' || typeLower === 'sick_leave') {
+      code = 'A'
+    } else if (typeUpper === 'HLD' || typeLower === 'hld') {
+      code = 'HLD'
+    } else if (typeUpper === 'G' || typeLower === 'guard') {
+      code = 'G'
+    } else if (typeUpper === 'F' || typeLower === 'training') {
+      code = 'F'
+    } else if (typeUpper === 'C' || typeLower === 'other') {
+      code = 'C'
+    } else {
+      code = activityType.charAt(0).toUpperCase()
     }
     
-    const code = codes[activityType] || (activityType ? activityType.charAt(0).toUpperCase() : '')
-    
     // Para actividades con horas, mostrar el número
-    const activityTypeLower = activityType.toLowerCase()
-    const isGuard = activityTypeLower === 'guard' || activityType === 'G'
-    const isHld = activityTypeLower === 'hld' || activityType === 'HLD'
-    const isTraining = activityTypeLower === 'training' || activityType === 'F'
-    
-    if (activity.hours && (isHld || isGuard || isTraining)) {
-      const sign = isGuard ? '+' : '-'
-      return `${code} ${sign}${activity.hours}h`
+    if (activity.hours) {
+      const hasHours = typeUpper === 'HLD' || typeUpper === 'G' || typeUpper === 'F' || 
+                       typeLower === 'hld' || typeLower === 'guard' || typeLower === 'training'
+      if (hasHours) {
+        const sign = (typeUpper === 'G' || typeLower === 'guard') ? '+' : '-'
+        return `${code} ${sign}${activity.hours}h`
+      }
     }
     
     return code
