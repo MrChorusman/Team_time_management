@@ -379,7 +379,7 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
         </tr>
       </thead>
     )
-  }, [])
+  }
 
   // ===== HANDLERS (definidos después de las funciones helper) =====
 
