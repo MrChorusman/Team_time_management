@@ -25,6 +25,43 @@ const ISO_TO_COUNTRY_NAME = {
   'PT': 'Portugal'
 }
 
+// Funciones helper fuera del componente para evitar problemas de inicialización
+const getDaysInMonth = (date) => {
+  const year = date.getFullYear()
+  const month = date.getMonth()
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const days = []
+  
+  for (let day = 1; day <= daysInMonth; day++) {
+    const currentDate = new Date(year, month, day)
+    days.push({
+      day,
+      date: currentDate,
+      dayOfWeek: currentDate.getDay(),
+      isWeekend: currentDate.getDay() === 0 || currentDate.getDay() === 6,
+      dateString: currentDate.toISOString().split('T')[0]
+    })
+  }
+  
+  return days
+}
+
+const getMonthsInYear = (date) => {
+  const year = date.getFullYear()
+  const months = []
+  
+  for (let month = 0; month < 12; month++) {
+    const monthDate = new Date(year, month, 1)
+    months.push({
+      date: monthDate,
+      name: monthDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }),
+      days: getDaysInMonth(monthDate)
+    })
+  }
+  
+  return months
+}
+
 /**
  * CalendarTableView - Calendario tipo tabla/spreadsheet
  * 
@@ -40,44 +77,6 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
   const [activityModal, setActivityModal] = useState({ visible: false, type: null, date: null, employeeId: null, employeeName: null })
   const longPressTimer = useRef(null)
   const { toast } = useToast()
-
-  // Obtener días del mes
-  const getDaysInMonth = (date) => {
-    const year = date.getFullYear()
-    const month = date.getMonth()
-    const daysInMonth = new Date(year, month + 1, 0).getDate()
-    const days = []
-    
-    for (let day = 1; day <= daysInMonth; day++) {
-      const currentDate = new Date(year, month, day)
-      days.push({
-        day,
-        date: currentDate,
-        dayOfWeek: currentDate.getDay(),
-        isWeekend: currentDate.getDay() === 0 || currentDate.getDay() === 6,
-        dateString: currentDate.toISOString().split('T')[0]
-      })
-    }
-    
-    return days
-  }
-
-  // Obtener todos los meses del año para vista anual
-  const getMonthsInYear = (date) => {
-    const year = date.getFullYear()
-    const months = []
-    
-    for (let month = 0; month < 12; month++) {
-      const monthDate = new Date(year, month, 1)
-      months.push({
-        date: monthDate,
-        name: monthDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }),
-        days: getDaysInMonth(monthDate)
-      })
-    }
-    
-    return months
-  }
 
   // Manejo de menú contextual (click derecho)
   const handleContextMenu = (e, employeeId, employeeName, dateString, dayInfo) => {
