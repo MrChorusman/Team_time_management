@@ -291,20 +291,31 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
   const getActivityCode = (activity) => {
     if (!activity) return ''
     
+    // Usar activity_type o type según lo que esté disponible
+    const activityType = activity.activity_type || activity.type || ''
+    
     const codes = {
-      vacation: 'V',
-      sick_leave: 'A',
-      hld: 'HLD',
-      guard: 'G',
-      training: 'F',
-      other: 'C'
+      'V': 'V',
+      'vacation': 'V',
+      'A': 'A',
+      'absence': 'A',
+      'sick_leave': 'A',
+      'HLD': 'HLD',
+      'hld': 'HLD',
+      'G': 'G',
+      'guard': 'G',
+      'F': 'F',
+      'training': 'F',
+      'C': 'C',
+      'other': 'C'
     }
     
-    const code = codes[activity.type] || activity.type.charAt(0).toUpperCase()
+    const code = codes[activityType] || (activityType ? activityType.charAt(0).toUpperCase() : '')
     
     // Para actividades con horas, mostrar el número
-    if (activity.hours && (activity.type === 'hld' || activity.type === 'guard' || activity.type === 'training')) {
-      const sign = activity.type === 'guard' ? '+' : '-'
+    const activityTypeLower = activityType.toLowerCase()
+    if (activity.hours && (activityTypeLower === 'hld' || activityTypeLower === 'guard' || activityTypeLower === 'training' || activityType === 'G' || activityType === 'HLD' || activityType === 'F')) {
+      const sign = (activityTypeLower === 'guard' || activityType === 'G') ? '+' : '-'
       return `${code} ${sign}${activity.hours}h`
     }
     
