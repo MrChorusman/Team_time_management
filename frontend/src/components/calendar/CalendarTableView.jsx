@@ -381,61 +381,6 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
     )
   }, [])
 
-  // Renderizar una fila de empleado
-  const renderEmployeeRow = useCallback((employee, monthDate) => {
-    if (!employee || !monthDate) return null
-    const summary = getMonthSummary(employee.id, monthDate)
-    const monthDays = getDaysInMonth(monthDate)
-    
-    return (
-      <tr key={`${employee.id}-${monthDate.toISOString()}`} className="hover:bg-gray-50">
-        {/* Equipo */}
-        <td className="sticky left-0 z-10 px-4 py-3 bg-white border-r border-b border-gray-300 font-medium text-sm text-gray-900 whitespace-nowrap">
-          {employee.team_name || 'Sin equipo'}
-        </td>
-        
-        {/* Empleado */}
-        <td className="sticky left-[140px] z-10 px-4 py-3 bg-white border-r border-b border-gray-300 font-medium text-sm text-gray-900 whitespace-nowrap">
-          {employee.full_name}
-        </td>
-        
-        {/* Vac (Vacaciones) */}
-        <td className="sticky left-[280px] z-10 px-3 py-3 bg-blue-50 border-r border-b border-gray-300 text-center font-semibold text-sm text-gray-900">
-          {summary.vacation}
-        </td>
-        
-        {/* Aus (Ausencias) */}
-        <td className="sticky left-[330px] z-10 px-3 py-3 bg-yellow-50 border-r border-b border-gray-300 text-center font-semibold text-sm text-gray-900">
-          {summary.absence}
-        </td>
-        
-        {/* Días del mes (1-31) */}
-        {monthDays.map((dayInfo) => {
-          const activity = getActivityForDay(employee.id, dayInfo.dateString)
-          const isHolidayDay = isHoliday(dayInfo.dateString, employee.location || { country: employee.country, region: employee.region, city: employee.city })
-          const bgColor = getCellBackgroundColor(activity, dayInfo.isWeekend, isHolidayDay)
-          const textColor = getCellTextColor(activity, dayInfo.isWeekend, isHolidayDay)
-          const code = getActivityCode(activity)
-          
-          return (
-            <td
-              key={dayInfo.day}
-              className={`px-2 py-3 border-r border-b border-gray-200 text-center text-xs font-medium ${bgColor} ${textColor} cursor-pointer hover:opacity-80 transition-opacity select-none`}
-              onMouseEnter={() => setHoveredDay(dayInfo.dateString)}
-              onMouseLeave={() => setHoveredDay(null)}
-              onContextMenu={(e) => handleContextMenu(e, employee.id, employee.full_name, dayInfo.dateString, dayInfo)}
-              onTouchStart={(e) => handleTouchStart(e, employee.id, employee.full_name, dayInfo.dateString, dayInfo)}
-              onTouchEnd={handleTouchEnd}
-              title={activity ? `${activity.type}: ${activity.notes || ''}` : (isHolidayDay ? 'Festivo' : (dayInfo.isWeekend ? 'Fin de semana' : 'Click derecho para marcar'))}
-            >
-              {code}
-            </td>
-          )
-        })}
-      </tr>
-    )
-  }, [getActivityForDay, isHoliday, getCellBackgroundColor, getCellTextColor, getActivityCode, getMonthSummary])
-
   // ===== HANDLERS (definidos después de las funciones helper) =====
 
   // Manejo de menú contextual (click derecho)
@@ -686,7 +631,59 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
                     {renderTableHeader(month.days)}
                     <tbody>
                       {employees && employees.length > 0 ? (
-                        employees.map(employee => renderEmployeeRow(employee, month.date))
+                        employees.map(employee => {
+                          if (!employee || !month.date) return null
+                          const summary = getMonthSummary(employee.id, month.date)
+                          const monthDays = getDaysInMonth(month.date)
+                          
+                          return (
+                            <tr key={`${employee.id}-${month.date.toISOString()}`} className="hover:bg-gray-50">
+                              {/* Equipo */}
+                              <td className="sticky left-0 z-10 px-4 py-3 bg-white border-r border-b border-gray-300 font-medium text-sm text-gray-900 whitespace-nowrap">
+                                {employee.team_name || 'Sin equipo'}
+                              </td>
+                              
+                              {/* Empleado */}
+                              <td className="sticky left-[140px] z-10 px-4 py-3 bg-white border-r border-b border-gray-300 font-medium text-sm text-gray-900 whitespace-nowrap">
+                                {employee.full_name}
+                              </td>
+                              
+                              {/* Vac (Vacaciones) */}
+                              <td className="sticky left-[280px] z-10 px-3 py-3 bg-blue-50 border-r border-b border-gray-300 text-center font-semibold text-sm text-gray-900">
+                                {summary.vacation}
+                              </td>
+                              
+                              {/* Aus (Ausencias) */}
+                              <td className="sticky left-[330px] z-10 px-3 py-3 bg-yellow-50 border-r border-b border-gray-300 text-center font-semibold text-sm text-gray-900">
+                                {summary.absence}
+                              </td>
+                              
+                              {/* Días del mes (1-31) */}
+                              {monthDays.map((dayInfo) => {
+                                const activity = getActivityForDay(employee.id, dayInfo.dateString)
+                                const isHolidayDay = isHoliday(dayInfo.dateString, employee.location || { country: employee.country, region: employee.region, city: employee.city })
+                                const bgColor = getCellBackgroundColor(activity, dayInfo.isWeekend, isHolidayDay)
+                                const textColor = getCellTextColor(activity, dayInfo.isWeekend, isHolidayDay)
+                                const code = getActivityCode(activity)
+                                
+                                return (
+                                  <td
+                                    key={dayInfo.day}
+                                    className={`px-2 py-3 border-r border-b border-gray-200 text-center text-xs font-medium ${bgColor} ${textColor} cursor-pointer hover:opacity-80 transition-opacity select-none`}
+                                    onMouseEnter={() => setHoveredDay(dayInfo.dateString)}
+                                    onMouseLeave={() => setHoveredDay(null)}
+                                    onContextMenu={(e) => handleContextMenu(e, employee.id, employee.full_name, dayInfo.dateString, dayInfo)}
+                                    onTouchStart={(e) => handleTouchStart(e, employee.id, employee.full_name, dayInfo.dateString, dayInfo)}
+                                    onTouchEnd={handleTouchEnd}
+                                    title={activity ? `${activity.type}: ${activity.notes || ''}` : (isHolidayDay ? 'Festivo' : (dayInfo.isWeekend ? 'Fin de semana' : 'Click derecho para marcar'))}
+                                  >
+                                    {code}
+                                  </td>
+                                )
+                              })}
+                            </tr>
+                          )
+                        })
                       ) : (
                         <tr>
                           <td colSpan={month.days.length + 4} className="px-4 py-8 text-center text-gray-500">
