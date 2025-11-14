@@ -24,9 +24,9 @@ class CalendarActivity(db.Model):
     # notes = db.Column(db.Text)  # Comentado: columna no existe en BD, usar description en su lugar
     
     # Metadatos
-    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    approved_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
-    approved_at = db.Column(db.DateTime, nullable=True)
+    # created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # Comentado: columna no existe en BD
+    # approved_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # Comentado: columna no existe en BD
+    # approved_at = db.Column(db.DateTime, nullable=True)  # Comentado: columna no existe en BD
     
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -218,8 +218,8 @@ class CalendarActivity(db.Model):
             'display_text': self.get_display_text(),
             'color': self.get_color(),
             'hours_impact': self.calculate_hours_impact(),
-            'approved_by': self.approved_by,
-            'approved_at': self.approved_at.isoformat() if self.approved_at else None,
+            'approved_by': getattr(self, 'approved_by', None),  # Usar getattr por si la columna no existe
+            'approved_at': getattr(self, 'approved_at', None).isoformat() if getattr(self, 'approved_at', None) else None,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
