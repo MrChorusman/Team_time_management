@@ -523,28 +523,28 @@ const DashboardPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatsCard
             title="Equipos Gestionados"
-            value={dashboardData.statistics.managed_teams}
+            value={dashboardData.statistics?.managed_teams || 0}
             subtitle="Bajo tu supervisión"
             icon={Target}
             variant="info"
           />
           <StatsCard
             title="Total Empleados"
-            value={dashboardData.statistics.total_employees}
+            value={dashboardData.statistics?.total_employees || 0}
             subtitle="En tus equipos"
             icon={Users}
             variant="success"
           />
           <StatsCard
             title="Aprobaciones Pendientes"
-            value={dashboardData.statistics.pending_approvals}
+            value={dashboardData.statistics?.pending_approvals || 0}
             subtitle="Requieren tu atención"
             icon={AlertCircle}
             variant="warning"
           />
           <StatsCard
             title="Eficiencia Promedio"
-            value={`${dashboardData.statistics.average_efficiency}%`}
+            value={`${dashboardData.statistics?.average_efficiency || 0}%`}
             subtitle="De tus equipos"
             icon={TrendingUp}
             trend="up"
@@ -740,14 +740,14 @@ const DashboardPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <StatsCard
                 title="Horas Reales"
-                value={`${dashboardData.monthly_summary.actual_hours}h`}
-                subtitle={`de ${dashboardData.monthly_summary.theoretical_hours}h teóricas`}
+                value={`${dashboardData.monthly_summary?.actual_hours || 0}h`}
+                subtitle={`de ${dashboardData.monthly_summary?.theoretical_hours || 0}h teóricas`}
                 icon={Clock}
                 variant="info"
               />
               <StatsCard
                 title="Eficiencia"
-                value={`${dashboardData.monthly_summary.efficiency}%`}
+                value={`${dashboardData.monthly_summary?.efficiency || 0}%`}
                 subtitle="Este mes"
                 icon={TrendingUp}
                 trend="up"
@@ -756,14 +756,14 @@ const DashboardPage = () => {
               />
               <StatsCard
                 title="Días de Vacaciones"
-                value={dashboardData.monthly_summary.vacation_days}
+                value={dashboardData.monthly_summary?.vacation_days || 0}
                 subtitle="Utilizados este mes"
                 icon={Calendar}
                 variant="warning"
               />
               <StatsCard
                 title="Horas HLD"
-                value={`${dashboardData.monthly_summary.hld_hours}h`}
+                value={`${dashboardData.monthly_summary?.hld_hours || 0}h`}
                 subtitle="Horas de libre disposición"
                 icon={Activity}
               />
@@ -783,11 +783,13 @@ const DashboardPage = () => {
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-medium">Horas Completadas</span>
                       <span className="text-sm text-gray-500">
-                        {dashboardData.monthly_summary.actual_hours} / {dashboardData.monthly_summary.theoretical_hours}h
+                        {dashboardData.monthly_summary?.actual_hours || 0} / {dashboardData.monthly_summary?.theoretical_hours || 0}h
                       </span>
                     </div>
                     <Progress 
-                      value={(dashboardData.monthly_summary.actual_hours / dashboardData.monthly_summary.theoretical_hours) * 100} 
+                      value={dashboardData.monthly_summary?.theoretical_hours 
+                        ? ((dashboardData.monthly_summary.actual_hours || 0) / dashboardData.monthly_summary.theoretical_hours) * 100 
+                        : 0} 
                       className="h-3" 
                     />
                   </div>
@@ -801,29 +803,29 @@ const DashboardPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <StatsCard
                 title="Horas Totales"
-                value={`${dashboardData.annual_summary.total_actual_hours}h`}
-                subtitle={`de ${dashboardData.annual_summary.total_theoretical_hours}h anuales`}
+                value={`${dashboardData.annual_summary?.total_actual_hours || 0}h`}
+                subtitle={`de ${dashboardData.annual_summary?.total_theoretical_hours || 0}h anuales`}
                 icon={Clock}
                 variant="info"
               />
               <StatsCard
                 title="Eficiencia Anual"
-                value={`${dashboardData.annual_summary.total_efficiency}%`}
+                value={`${dashboardData.annual_summary?.total_efficiency || 0}%`}
                 subtitle="Promedio del año"
                 icon={TrendingUp}
                 variant="success"
               />
               <StatsCard
                 title="Vacaciones Restantes"
-                value={dashboardData.annual_summary.remaining_vacation_days}
-                subtitle={`de ${dashboardData.annual_summary.total_vacation_days} anuales`}
+                value={dashboardData.annual_summary?.remaining_vacation_days || 0}
+                subtitle={`de ${dashboardData.annual_summary?.total_vacation_days || 0} anuales`}
                 icon={Calendar}
                 variant="warning"
               />
               <StatsCard
                 title="HLD Restantes"
-                value={`${dashboardData.annual_summary.remaining_hld_hours}h`}
-                subtitle={`de ${dashboardData.annual_summary.total_hld_hours}h anuales`}
+                value={`${dashboardData.annual_summary?.remaining_hld_hours || 0}h`}
+                subtitle={`de ${dashboardData.annual_summary?.total_hld_hours || 0}h anuales`}
                 icon={Activity}
               />
             </div>
@@ -836,7 +838,7 @@ const DashboardPage = () => {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Users className="w-5 h-5 mr-2" />
-                Mi Equipo: {dashboardData.team_summary.team_name}
+                Mi Equipo: {dashboardData.team_summary?.team_name || 'Sin equipo'}
               </CardTitle>
               <CardDescription>
                 Rendimiento de tu equipo comparado con otros
@@ -846,19 +848,19 @@ const DashboardPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="text-center">
                   <p className="text-2xl font-bold text-blue-600">
-                    {dashboardData.team_summary.average_efficiency}%
+                    {dashboardData.team_summary?.average_efficiency || 0}%
                   </p>
                   <p className="text-sm text-gray-500">Eficiencia del equipo</p>
                 </div>
                 <div className="text-center">
                   <p className="text-2xl font-bold text-green-600">
-                    #{dashboardData.team_summary.team_ranking}
+                    #{dashboardData.team_summary?.team_ranking || 0}
                   </p>
                   <p className="text-sm text-gray-500">Ranking general</p>
                 </div>
                 <div className="text-center">
                   <p className="text-2xl font-bold text-purple-600">
-                    {dashboardData.team_summary.employee_count}
+                    {dashboardData.team_summary?.employee_count || 0}
                   </p>
                   <p className="text-sm text-gray-500">Miembros del equipo</p>
                 </div>

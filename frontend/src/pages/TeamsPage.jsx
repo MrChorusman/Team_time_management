@@ -215,9 +215,9 @@ const TeamsPage = () => {
   }
 
   const filteredTeams = teams.filter(team =>
-    team.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    team.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    team.manager.name.toLowerCase().includes(searchTerm.toLowerCase())
+    team.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    team.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (team.manager?.name?.toLowerCase().includes(searchTerm.toLowerCase()) || false)
   )
 
   const getTeamStats = () => {

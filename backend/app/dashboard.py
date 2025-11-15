@@ -212,9 +212,12 @@ def _get_manager_stats(team_id):
         return {
             'type': 'manager',
             'statistics': {
+                'managed_teams': 1,  # Por ahora, un manager gestiona un equipo
                 'team_members': team_members,
+                'total_employees': team_members,
                 'pending_approvals': pending_approvals,
                 'team_efficiency': team_efficiency,
+                'average_efficiency': team_efficiency,  # Alias para compatibilidad
                 'projects': projects
             },
             'team_stats': {
@@ -295,7 +298,23 @@ def _get_employee_stats(employee_id):
                 'vacation_days_left': vacation_days_left,
                 'hld_hours_left': hld_hours_left
             },
-            'monthly_summary': monthly_summary,
+            'monthly_summary': monthly_summary or {
+                'theoretical_hours': 0,
+                'actual_hours': 0,
+                'efficiency': 0,
+                'days_worked': 0,
+                'vacation_days': 0,
+                'hld_hours': 0
+            },
+            'annual_summary': {
+                'total_theoretical_hours': 0,
+                'total_actual_hours': 0,
+                'total_efficiency': 0,
+                'total_vacation_days': 0,
+                'remaining_vacation_days': vacation_days_left,
+                'total_hld_hours': 0,
+                'remaining_hld_hours': hld_hours_left
+            },
             'recent_activity': recent_activity,
             'alerts': alerts
         }
