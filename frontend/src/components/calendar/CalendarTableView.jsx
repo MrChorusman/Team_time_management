@@ -143,8 +143,18 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
       return
     }
 
-    // Validar si el tipo de actividad está permitido en este día
-    const isGuard = option === 'guard'
+    // Mapear códigos del menú contextual a tipos de actividad del modal
+    const codeToTypeMap = {
+      'v': 'vacation',
+      'a': 'sick_leave',
+      'hld': 'hld',
+      'g': 'guard',
+      'f': 'training',
+      'c': 'other'
+    }
+    
+    const activityType = codeToTypeMap[option] || 'other'
+    const isGuard = activityType === 'guard'
     
     // Solo guardias se permiten en festivos/fines de semana
     if ((contextMenu.isHoliday || contextMenu.isWeekend) && !isGuard) {
@@ -159,7 +169,7 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
     // Abrir modal para crear actividad
     setActivityModal({
       visible: true,
-      type: option,
+      type: activityType,
       date: contextMenu.date,
       employeeId: contextMenu.employeeId,
       employeeName: contextMenu.employeeName
