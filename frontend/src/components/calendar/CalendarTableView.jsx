@@ -433,60 +433,41 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
         </CardContent>
       </Card>
 
-      {/* Leyenda de códigos */}
+      {/* Leyenda de códigos - Compacta en 1-2 líneas */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">Leyenda de Actividades</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-green-100 border-2 border-green-300 rounded flex items-center justify-center text-xs font-bold text-green-700">
-                V
-              </div>
-              <span className="text-xs text-gray-700">Vacaciones</span>
+        <CardContent className="p-3">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
+            <div className="flex items-center space-x-1">
+              <div className="w-5 h-5 bg-green-100 border border-green-300 rounded flex items-center justify-center text-[10px] font-bold text-green-700">V</div>
+              <span className="text-gray-700">Vacaciones</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-yellow-100 border-2 border-yellow-300 rounded flex items-center justify-center text-xs font-bold text-yellow-700">
-                A
-              </div>
-              <span className="text-xs text-gray-700">Ausencias</span>
+            <div className="flex items-center space-x-1">
+              <div className="w-5 h-5 bg-yellow-100 border border-yellow-300 rounded flex items-center justify-center text-[10px] font-bold text-yellow-700">A</div>
+              <span className="text-gray-700">Ausencias</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-green-200 border-2 border-green-400 rounded flex items-center justify-center text-xs font-bold text-green-800">
-                HLD
-              </div>
-              <span className="text-xs text-gray-700">Horas Libre Disposición</span>
+            <div className="flex items-center space-x-1">
+              <div className="w-5 h-5 bg-green-200 border border-green-400 rounded flex items-center justify-center text-[10px] font-bold text-green-800">HLD</div>
+              <span className="text-gray-700">HLD</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-blue-100 border-2 border-blue-300 rounded flex items-center justify-center text-xs font-bold text-blue-700">
-                G
-              </div>
-              <span className="text-xs text-gray-700">Guardia</span>
+            <div className="flex items-center space-x-1">
+              <div className="w-5 h-5 bg-blue-100 border border-blue-300 rounded flex items-center justify-center text-[10px] font-bold text-blue-700">G</div>
+              <span className="text-gray-700">Guardia</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-purple-100 border-2 border-purple-300 rounded flex items-center justify-center text-xs font-bold text-purple-700">
-                F
-              </div>
-              <span className="text-xs text-gray-700">Formación/Evento</span>
+            <div className="flex items-center space-x-1">
+              <div className="w-5 h-5 bg-purple-100 border border-purple-300 rounded flex items-center justify-center text-[10px] font-bold text-purple-700">F</div>
+              <span className="text-gray-700">Formación</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-sky-100 border-2 border-sky-300 rounded flex items-center justify-center text-xs font-bold text-sky-700">
-                C
-              </div>
-              <span className="text-xs text-gray-700">Permiso/Otro</span>
+            <div className="flex items-center space-x-1">
+              <div className="w-5 h-5 bg-sky-100 border border-sky-300 rounded flex items-center justify-center text-[10px] font-bold text-sky-700">C</div>
+              <span className="text-gray-700">Otro</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-red-50 border-2 border-red-200 rounded flex items-center justify-center text-xs font-bold text-red-700">
-                🔴
-              </div>
-              <span className="text-xs text-gray-700">Festivo</span>
+            <div className="flex items-center space-x-1">
+              <div className="w-5 h-5 bg-red-50 border border-red-200 rounded flex items-center justify-center text-[10px] font-bold text-red-700">🔴</div>
+              <span className="text-gray-700">Festivo</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gray-100 border-2 border-gray-200 rounded flex items-center justify-center text-xs font-bold text-gray-500">
-                □
-              </div>
-              <span className="text-xs text-gray-700">Fin de Semana</span>
+            <div className="flex items-center space-x-1">
+              <div className="w-5 h-5 bg-gray-100 border border-gray-200 rounded flex items-center justify-center text-[10px] font-bold text-gray-500">□</div>
+              <span className="text-gray-700">Fin Semana</span>
             </div>
           </div>
         </CardContent>

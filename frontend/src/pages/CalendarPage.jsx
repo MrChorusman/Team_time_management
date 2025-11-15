@@ -27,6 +27,7 @@ import { Alert, AlertDescription } from '../components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import CalendarTableView from '../components/calendar/CalendarTableView'
+import CalendarSummary from '../components/calendar/CalendarSummary'
 
 const CalendarPage = () => {
   const { user, employee, isManager, isEmployee } = useAuth()
@@ -78,8 +79,10 @@ const CalendarPage = () => {
                 )
               }
               
-              // Cargar actividades de todos los meses
+              // Cargar actividades de todos los meses y empleados
               const allActivities = []
+              let allEmployees = []
+              
               for (let m = 1; m <= 12; m++) {
                 let url = `${import.meta.env.VITE_API_BASE_URL}/calendar?year=${year}&month=${m}`
                 if (employee) {
@@ -92,12 +95,31 @@ const CalendarPage = () => {
                 if (response.ok) {
                   const data = await response.json()
                   if (data.success && data.calendar?.employees) {
+                    // Recopilar empleados (evitar duplicados)
                     data.calendar.employees.forEach(emp => {
+                      const empData = emp.employee || emp
+                      if (empData && !allEmployees.find(e => e.id === empData.id)) {
+                        allEmployees.push({
+                          id: empData.id,
+                          full_name: empData.full_name || empData.name,
+                          team_name: empData.team_name || empData.team?.name || 'Sin equipo',
+                          country: empData.country,
+                          region: empData.region,
+                          city: empData.city,
+                          location: {
+                            country: empData.country,
+                            region: empData.region,
+                            city: empData.city
+                          }
+                        })
+                      }
+                      
+                      // Recopilar actividades
                       if (emp.activities) {
                         Object.values(emp.activities).forEach(activity => {
                           allActivities.push({
                             ...activity,
-                            employee_id: emp.employee?.id || emp.id
+                            employee_id: empData.id
                           })
                         })
                       }
@@ -106,8 +128,25 @@ const CalendarPage = () => {
                 }
               }
               
+              // Si no hay empleados pero hay un empleado logueado, usar ese
+              if (allEmployees.length === 0 && employee) {
+                allEmployees = [{
+                  id: employee.id,
+                  full_name: employee.full_name || employee.name,
+                  team_name: employee.team_name || employee.team?.name || 'Sin equipo',
+                  country: employee.country,
+                  region: employee.region,
+                  city: employee.city,
+                  location: {
+                    country: employee.country,
+                    region: employee.region,
+                    city: employee.city
+                  }
+                }]
+              }
+              
               setCalendarData({
-                employees: calendarData?.employees || [],
+                employees: allEmployees,
                 activities: allActivities,
                 holidays: relevantHolidays
               })
@@ -140,16 +179,54 @@ const CalendarPage = () => {
           // Necesitamos aplanar las actividades de todos los empleados
           // El backend devuelve activities como un diccionario por fecha, necesitamos convertirlo a array
           const allActivities = []
+          const processedEmployees = []
+          
           if (data.calendar.employees) {
             data.calendar.employees.forEach(emp => {
+              const empData = emp.employee || emp
+              
+              // Asegurar que el empleado tenga team_name y full_name
+              if (empData && !processedEmployees.find(e => e.id === empData.id)) {
+                processedEmployees.push({
+                  id: empData.id,
+                  full_name: empData.full_name || empData.name || 'Sin nombre',
+                  team_name: empData.team_name || empData.team?.name || 'Sin equipo',
+                  country: empData.country,
+                  region: empData.region,
+                  city: empData.city,
+                  location: {
+                    country: empData.country,
+                    region: empData.region,
+                    city: empData.city
+                  }
+                })
+              }
+              
               if (emp.activities) {
                 // activities es un diccionario {fecha: actividad}, convertir a array
                 Object.values(emp.activities).forEach(activity => {
                   allActivities.push({
                     ...activity,
-                    employee_id: emp.employee?.id || emp.id
+                    employee_id: empData.id
                   })
                 })
+              }
+            })
+          }
+          
+          // Si no hay empleados pero hay un empleado logueado, usar ese
+          if (processedEmployees.length === 0 && employee) {
+            processedEmployees.push({
+              id: employee.id,
+              full_name: employee.full_name || employee.name || 'Sin nombre',
+              team_name: employee.team_name || employee.team?.name || 'Sin equipo',
+              country: employee.country,
+              region: employee.region,
+              city: employee.city,
+              location: {
+                country: employee.country,
+                region: employee.region,
+                city: employee.city
               }
             })
           }
@@ -157,7 +234,7 @@ const CalendarPage = () => {
           setCalendarData({
             ...data.calendar,
             activities: allActivities, // Actividades aplanadas para compatibilidad
-            employees: data.calendar.employees || [],
+            employees: processedEmployees,
             holidays: data.calendar.holidays || []
           })
         } else {
@@ -490,59 +567,6 @@ const CalendarPage = () => {
         </div>
       </div>
 
-      {/* Estadísticas rápidas */}
-      {calendarData && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Total Actividades</p>
-                  <p className="text-2xl font-bold">{calendarData.summary.total_activities}</p>
-                </div>
-                <CalendarIcon className="w-8 h-8 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Pendientes</p>
-                  <p className="text-2xl font-bold text-yellow-600">{calendarData.summary.pending_approvals}</p>
-                </div>
-                <Clock className="w-8 h-8 text-yellow-600" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Aprobadas</p>
-                  <p className="text-2xl font-bold text-green-600">{calendarData.summary.approved_activities}</p>
-                </div>
-                <CheckCircle className="w-8 h-8 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Vacaciones</p>
-                  <p className="text-2xl font-bold text-blue-600">{calendarData.summary.vacation_days}</p>
-                </div>
-                <User className="w-8 h-8 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
       {/* Filtros y Toggle de Vista */}
       <div className="flex flex-wrap items-center gap-4">
         <Select value={activityFilter} onValueChange={setActivityFilter}>
@@ -579,18 +603,29 @@ const CalendarPage = () => {
         </div>
       </div>
 
-      {/* Contenido principal - Vista Tabla */}
+      {/* Contenido principal - Vista Tabla (primera vista por defecto) */}
       {selectedView === 'table' && (
-        <CalendarTableView
-          employees={calendarData?.employees || []}
-          activities={calendarData?.activities || []}
-          holidays={calendarData?.holidays || []}
-          currentMonth={currentMonth}
-          onMonthChange={setCurrentMonth}
-          onActivityCreate={handleCreateActivity}
-          onActivityDelete={handleDeleteActivity}
-          onViewModeChange={setCalendarViewMode}
-        />
+        <>
+          <CalendarTableView
+            employees={calendarData?.employees || []}
+            activities={calendarData?.activities || []}
+            holidays={calendarData?.holidays || []}
+            currentMonth={currentMonth}
+            onMonthChange={setCurrentMonth}
+            onActivityCreate={handleCreateActivity}
+            onActivityDelete={handleDeleteActivity}
+            onViewModeChange={setCalendarViewMode}
+            employee={employee}
+          />
+          {/* Información compacta bajo el calendario */}
+          {employee && calendarData && (
+            <CalendarSummary 
+              employee={employee}
+              activities={calendarData?.activities || []}
+              currentMonth={currentMonth}
+            />
+          )}
+        </>
       )}
 
       {/* Contenido principal - Vista Calendario Tradicional */}
