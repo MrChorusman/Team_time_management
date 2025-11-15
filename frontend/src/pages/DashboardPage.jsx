@@ -23,6 +23,8 @@ import { Progress } from '../components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Alert, AlertDescription } from '../components/ui/alert'
 import { Tooltip } from '../components/ui/tooltip'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../components/ui/collapsible'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 
 const DashboardPage = () => {
@@ -519,37 +521,198 @@ const DashboardPage = () => {
           </Badge>
         </div>
 
-        {/* Estadísticas principales */}
+        {/* Estadísticas principales - Listas desplegables */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatsCard
-            title="Equipos Gestionados"
-            value={dashboardData.statistics?.managed_teams || 0}
-            subtitle="Bajo tu supervisión"
-            icon={Target}
-            variant="info"
-          />
-          <StatsCard
-            title="Total Empleados"
-            value={dashboardData.statistics?.total_employees || 0}
-            subtitle="En tus equipos"
-            icon={Users}
-            variant="success"
-          />
-          <StatsCard
-            title="Aprobaciones Pendientes"
-            value={dashboardData.statistics?.pending_approvals || 0}
-            subtitle="Requieren tu atención"
-            icon={AlertCircle}
-            variant="warning"
-          />
-          <StatsCard
-            title="Eficiencia Promedio"
-            value={`${dashboardData.statistics?.average_efficiency || 0}%`}
-            subtitle="De tus equipos"
-            icon={TrendingUp}
-            trend="up"
-            trendValue="+1.8%"
-          />
+          {/* Equipos Gestionados */}
+          <Collapsible>
+            <Card>
+              <CollapsibleTrigger className="w-full">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                  <div className="flex items-center gap-2">
+                    <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      Equipos Gestionados
+                    </CardTitle>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                      <Target className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <ChevronDown className="h-4 w-4 text-gray-400" />
+                  </div>
+                </CardHeader>
+              </CollapsibleTrigger>
+              <CardContent>
+                <div className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
+                  {dashboardData.statistics?.managed_teams || 0}
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 font-medium mb-4">
+                  Bajo tu supervisión
+                </p>
+                <CollapsibleContent>
+                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
+                    {dashboardData.team_performance && dashboardData.team_performance.length > 0 ? (
+                      dashboardData.team_performance.map((team, index) => (
+                        <div key={index} className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600 dark:text-gray-400">{team.team_name}</span>
+                          <Badge variant="outline">{team.members_count} miembros</Badge>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">No hay equipos asignados</p>
+                    )}
+                  </div>
+                </CollapsibleContent>
+              </CardContent>
+            </Card>
+          </Collapsible>
+
+          {/* Total Empleados */}
+          <Collapsible>
+            <Card>
+              <CollapsibleTrigger className="w-full">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                  <div className="flex items-center gap-2">
+                    <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      Total Empleados
+                    </CardTitle>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                      <Users className="h-5 w-5 text-green-600 dark:text-green-400" />
+                    </div>
+                    <ChevronDown className="h-4 w-4 text-gray-400" />
+                  </div>
+                </CardHeader>
+              </CollapsibleTrigger>
+              <CardContent>
+                <div className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
+                  {dashboardData.statistics?.total_employees || 0}
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 font-medium mb-4">
+                  En tus equipos
+                </p>
+                <CollapsibleContent>
+                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
+                    {dashboardData.team_performance && dashboardData.team_performance.length > 0 ? (
+                      dashboardData.team_performance.map((team, index) => (
+                        <div key={index} className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600 dark:text-gray-400">{team.team_name}</span>
+                          <span className="font-medium">{team.members_count} empleados</span>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">No hay empleados asignados</p>
+                    )}
+                  </div>
+                </CollapsibleContent>
+              </CardContent>
+            </Card>
+          </Collapsible>
+
+          {/* Aprobaciones Pendientes */}
+          <Collapsible>
+            <Card>
+              <CollapsibleTrigger className="w-full">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                  <div className="flex items-center gap-2">
+                    <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      Aprobaciones Pendientes
+                    </CardTitle>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                      <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                    </div>
+                    <ChevronDown className="h-4 w-4 text-gray-400" />
+                  </div>
+                </CardHeader>
+              </CollapsibleTrigger>
+              <CardContent>
+                <div className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
+                  {dashboardData.statistics?.pending_approvals || 0}
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 font-medium mb-4">
+                  Requieren tu atención
+                </p>
+                <CollapsibleContent>
+                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                    {(dashboardData.pending_requests || []).length > 0 ? (
+                      <div className="space-y-2">
+                        {(dashboardData.pending_requests || []).slice(0, 5).map((request, index) => (
+                          <div key={index} className="text-sm p-2 bg-yellow-50 dark:bg-yellow-900/10 rounded">
+                            <p className="font-medium text-gray-900 dark:text-white">{request.employee}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {request.type === 'vacation' && `Vacaciones: ${request.dates}`}
+                              {request.type === 'approval' && request.description}
+                              {request.type === 'calendar_change' && request.description}
+                            </p>
+                          </div>
+                        ))}
+                        {(dashboardData.pending_requests || []).length > 5 && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                            +{(dashboardData.pending_requests || []).length - 5} más
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">No hay aprobaciones pendientes</p>
+                    )}
+                  </div>
+                </CollapsibleContent>
+              </CardContent>
+            </Card>
+          </Collapsible>
+
+          {/* Eficiencia Promedio */}
+          <Collapsible>
+            <Card>
+              <CollapsibleTrigger className="w-full">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                  <div className="flex items-center gap-2">
+                    <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      Eficiencia Promedio
+                    </CardTitle>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                      <TrendingUp className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <ChevronDown className="h-4 w-4 text-gray-400" />
+                  </div>
+                </CardHeader>
+              </CollapsibleTrigger>
+              <CardContent>
+                <div className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
+                  {dashboardData.statistics?.average_efficiency || 0}%
+                </div>
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                    De tus equipos
+                  </p>
+                  <Badge variant="outline" className="text-xs font-semibold text-green-600">
+                    ↗ +1.8%
+                  </Badge>
+                </div>
+                <CollapsibleContent>
+                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
+                    {dashboardData.team_performance && dashboardData.team_performance.length > 0 ? (
+                      dashboardData.team_performance.map((team, index) => (
+                        <div key={index} className="space-y-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-600 dark:text-gray-400">{team.team_name}</span>
+                            <span className="font-medium">{team.efficiency || 0}%</span>
+                          </div>
+                          <Progress value={team.efficiency || 0} className="h-2" />
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">No hay datos de eficiencia</p>
+                    )}
+                  </div>
+                </CollapsibleContent>
+              </CardContent>
+            </Card>
+          </Collapsible>
         </div>
 
         {/* Contenido principal */}

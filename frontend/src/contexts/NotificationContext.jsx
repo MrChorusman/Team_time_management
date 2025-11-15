@@ -107,13 +107,16 @@ export const NotificationProvider = ({ children }) => {
 
   const markAsRead = async (notificationIds) => {
     try {
-      const response = await notificationService.markAsRead(notificationIds)
+      // Asegurar que notificationIds sea siempre un array
+      const idsArray = Array.isArray(notificationIds) ? notificationIds : [notificationIds]
+      
+      const response = await notificationService.markAsRead(idsArray)
       
       if (response.success) {
         // Actualizar estado local
         setNotifications(prev => 
           prev.map(notif => 
-            notificationIds.includes(notif.id) 
+            idsArray.includes(notif.id) 
               ? { ...notif, read: true, read_at: new Date().toISOString() }
               : notif
           )

@@ -55,12 +55,28 @@ export const AuthProvider = ({ children }) => {
       setLoading(false)
     }
     
+    // Listener para sesión expirada (emitido desde apiClient)
+    const handleSessionExpired = () => {
+      console.log('Sesión expirada, limpiando estado y redirigiendo a login')
+      setUser(null)
+      setEmployee(null)
+      localStorage.removeItem('user')
+      localStorage.removeItem('employee')
+      setLoading(false)
+      // Redirigir a login si no estamos ya ahí
+      if (!window.location.pathname.includes('/login')) {
+        window.location.href = '/login?reason=session_expired'
+      }
+    }
+    
     window.addEventListener('googleLoginSuccess', handleGoogleLoginSuccess)
     window.addEventListener('googleLoginError', handleGoogleLoginError)
+    window.addEventListener('session-expired', handleSessionExpired)
     
     return () => {
       window.removeEventListener('googleLoginSuccess', handleGoogleLoginSuccess)
       window.removeEventListener('googleLoginError', handleGoogleLoginError)
+      window.removeEventListener('session-expired', handleSessionExpired)
     }
   }, [])
 
@@ -96,6 +112,12 @@ export const AuthProvider = ({ children }) => {
         setEmployee(null)
         localStorage.removeItem('user')
         localStorage.removeItem('employee')
+        // Si es un error 401 (no autorizado), redirigir a login
+        if (error.response?.status === 401 || error.message?.includes('401')) {
+          if (!window.location.pathname.includes('/login')) {
+            window.location.href = '/login?reason=session_expired'
+          }
+        }
       }
     } catch (error) {
       console.error('Error general en checkSession:', error)
