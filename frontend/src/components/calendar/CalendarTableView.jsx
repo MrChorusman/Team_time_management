@@ -208,22 +208,34 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
   // Guardar actividad desde el modal
   const handleSaveActivity = async (activityData) => {
     try {
+      // Mapear tipos del modal a códigos del backend
+      const typeToCodeMap = {
+        'vacation': 'V',
+        'sick_leave': 'A',
+        'hld': 'HLD',
+        'guard': 'G',
+        'training': 'F',
+        'other': 'C'
+      }
+      
+      const activityCode = typeToCodeMap[activityData.activityType] || 'C'
+      
       // Callback al componente padre para guardar en backend
       if (onActivityCreate) {
         await onActivityCreate({
           employee_id: activityModal.employeeId,
           date: activityModal.date,
-          activity_type: activityData.activityType,
+          activity_type: activityCode, // Enviar código al backend (V, A, G, etc.)
           hours: activityData.hours || null,
           start_time: activityData.startTime || null,
           end_time: activityData.endTime || null,
-          description: activityData.notes
+          description: activityData.notes || ''
         })
       }
 
       toast({
         title: "✅ Actividad guardada",
-        description: `${activityData.activityType.toUpperCase()} marcado correctamente`,
+        description: `${activityCode} marcado correctamente`,
       })
 
       setActivityModal({ visible: false, type: null, date: null, employeeId: null, employeeName: null })
