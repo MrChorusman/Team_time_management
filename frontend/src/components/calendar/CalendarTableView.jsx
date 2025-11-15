@@ -92,7 +92,19 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
     const employee = employees.find(emp => emp.id === employeeId)
     const employeeLocation = employee?.location || { country: employee?.country, region: employee?.region, city: employee?.city }
     const isHolidayDay = calendarHelpers.isHolidayHelper(dateString, employeeLocation, holidays)
-    const isWeekendDay = dayInfo.isWeekend
+    
+    // Asegurar que isWeekend se calcula correctamente desde dayInfo
+    // Si dayInfo no tiene isWeekend, calcularlo desde la fecha
+    let isWeekendDay = dayInfo?.isWeekend
+    if (isWeekendDay === undefined && dayInfo?.date) {
+      const dayOfWeek = dayInfo.date.getDay()
+      isWeekendDay = dayOfWeek === 0 || dayOfWeek === 6
+    } else if (isWeekendDay === undefined && dateString) {
+      // Si no tenemos dayInfo.date, calcular desde dateString
+      const date = new Date(dateString + 'T00:00:00')
+      const dayOfWeek = date.getDay()
+      isWeekendDay = dayOfWeek === 0 || dayOfWeek === 6
+    }
 
     // Buscar si ya hay actividad en este día
     const existingActivity = calendarHelpers.getActivityForDayHelper(employeeId, dateString, activities)
@@ -107,7 +119,7 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
       date: dateString,
       activity: existingActivity,
       isHoliday: isHolidayDay,
-      isWeekend: isWeekendDay
+      isWeekend: isWeekendDay || false // Asegurar que siempre sea boolean
     })
   }
 
@@ -121,7 +133,8 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
         clientX: touch.clientX,
         clientY: touch.clientY
       }
-      handleContextMenu(fakeEvent, employeeId, employeeName, dateString, dayInfo)
+      // Asegurar que dayInfo se pasa correctamente
+      handleContextMenu(fakeEvent, employeeId, employeeName, dateString, dayInfo || {})
       
       // Feedback háptico si está disponible
       if (navigator.vibrate) {
