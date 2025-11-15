@@ -88,8 +88,20 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
   // Manejo de menú contextual (click derecho)
   const handleContextMenu = (e, employeeId, employeeName, dateString, dayInfo) => {
     e.preventDefault()
+    e.stopPropagation()
+
+    // Validar que tenemos los datos necesarios
+    if (!employeeId || !dateString) {
+      console.warn('handleContextMenu: Faltan datos necesarios', { employeeId, dateString })
+      return
+    }
 
     const employee = employees.find(emp => emp.id === employeeId)
+    if (!employee) {
+      console.warn('handleContextMenu: Empleado no encontrado', { employeeId, employees })
+      return
+    }
+
     const employeeLocation = employee?.location || { country: employee?.country, region: employee?.region, city: employee?.city }
     const isHolidayDay = calendarHelpers.isHolidayHelper(dateString, employeeLocation, holidays)
     
@@ -109,11 +121,15 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
     // Buscar si ya hay actividad en este día
     const existingActivity = calendarHelpers.getActivityForDayHelper(employeeId, dateString, activities)
 
+    // Calcular posición del menú (asegurar que esté dentro de la ventana)
+    const menuX = Math.min(e.clientX, window.innerWidth - 250)
+    const menuY = Math.min(e.clientY, window.innerHeight - 300)
+
     // Abrir menú contextual con información del día
     setContextMenu({
       visible: true,
-      x: e.clientX,
-      y: e.clientY,
+      x: menuX,
+      y: menuY,
       employeeId,
       employeeName,
       date: dateString,

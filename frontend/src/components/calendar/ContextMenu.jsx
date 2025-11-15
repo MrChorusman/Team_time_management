@@ -108,10 +108,11 @@ const ContextMenu = ({
   return (
     <div
       ref={menuRef}
-      className="fixed bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 min-w-[240px]"
+      className="fixed bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-1 z-[9999] min-w-[240px]"
       style={{
         left: `${x}px`,
-        top: `${y}px`
+        top: `${y}px`,
+        position: 'fixed'
       }}
     >
       {/* Opciones de actividad */}

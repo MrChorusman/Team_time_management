@@ -70,7 +70,12 @@ def get_calendar():
         
         else:
             # Sin filtros específicos - usar empleado actual o su equipo
-            if current_user.employee:
+            if current_user.is_admin():
+                # Admin puede ver todos los empleados - no establecer filtros
+                # El CalendarService.get_calendar_data() sin parámetros devuelve todos los empleados activos
+                employee_id = None
+                team_id = None
+            elif current_user.employee:
                 if current_user.is_manager():
                     # Manager ve su equipo por defecto
                     team_id = current_user.employee.team_id

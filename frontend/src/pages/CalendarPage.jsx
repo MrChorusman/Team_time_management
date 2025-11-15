@@ -30,7 +30,7 @@ import CalendarTableView from '../components/calendar/CalendarTableView'
 import CalendarSummary from '../components/calendar/CalendarSummary'
 
 const CalendarPage = () => {
-  const { user, employee, isManager, isEmployee } = useAuth()
+  const { user, employee, isAdmin, isManager, isEmployee } = useAuth()
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [calendarData, setCalendarData] = useState(null)
@@ -85,10 +85,13 @@ const CalendarPage = () => {
               
               for (let m = 1; m <= 12; m++) {
                 let url = `${import.meta.env.VITE_API_BASE_URL}/calendar?year=${year}&month=${m}`
-                if (employee) {
-                  url += `&employee_id=${employee.id}`
-                } else if (isManager() && employee?.team_id) {
-                  url += `&team_id=${employee.team_id}`
+                // Solo agregar filtros si no es admin (admin ve todos los empleados sin filtros)
+                if (!isAdmin()) {
+                  if (employee) {
+                    url += `&employee_id=${employee.id}`
+                  } else if (isManager() && employee?.team_id) {
+                    url += `&team_id=${employee.team_id}`
+                  }
                 }
                 
                 const response = await fetch(url, { credentials: 'include' })
@@ -162,10 +165,13 @@ const CalendarPage = () => {
       // Vista mensual - cargar datos del mes actual
       let url = `${import.meta.env.VITE_API_BASE_URL}/calendar?year=${year}&month=${month}`
       
-      if (employee) {
-        url += `&employee_id=${employee.id}`
-      } else if (isManager() && employee?.team_id) {
-        url += `&team_id=${employee.team_id}`
+      // Solo agregar filtros si no es admin (admin ve todos los empleados sin filtros)
+      if (!isAdmin()) {
+        if (employee) {
+          url += `&employee_id=${employee.id}`
+        } else if (isManager() && employee?.team_id) {
+          url += `&team_id=${employee.team_id}`
+        }
       }
       
       const response = await fetch(url, {
