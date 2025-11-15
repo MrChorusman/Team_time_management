@@ -222,7 +222,8 @@ def _get_manager_stats(team_id):
                 'efficiency': team_efficiency
             },
             'recent_activity': recent_activity,
-            'alerts': alerts
+            'alerts': alerts,
+            'pending_requests': []  # Asegurar que siempre existe como array
         }
         
     except Exception as e:

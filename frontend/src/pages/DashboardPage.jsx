@@ -92,7 +92,8 @@ const DashboardPage = () => {
           efficiency: 0
         },
         recent_activity: [],
-        alerts: []
+        alerts: [],
+        pending_requests: [] // Asegurar que siempre existe como array
       }
     }
     
@@ -614,7 +615,7 @@ const DashboardPage = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {dashboardData.pending_requests.map((request, index) => (
+                {(dashboardData.pending_requests || []).map((request, index) => (
                   <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex-1">
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
@@ -631,6 +632,11 @@ const DashboardPage = () => {
                     </Button>
                   </div>
                 ))}
+                {(!dashboardData.pending_requests || dashboardData.pending_requests.length === 0) && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+                    No hay solicitudes pendientes
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
