@@ -267,8 +267,8 @@ class CalendarService:
                 hours=hours,
                 start_time=start_time_obj,
                 end_time=end_time_obj,
-                description=description,
-                created_by=created_by_user_id
+                description=description
+                # created_by no existe en el modelo (columna comentada en BD)
             )
             
             # Validar actividad
