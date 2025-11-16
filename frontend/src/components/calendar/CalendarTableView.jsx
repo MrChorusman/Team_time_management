@@ -19,15 +19,30 @@ import calendarHelpers from './calendarHelpers'
  * - Vista mensual o anual
  */
 // Las funciones helper están ahora en calendarHelpers.js para evitar problemas de inicialización
-const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMonthChange, onActivityCreate, onActivityDelete, onViewModeChange }) => {
-  const [viewMode, setViewMode] = useState('monthly') // 'monthly' o 'annual'
+const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMonthChange, onActivityCreate, onActivityDelete, onViewModeChange, viewMode: externalViewMode }) => {
+  // Usar viewMode externo si se proporciona, sino usar estado local
+  const [internalViewMode, setInternalViewMode] = useState('monthly')
+  const viewMode = externalViewMode !== undefined ? externalViewMode : internalViewMode
   
-  // Notificar al padre cuando cambia el modo de vista
+  // Notificar al padre cuando cambia el modo de vista (solo si usamos estado interno)
   useEffect(() => {
-    if (onViewModeChange) {
-      onViewModeChange(viewMode)
+    if (externalViewMode === undefined && onViewModeChange) {
+      onViewModeChange(internalViewMode)
     }
-  }, [viewMode, onViewModeChange])
+  }, [internalViewMode, onViewModeChange, externalViewMode])
+  
+  // Handler para cambiar el modo de vista
+  const handleViewModeChange = (newMode) => {
+    if (externalViewMode !== undefined) {
+      // Si el modo viene del padre, notificar el cambio
+      if (onViewModeChange) {
+        onViewModeChange(newMode)
+      }
+    } else {
+      // Si usamos estado interno, actualizarlo
+      setInternalViewMode(newMode)
+    }
+  }
   const [hoveredDay, setHoveredDay] = useState(null)
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, employeeId: null, date: null, activity: null })
   const [activityModal, setActivityModal] = useState({ visible: false, type: null, date: null, employeeId: null, employeeName: null })
@@ -286,7 +301,7 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
             <Button
               variant={viewMode === 'monthly' ? 'default' : 'ghost'}
               size="sm"
-              onClick={() => setViewMode('monthly')}
+              onClick={() => handleViewModeChange('monthly')}
               className="flex items-center space-x-1"
             >
               <CalendarDays className="w-4 h-4" />
@@ -295,7 +310,7 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
             <Button
               variant={viewMode === 'annual' ? 'default' : 'ghost'}
               size="sm"
-              onClick={() => setViewMode('annual')}
+              onClick={() => handleViewModeChange('annual')}
               className="flex items-center space-x-1"
             >
               <List className="w-4 h-4" />

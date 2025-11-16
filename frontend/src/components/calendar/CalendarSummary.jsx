@@ -6,7 +6,8 @@ import { Card, CardContent } from '@/components/ui/card'
  * Formato: 4 columnas (Vacaciones, HLD, Guardias, Formación)
  */
 const CalendarSummary = ({ employee, activities, currentMonth }) => {
-  const summary = useMemo(() => {
+  // Separar cálculos: estadísticas globales (solo dependen de activities) y mensuales (dependen de currentMonth)
+  const globalSummary = useMemo(() => {
     // Obtener totales del empleado (usar annual_vacation_days y annual_hld_hours del backend)
     const vacationTotal = employee?.annual_vacation_days || employee?.vacation_days || 0
     const hldTotal = employee?.annual_hld_hours || employee?.hld_hours || 0
@@ -21,15 +22,11 @@ const CalendarSummary = ({ employee, activities, currentMonth }) => {
         hldPlanned: 0,
         hldConsumed: 0,
         hldRemaining: hldTotal,
-        guardMonthly: 0,
         guardAnnual: 0,
-        trainingMonthly: 0,
         trainingAnnual: 0
       }
     }
 
-    const currentYear = currentMonth.getFullYear()
-    const currentMonthNum = currentMonth.getMonth() + 1
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     const todayString = today.toISOString().split('T')[0]
@@ -38,9 +35,7 @@ const CalendarSummary = ({ employee, activities, currentMonth }) => {
     let vacationConsumed = 0
     let hldPlanned = 0
     let hldConsumed = 0
-    let guardMonthly = 0
     let guardAnnual = 0
-    let trainingMonthly = 0
     let trainingAnnual = 0
 
     // Filtrar actividades del empleado actual
@@ -79,10 +74,9 @@ const CalendarSummary = ({ employee, activities, currentMonth }) => {
       }
 
       const activityYear = activityDateObj.getFullYear()
-      const activityMonth = activityDateObj.getMonth() + 1
       const activityType = (activity.activity_type || activity.type || '').toUpperCase()
 
-      // Vacaciones (tipo 'V')
+      // Vacaciones (tipo 'V') - GLOBALES (todo el año)
       if (activityType === 'V' || activityType === 'VACATION') {
         vacationPlanned++
         // Si la fecha ya pasó, es consumida
@@ -91,7 +85,7 @@ const CalendarSummary = ({ employee, activities, currentMonth }) => {
         }
       }
 
-      // HLD (tipo 'HLD')
+      // HLD (tipo 'HLD') - GLOBALES (todo el año)
       if (activityType === 'HLD') {
         const hours = parseFloat(activity.hours) || 0
         hldPlanned += hours
@@ -101,27 +95,19 @@ const CalendarSummary = ({ employee, activities, currentMonth }) => {
         }
       }
 
-      // Guardias (tipo 'G')
+      // Guardias (tipo 'G') - ANUALES (del año actual)
       if (activityType === 'G' || activityType === 'GUARD') {
         const hours = parseFloat(activity.hours) || 0
-        // Guardias mensuales: del mes actual
-        if (activityYear === currentYear && activityMonth === currentMonthNum) {
-          guardMonthly += hours
-        }
-        // Guardias anuales: del año actual
+        const currentYear = new Date().getFullYear()
         if (activityYear === currentYear) {
           guardAnnual += hours
         }
       }
 
-      // Formación (tipo 'F')
+      // Formación (tipo 'F') - ANUALES (del año actual)
       if (activityType === 'F' || activityType === 'TRAINING') {
         const hours = parseFloat(activity.hours) || 0
-        // Formación mensual: del mes actual
-        if (activityYear === currentYear && activityMonth === currentMonthNum) {
-          trainingMonthly += hours
-        }
-        // Formación anual: del año actual
+        const currentYear = new Date().getFullYear()
         if (activityYear === currentYear) {
           trainingAnnual += hours
         }
@@ -141,12 +127,83 @@ const CalendarSummary = ({ employee, activities, currentMonth }) => {
       hldPlanned,
       hldConsumed,
       hldRemaining: Math.max(0, hldRemaining),
-      guardMonthly,
       guardAnnual,
-      trainingMonthly,
       trainingAnnual
     }
-  }, [employee, activities, currentMonth])
+  }, [employee, activities]) // SOLO depende de employee y activities, NO de currentMonth
+
+  // Cálculos mensuales (solo guardias y formación del mes actual)
+  const monthlySummary = useMemo(() => {
+    if (!employee || !activities || !Array.isArray(activities) || !currentMonth) {
+      return {
+        guardMonthly: 0,
+        trainingMonthly: 0
+      }
+    }
+
+    const currentYear = currentMonth.getFullYear()
+    const currentMonthNum = currentMonth.getMonth() + 1
+
+    let guardMonthly = 0
+    let trainingMonthly = 0
+
+    // Filtrar actividades del empleado actual
+    const employeeActivities = activities.filter(activity => {
+      if (!activity) return false
+      const activityEmployeeId = activity.employee_id || activity.employee?.id
+      const employeeId = employee.id
+      return String(activityEmployeeId) === String(employeeId)
+    })
+
+    employeeActivities.forEach(activity => {
+      const activityDate = activity.date || activity.start_date || activity.end_date
+      if (!activityDate) return
+
+      let dateString = activityDate
+      if (activityDate instanceof Date) {
+        const year = activityDate.getFullYear()
+        const month = String(activityDate.getMonth() + 1).padStart(2, '0')
+        const day = String(activityDate.getDate()).padStart(2, '0')
+        dateString = `${year}-${month}-${day}`
+      } else if (typeof activityDate === 'string') {
+        dateString = activityDate.split('T')[0]
+      }
+
+      const activityDateObj = new Date(dateString + 'T00:00:00')
+      if (isNaN(activityDateObj.getTime())) return
+
+      const activityYear = activityDateObj.getFullYear()
+      const activityMonth = activityDateObj.getMonth() + 1
+      const activityType = (activity.activity_type || activity.type || '').toUpperCase()
+
+      // Guardias mensuales: del mes actual
+      if (activityType === 'G' || activityType === 'GUARD') {
+        const hours = parseFloat(activity.hours) || 0
+        if (activityYear === currentYear && activityMonth === currentMonthNum) {
+          guardMonthly += hours
+        }
+      }
+
+      // Formación mensual: del mes actual
+      if (activityType === 'F' || activityType === 'TRAINING') {
+        const hours = parseFloat(activity.hours) || 0
+        if (activityYear === currentYear && activityMonth === currentMonthNum) {
+          trainingMonthly += hours
+        }
+      }
+    })
+
+    return {
+      guardMonthly,
+      trainingMonthly
+    }
+  }, [employee, activities, currentMonth]) // Depende de currentMonth solo para cálculos mensuales
+
+  // Combinar resúmenes
+  const summary = {
+    ...globalSummary,
+    ...monthlySummary
+  }
 
   return (
     <div className="mt-4">

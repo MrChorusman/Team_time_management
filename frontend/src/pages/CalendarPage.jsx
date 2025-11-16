@@ -43,7 +43,7 @@ const CalendarPage = () => {
 
   useEffect(() => {
     loadCalendarData()
-  }, [currentMonth, activityFilter, calendarViewMode])
+  }, [currentMonth, activityFilter, calendarViewMode, employee])
 
   const loadCalendarData = async () => {
     setLoading(true)
@@ -53,6 +53,7 @@ const CalendarPage = () => {
       
       // Para vista anual, cargar festivos de todo el año
       if (calendarViewMode === 'annual') {
+        console.log('📅 Cargando vista anual para año:', year)
         let relevantHolidays = []
         
         // Intentar cargar festivos (pero no bloquear si falla)
@@ -81,10 +82,13 @@ const CalendarPage = () => {
                   h.country === countryName || h.country === employee.country
                 )
               }
+              console.log('✅ Festivos cargados:', relevantHolidays.length)
             }
+          } else {
+            console.warn('⚠️ Error en respuesta de festivos:', holidaysResponse.status)
           }
         } catch (error) {
-          console.error('Error cargando festivos del año:', error)
+          console.error('❌ Error cargando festivos del año:', error)
           // Continuar sin festivos si hay error
         }
         
@@ -110,11 +114,13 @@ const CalendarPage = () => {
               .then(response => {
                 if (response.ok) {
                   return response.json()
+                } else {
+                  console.warn(`⚠️ Error HTTP cargando mes ${m}:`, response.status, response.statusText)
+                  return null
                 }
-                return null
               })
               .catch(error => {
-                console.error(`Error cargando mes ${m}:`, error)
+                console.error(`❌ Error cargando mes ${m}:`, error)
                 return null
               })
           )
@@ -122,9 +128,10 @@ const CalendarPage = () => {
         
         // Esperar todas las peticiones
         const monthResults = await Promise.all(monthPromises)
+        console.log('📊 Resultados de meses cargados:', monthResults.filter(r => r !== null).length, 'de 12')
         
         // Procesar resultados
-        monthResults.forEach((data) => {
+        monthResults.forEach((data, index) => {
           if (data && data.success && data.calendar?.employees) {
             // Recopilar empleados (evitar duplicados)
             data.calendar.employees.forEach(emp => {
@@ -155,11 +162,14 @@ const CalendarPage = () => {
                 })
               }
             })
+          } else if (data && !data.success) {
+            console.warn(`⚠️ Mes ${index + 1} devolvió success=false:`, data.message || 'Sin mensaje')
           }
         })
         
         // Si no hay empleados pero hay un empleado logueado, usar ese
         if (allEmployees.length === 0 && employee) {
+          console.log('ℹ️ No se encontraron empleados, usando empleado logueado')
           allEmployees = [{
             id: employee.id,
             full_name: employee.full_name || employee.name,
@@ -174,6 +184,12 @@ const CalendarPage = () => {
             }
           }]
         }
+        
+        console.log('✅ Vista anual cargada:', {
+          empleados: allEmployees.length,
+          actividades: allActivities.length,
+          festivos: relevantHolidays.length
+        })
         
         setCalendarData({
           employees: allEmployees,
@@ -679,6 +695,7 @@ const CalendarPage = () => {
             onActivityCreate={handleCreateActivity}
             onActivityDelete={handleDeleteActivity}
             onViewModeChange={setCalendarViewMode}
+            viewMode={calendarViewMode}
             employee={employee}
           />
           {/* Información compacta bajo el calendario */}
