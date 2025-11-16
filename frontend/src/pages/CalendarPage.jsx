@@ -53,6 +53,9 @@ const CalendarPage = () => {
       
       // Para vista anual, cargar festivos de todo el año
       if (calendarViewMode === 'annual') {
+        let relevantHolidays = []
+        
+        // Intentar cargar festivos (pero no bloquear si falla)
         try {
           const holidaysResponse = await fetch(
             `${import.meta.env.VITE_API_BASE_URL}/holidays?year=${year}`,
@@ -62,7 +65,7 @@ const CalendarPage = () => {
             const holidaysData = await holidaysResponse.json()
             if (holidaysData.success && holidaysData.holidays) {
               // Filtrar festivos por país del empleado si existe
-              let relevantHolidays = holidaysData.holidays
+              relevantHolidays = holidaysData.holidays
               if (employee?.country) {
                 const ISO_TO_COUNTRY_NAME = {
                   'ESP': 'España', 'ES': 'España',
@@ -78,88 +81,107 @@ const CalendarPage = () => {
                   h.country === countryName || h.country === employee.country
                 )
               }
-              
-              // Cargar actividades de todos los meses y empleados
-              const allActivities = []
-              let allEmployees = []
-              
-              for (let m = 1; m <= 12; m++) {
-                let url = `${import.meta.env.VITE_API_BASE_URL}/calendar?year=${year}&month=${m}`
-                // Solo agregar filtros si no es admin (admin ve todos los empleados sin filtros)
-                if (!isAdmin()) {
-                  if (employee) {
-                    url += `&employee_id=${employee.id}`
-                  } else if (isManager() && employee?.team_id) {
-                    url += `&team_id=${employee.team_id}`
-                  }
-                }
-                
-                const response = await fetch(url, { credentials: 'include' })
-                if (response.ok) {
-                  const data = await response.json()
-                  if (data.success && data.calendar?.employees) {
-                    // Recopilar empleados (evitar duplicados)
-                    data.calendar.employees.forEach(emp => {
-                      const empData = emp.employee || emp
-                      if (empData && !allEmployees.find(e => e.id === empData.id)) {
-                        allEmployees.push({
-                          id: empData.id,
-                          full_name: empData.full_name || empData.name,
-                          team_name: empData.team_name || empData.team?.name || 'Sin equipo',
-                          country: empData.country,
-                          region: empData.region,
-                          city: empData.city,
-                          location: {
-                            country: empData.country,
-                            region: empData.region,
-                            city: empData.city
-                          }
-                        })
-                      }
-                      
-                      // Recopilar actividades
-                      if (emp.activities) {
-                        Object.values(emp.activities).forEach(activity => {
-                          allActivities.push({
-                            ...activity,
-                            employee_id: empData.id
-                          })
-                        })
-                      }
-                    })
-                  }
-                }
-              }
-              
-              // Si no hay empleados pero hay un empleado logueado, usar ese
-              if (allEmployees.length === 0 && employee) {
-                allEmployees = [{
-                  id: employee.id,
-                  full_name: employee.full_name || employee.name,
-                  team_name: employee.team_name || employee.team?.name || 'Sin equipo',
-                  country: employee.country,
-                  region: employee.region,
-                  city: employee.city,
-                  location: {
-                    country: employee.country,
-                    region: employee.region,
-                    city: employee.city
-                  }
-                }]
-              }
-              
-              setCalendarData({
-                employees: allEmployees,
-                activities: allActivities,
-                holidays: relevantHolidays
-              })
-              setLoading(false)
-              return
             }
           }
         } catch (error) {
           console.error('Error cargando festivos del año:', error)
+          // Continuar sin festivos si hay error
         }
+        
+        // Cargar actividades de todos los meses y empleados
+        const allActivities = []
+        let allEmployees = []
+        
+        // Cargar datos de todos los meses en paralelo para mejor rendimiento
+        const monthPromises = []
+        for (let m = 1; m <= 12; m++) {
+          let url = `${import.meta.env.VITE_API_BASE_URL}/calendar?year=${year}&month=${m}`
+          // Solo agregar filtros si no es admin (admin ve todos los empleados sin filtros)
+          if (!isAdmin()) {
+            if (employee) {
+              url += `&employee_id=${employee.id}`
+            } else if (isManager() && employee?.team_id) {
+              url += `&team_id=${employee.team_id}`
+            }
+          }
+          
+          monthPromises.push(
+            fetch(url, { credentials: 'include' })
+              .then(response => {
+                if (response.ok) {
+                  return response.json()
+                }
+                return null
+              })
+              .catch(error => {
+                console.error(`Error cargando mes ${m}:`, error)
+                return null
+              })
+          )
+        }
+        
+        // Esperar todas las peticiones
+        const monthResults = await Promise.all(monthPromises)
+        
+        // Procesar resultados
+        monthResults.forEach((data) => {
+          if (data && data.success && data.calendar?.employees) {
+            // Recopilar empleados (evitar duplicados)
+            data.calendar.employees.forEach(emp => {
+              const empData = emp.employee || emp
+              if (empData && !allEmployees.find(e => e.id === empData.id)) {
+                allEmployees.push({
+                  id: empData.id,
+                  full_name: empData.full_name || empData.name,
+                  team_name: empData.team_name || empData.team?.name || 'Sin equipo',
+                  country: empData.country,
+                  region: empData.region,
+                  city: empData.city,
+                  location: {
+                    country: empData.country,
+                    region: empData.region,
+                    city: empData.city
+                  }
+                })
+              }
+              
+              // Recopilar actividades
+              if (emp.activities) {
+                Object.values(emp.activities).forEach(activity => {
+                  allActivities.push({
+                    ...activity,
+                    employee_id: empData.id
+                  })
+                })
+              }
+            })
+          }
+        })
+        
+        // Si no hay empleados pero hay un empleado logueado, usar ese
+        if (allEmployees.length === 0 && employee) {
+          allEmployees = [{
+            id: employee.id,
+            full_name: employee.full_name || employee.name,
+            team_name: employee.team_name || employee.team?.name || 'Sin equipo',
+            country: employee.country,
+            region: employee.region,
+            city: employee.city,
+            location: {
+              country: employee.country,
+              region: employee.region,
+              city: employee.city
+            }
+          }]
+        }
+        
+        setCalendarData({
+          employees: allEmployees,
+          activities: allActivities,
+          holidays: relevantHolidays
+        })
+        setLoading(false)
+        return
       }
       
       // Vista mensual - cargar datos del mes actual
@@ -573,7 +595,7 @@ const CalendarPage = () => {
         </div>
       </div>
 
-      {/* Filtros y Toggle de Vista */}
+      {/* Filtros, Toggle de Vista y Leyenda */}
       <div className="flex flex-wrap items-center gap-4">
         <Select value={activityFilter} onValueChange={setActivityFilter}>
           <SelectTrigger className="w-48">
@@ -606,6 +628,42 @@ const CalendarPage = () => {
           >
             Vista Calendario
           </Button>
+        </div>
+
+        {/* Leyenda de códigos - Compacta en 1-2 líneas */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs ml-auto">
+          <div className="flex items-center space-x-1">
+            <div className="w-5 h-5 bg-green-100 border border-green-300 rounded flex items-center justify-center text-[10px] font-bold text-green-700">V</div>
+            <span className="text-gray-700 dark:text-gray-300">Vacaciones</span>
+          </div>
+          <div className="flex items-center space-x-1">
+            <div className="w-5 h-5 bg-yellow-100 border border-yellow-300 rounded flex items-center justify-center text-[10px] font-bold text-yellow-700">A</div>
+            <span className="text-gray-700 dark:text-gray-300">Ausencias</span>
+          </div>
+          <div className="flex items-center space-x-1">
+            <div className="w-5 h-5 bg-green-200 border border-green-400 rounded flex items-center justify-center text-[10px] font-bold text-green-800">HLD</div>
+            <span className="text-gray-700 dark:text-gray-300">HLD</span>
+          </div>
+          <div className="flex items-center space-x-1">
+            <div className="w-5 h-5 bg-blue-100 border border-blue-300 rounded flex items-center justify-center text-[10px] font-bold text-blue-700">G</div>
+            <span className="text-gray-700 dark:text-gray-300">Guardia</span>
+          </div>
+          <div className="flex items-center space-x-1">
+            <div className="w-5 h-5 bg-purple-100 border border-purple-300 rounded flex items-center justify-center text-[10px] font-bold text-purple-700">F</div>
+            <span className="text-gray-700 dark:text-gray-300">Formación</span>
+          </div>
+          <div className="flex items-center space-x-1">
+            <div className="w-5 h-5 bg-sky-100 border border-sky-300 rounded flex items-center justify-center text-[10px] font-bold text-sky-700">C</div>
+            <span className="text-gray-700 dark:text-gray-300">Otro</span>
+          </div>
+          <div className="flex items-center space-x-1">
+            <div className="w-5 h-5 bg-red-50 border border-red-200 rounded flex items-center justify-center text-[10px] font-bold text-red-700">🔴</div>
+            <span className="text-gray-700 dark:text-gray-300">Festivo</span>
+          </div>
+          <div className="flex items-center space-x-1">
+            <div className="w-5 h-5 bg-gray-100 border border-gray-200 rounded flex items-center justify-center text-[10px] font-bold text-gray-500">□</div>
+            <span className="text-gray-700 dark:text-gray-300">Fin Semana</span>
+          </div>
         </div>
       </div>
 

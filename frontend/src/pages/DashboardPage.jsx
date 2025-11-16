@@ -900,36 +900,114 @@ const DashboardPage = () => {
 
           {/* Resumen mensual */}
           <TabsContent value="monthly" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <StatsCard
-                title="Horas Reales"
-                value={`${dashboardData.monthly_summary?.actual_hours || 0}h`}
-                subtitle={`de ${dashboardData.monthly_summary?.theoretical_hours || 0}h teóricas`}
-                icon={Clock}
-                variant="info"
-              />
-              <StatsCard
-                title="Eficiencia"
-                value={`${dashboardData.monthly_summary?.efficiency || 0}%`}
-                subtitle="Este mes"
-                icon={TrendingUp}
-                trend="up"
-                trendValue="+3.2%"
-                variant="success"
-              />
-              <StatsCard
-                title="Días de Vacaciones"
-                value={dashboardData.monthly_summary?.vacation_days || 0}
-                subtitle="Utilizados este mes"
-                icon={Calendar}
-                variant="warning"
-              />
-              <StatsCard
-                title="Horas HLD"
-                value={`${dashboardData.monthly_summary?.hld_hours || 0}h`}
-                subtitle="Horas de libre disposición"
-                icon={Activity}
-              />
+            <div className="flex flex-wrap gap-4">
+              <Card className="hover:shadow-md transition-shadow flex-shrink-0" style={{ minWidth: '200px', maxWidth: '280px' }}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                  <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    Horas Reales
+                  </CardTitle>
+                  <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-4xl font-bold text-gray-900 dark:text-white mb-1">
+                    {dashboardData.monthly_summary?.actual_hours || 0}h
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    de {dashboardData.monthly_summary?.theoretical_hours || 0}h teóricas
+                  </p>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => navigate('/calendar')}
+                    className="w-full"
+                  >
+                    Consultar
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="hover:shadow-md transition-shadow flex-shrink-0" style={{ minWidth: '200px', maxWidth: '280px' }}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                  <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    Eficiencia
+                  </CardTitle>
+                  <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <TrendingUp className="h-5 w-5 text-green-600 dark:text-green-400" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-4xl font-bold text-gray-900 dark:text-white mb-1">
+                    {dashboardData.monthly_summary?.efficiency || 0}%
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    Este mes
+                  </p>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => navigate('/reports')}
+                    className="w-full"
+                  >
+                    Consultar
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="hover:shadow-md transition-shadow flex-shrink-0" style={{ minWidth: '200px', maxWidth: '280px' }}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                  <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    Días de Vacaciones
+                  </CardTitle>
+                  <div className="p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                    <Calendar className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-4xl font-bold text-gray-900 dark:text-white mb-1">
+                    {dashboardData.monthly_summary?.vacation_days || 0}
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    Utilizados este mes
+                  </p>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => navigate('/calendar')}
+                    className="w-full"
+                  >
+                    Consultar
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="hover:shadow-md transition-shadow flex-shrink-0" style={{ minWidth: '200px', maxWidth: '280px' }}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                  <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    Horas HLD
+                  </CardTitle>
+                  <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                    <Activity className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-4xl font-bold text-gray-900 dark:text-white mb-1">
+                    {dashboardData.monthly_summary?.hld_hours || 0}h
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    Horas de libre disposición
+                  </p>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => navigate('/calendar')}
+                    className="w-full"
+                  >
+                    Consultar
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
 
             {/* Progreso mensual */}
@@ -963,34 +1041,114 @@ const DashboardPage = () => {
 
           {/* Resumen anual */}
           <TabsContent value="annual" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <StatsCard
-                title="Horas Totales"
-                value={`${dashboardData.annual_summary?.total_actual_hours || 0}h`}
-                subtitle={`de ${dashboardData.annual_summary?.total_theoretical_hours || 0}h anuales`}
-                icon={Clock}
-                variant="info"
-              />
-              <StatsCard
-                title="Eficiencia Anual"
-                value={`${dashboardData.annual_summary?.total_efficiency || 0}%`}
-                subtitle="Promedio del año"
-                icon={TrendingUp}
-                variant="success"
-              />
-              <StatsCard
-                title="Vacaciones Restantes"
-                value={dashboardData.annual_summary?.remaining_vacation_days || 0}
-                subtitle={`de ${dashboardData.annual_summary?.total_vacation_days || 0} anuales`}
-                icon={Calendar}
-                variant="warning"
-              />
-              <StatsCard
-                title="HLD Restantes"
-                value={`${dashboardData.annual_summary?.remaining_hld_hours || 0}h`}
-                subtitle={`de ${dashboardData.annual_summary?.total_hld_hours || 0}h anuales`}
-                icon={Activity}
-              />
+            <div className="flex flex-wrap gap-4">
+              <Card className="hover:shadow-md transition-shadow flex-shrink-0" style={{ minWidth: '200px', maxWidth: '280px' }}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                  <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    Horas Totales
+                  </CardTitle>
+                  <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-4xl font-bold text-gray-900 dark:text-white mb-1">
+                    {dashboardData.annual_summary?.total_actual_hours || 0}h
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    de {dashboardData.annual_summary?.total_theoretical_hours || 0}h anuales
+                  </p>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => navigate('/reports')}
+                    className="w-full"
+                  >
+                    Consultar
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="hover:shadow-md transition-shadow flex-shrink-0" style={{ minWidth: '200px', maxWidth: '280px' }}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                  <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    Eficiencia Anual
+                  </CardTitle>
+                  <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <TrendingUp className="h-5 w-5 text-green-600 dark:text-green-400" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-4xl font-bold text-gray-900 dark:text-white mb-1">
+                    {dashboardData.annual_summary?.total_efficiency || 0}%
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    Promedio del año
+                  </p>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => navigate('/reports')}
+                    className="w-full"
+                  >
+                    Consultar
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="hover:shadow-md transition-shadow flex-shrink-0" style={{ minWidth: '200px', maxWidth: '280px' }}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                  <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    Vacaciones Restantes
+                  </CardTitle>
+                  <div className="p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                    <Calendar className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-4xl font-bold text-gray-900 dark:text-white mb-1">
+                    {dashboardData.annual_summary?.remaining_vacation_days || 0}
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    de {dashboardData.annual_summary?.total_vacation_days || 0} anuales
+                  </p>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => navigate('/calendar')}
+                    className="w-full"
+                  >
+                    Consultar
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="hover:shadow-md transition-shadow flex-shrink-0" style={{ minWidth: '200px', maxWidth: '280px' }}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                  <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    HLD Restantes
+                  </CardTitle>
+                  <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                    <Activity className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-4xl font-bold text-gray-900 dark:text-white mb-1">
+                    {dashboardData.annual_summary?.remaining_hld_hours || 0}h
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    de {dashboardData.annual_summary?.total_hld_hours || 0}h anuales
+                  </p>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => navigate('/calendar')}
+                    className="w-full"
+                  >
+                    Consultar
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
         </Tabs>

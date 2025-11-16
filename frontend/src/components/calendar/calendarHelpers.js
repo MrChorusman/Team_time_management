@@ -288,7 +288,7 @@ function getMonthSummaryHelper(employeeId, monthDate, activities) {
   return { vacation: vacationDays, absence: absenceDays }
 }
 
-// Obtener festivos del mes
+// Obtener festivos del mes (ordenados cronológicamente)
 function getMonthHolidaysHelper(monthDate, holidays) {
   if (!holidays || !Array.isArray(holidays)) return []
   
@@ -299,9 +299,16 @@ function getMonthHolidaysHelper(monthDate, holidays) {
   const lastDay = new Date(year, month + 1, 0).getDate()
   const monthEnd = formatDateLocal(year, month, lastDay)
   
-  return holidays.filter(holiday => 
+  const monthHolidays = holidays.filter(holiday => 
     holiday && holiday.date >= monthStart && holiday.date <= monthEnd
   )
+  
+  // Ordenar cronológicamente por fecha (de menor a mayor)
+  return monthHolidays.sort((a, b) => {
+    if (a.date < b.date) return -1
+    if (a.date > b.date) return 1
+    return 0
+  })
 }
 
 // Export único como objeto al final - todas las funciones están definidas antes de exportarse

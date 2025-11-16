@@ -57,40 +57,40 @@ const ContextMenu = ({
     {
       code: 'V',
       label: 'Vacaciones',
-      color: 'bg-green-100 hover:bg-green-200 text-green-800',
+      color: 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100',
       icon: '🟢'
     },
     {
       code: 'A',
       label: 'Ausencias',
-      color: 'bg-yellow-100 hover:bg-yellow-200 text-yellow-800',
+      color: 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100',
       icon: '🟡'
     },
     {
       code: 'HLD',
       label: 'Horas Libre Disposición',
-      color: 'bg-green-200 hover:bg-green-300 text-green-900',
+      color: 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100',
       icon: '🟢',
       requiresModal: true
     },
     {
       code: 'G',
       label: 'Guardia',
-      color: 'bg-blue-100 hover:bg-blue-200 text-blue-800',
+      color: 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100',
       icon: '🔵',
       requiresModal: true
     },
     {
       code: 'F',
       label: 'Formación',
-      color: 'bg-purple-100 hover:bg-purple-200 text-purple-800',
+      color: 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100',
       icon: '🟣',
       requiresModal: true
     },
     {
       code: 'C',
       label: 'Permiso/Otro',
-      color: 'bg-sky-100 hover:bg-sky-200 text-sky-800',
+      color: 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100',
       icon: '🔵'
     }
   ]
