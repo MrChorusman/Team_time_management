@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { 
   Calendar as CalendarIcon, 
   Plus, 
@@ -42,7 +42,7 @@ const CalendarPage = () => {
   const [activityFilter, setActivityFilter] = useState('all')
   const [calendarViewMode, setCalendarViewMode] = useState('monthly') // Modo de vista del calendario (monthly/annual)
   const [allYearActivities, setAllYearActivities] = useState([]) // Todas las actividades del año para estadísticas globales
-  const [loadedYear, setLoadedYear] = useState(null) // Año para el que se cargaron las actividades
+  const lastLoadedRef = useRef({ year: null, employeeId: null }) // Referencia para evitar recargas innecesarias
 
   useEffect(() => {
     loadCalendarData()
@@ -54,17 +54,17 @@ const CalendarPage = () => {
     const employeeId = employee?.id
     
     // Solo cargar si el año o el empleado han cambiado
-    if (year !== loadedYear || (employeeId && (!allYearActivities.length || allYearActivities[0]?.employee_id !== employeeId))) {
+    if (year !== lastLoadedRef.current.year || employeeId !== lastLoadedRef.current.employeeId) {
       loadAllYearActivities()
+      lastLoadedRef.current = { year, employeeId }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [employee?.id, currentMonth.getFullYear()]) // Solo cuando cambia el empleado o el año
 
   // Función para cargar todas las actividades del año para estadísticas globales
   const loadAllYearActivities = async () => {
     if (!employee) {
       setAllYearActivities([])
-      setLoadedYear(null)
+      lastLoadedRef.current = { year: null, employeeId: null }
       return
     }
 
@@ -124,11 +124,9 @@ const CalendarPage = () => {
 
       console.log('📊 Actividades del año cargadas para estadísticas:', allActivities.length)
       setAllYearActivities(allActivities)
-      setLoadedYear(year)
     } catch (error) {
       console.error('Error cargando actividades del año:', error)
       setAllYearActivities([])
-      setLoadedYear(null)
     }
   }
 
