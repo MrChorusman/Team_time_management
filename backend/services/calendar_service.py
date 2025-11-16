@@ -280,6 +280,8 @@ class CalendarService:
             can_create, date_message = activity.can_be_created_on_date()
             if not can_create:
                 return False, date_message, None
+            # Si es un warning (fecha pasada), permitir pero el frontend mostrará el aviso
+            # El mensaje contiene "warning:" para que el frontend lo detecte
             
             # Guardar actividad
             db.session.add(activity)

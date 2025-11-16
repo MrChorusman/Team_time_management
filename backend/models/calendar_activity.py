@@ -121,17 +121,28 @@ class CalendarActivity(db.Model):
     
     def can_be_created_on_date(self):
         """Verifica si la actividad puede ser creada en la fecha especificada"""
-        # No se pueden crear actividades en fechas pasadas (excepto admin)
-        if self.date < date.today():
-            return False, "No se pueden crear actividades en fechas pasadas"
+        is_past_date = self.date < date.today()
+        is_weekend = self.date.weekday() >= 5  # Sábado=5, Domingo=6
+        is_holiday = self.employee and self.employee.is_holiday(self.date) if self.employee else False
+        is_guard = self.activity_type == 'G'
         
-        # Verificar si es fin de semana
-        if self.date.weekday() >= 5:  # Sábado=5, Domingo=6
-            return False, "No se pueden crear actividades en fines de semana"
+        # Las guardias se permiten en fines de semana y festivos
+        if is_guard and (is_weekend or is_holiday):
+            # Si es fecha pasada, avisar pero permitir
+            if is_past_date:
+                return True, "warning: Fecha pasada - Se permitirá marcar para ajustar el calendario"
+            return True, "Fecha válida"
         
-        # Verificar si es festivo
-        if self.employee and self.employee.is_holiday(self.date):
-            return False, "No se pueden crear actividades en días festivos"
+        # Para actividades que no son guardias, no permitir en fines de semana o festivos
+        if (is_weekend or is_holiday) and not is_guard:
+            if is_weekend:
+                return False, "No se pueden crear actividades en fines de semana (excepto guardias)"
+            if is_holiday:
+                return False, "No se pueden crear actividades en días festivos (excepto guardias)"
+        
+        # Fechas pasadas: avisar pero permitir (para ajustes de calendario)
+        if is_past_date:
+            return True, "warning: Fecha pasada - Se permitirá marcar para ajustar el calendario"
         
         return True, "Fecha válida"
     

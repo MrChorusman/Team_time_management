@@ -201,6 +201,14 @@ const ActivityModal = ({
             {employeeName && (
               <p className="text-xs text-gray-500 mt-1">Para: {employeeName}</p>
             )}
+            {/* Aviso si la fecha es pasada */}
+            {date && new Date(date + 'T00:00:00') < new Date(new Date().setHours(0, 0, 0, 0)) && (
+              <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-md">
+                <p className="text-xs text-yellow-800">
+                  ⚠️ Esta es una fecha pasada. Se permitirá marcar para ajustar el calendario.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Variante: Horas (HLD, Formación) */}
