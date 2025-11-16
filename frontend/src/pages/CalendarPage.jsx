@@ -28,6 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import CalendarTableView from '../components/calendar/CalendarTableView'
 import CalendarSummary from '../components/calendar/CalendarSummary'
+import calendarHelpers from '../components/calendar/calendarHelpers'
 
 const CalendarPage = () => {
   const { user, employee, isAdmin, isManager, isEmployee } = useAuth()
@@ -68,19 +69,26 @@ const CalendarPage = () => {
               // Filtrar festivos por país del empleado si existe
               relevantHolidays = holidaysData.holidays
               if (employee?.country) {
-                const ISO_TO_COUNTRY_NAME = {
-                  'ESP': 'España', 'ES': 'España',
-                  'USA': 'United States', 'US': 'United States',
-                  'GBR': 'United Kingdom', 'GB': 'United Kingdom',
-                  'FRA': 'France', 'FR': 'France',
-                  'DEU': 'Germany', 'DE': 'Germany',
-                  'ITA': 'Italy', 'IT': 'Italy',
-                  'PRT': 'Portugal', 'PT': 'Portugal'
-                }
-                const countryName = ISO_TO_COUNTRY_NAME[employee.country] || employee.country
-                relevantHolidays = holidaysData.holidays.filter(h => 
-                  h.country === countryName || h.country === employee.country
-                )
+                // Usar función helper para normalizar países
+                const employeeVariants = calendarHelpers.getCountryVariants(employee.country)
+                const employeeCountries = employeeVariants
+                  ? [employeeVariants.en, employeeVariants.es, employee.country].filter(Boolean)
+                  : [employee.country].filter(Boolean)
+                
+                relevantHolidays = holidaysData.holidays.filter(h => {
+                  const holidayVariants = calendarHelpers.getCountryVariants(h.country)
+                  const holidayCountries = holidayVariants
+                    ? [holidayVariants.en, holidayVariants.es, h.country].filter(Boolean)
+                    : [h.country].filter(Boolean)
+                  
+                  // Verificar si coinciden en cualquier variante
+                  return employeeCountries.some(empCountry =>
+                    holidayCountries.some(holCountry =>
+                      calendarHelpers.normalizeCountryName(empCountry) === calendarHelpers.normalizeCountryName(holCountry) ||
+                      empCountry === holCountry
+                    )
+                  )
+                })
               }
               console.log('✅ Festivos cargados:', relevantHolidays.length)
             }

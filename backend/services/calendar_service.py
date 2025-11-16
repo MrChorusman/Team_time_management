@@ -129,41 +129,32 @@ class CalendarService:
     @staticmethod
     def _get_holidays_for_month(employees: List[Employee], year: int, month: int) -> List[Dict]:
         """Obtiene festivos aplicables para los empleados en el mes"""
+        from utils.country_mapper import normalize_country_name, get_country_variants
+        
         start_date = date(year, month, 1)
         _, last_day = monthrange(year, month)
         end_date = date(year, month, last_day)
         
-        # Mapeo de códigos ISO a nombres de países (como están en la tabla holiday)
-        ISO_TO_COUNTRY_NAME = {
-            'ESP': 'España',
-            'ES': 'España',
-            'USA': 'United States',
-            'US': 'United States',
-            'GBR': 'United Kingdom',
-            'GB': 'United Kingdom',
-            'FRA': 'France',
-            'FR': 'France',
-            'DEU': 'Germany',
-            'DE': 'Germany',
-            'ITA': 'Italy',
-            'IT': 'Italy',
-            'PRT': 'Portugal',
-            'PT': 'Portugal',
-            # Añadir más según sea necesario
-        }
-        
-        # Obtener países únicos de los empleados y convertir códigos ISO a nombres
+        # Obtener países únicos de los empleados y normalizar
         employee_countries = list(set(emp.country for emp in employees if emp.country))
-        countries_to_search = []
+        countries_to_search = set()  # Usar set para evitar duplicados
         
-        for country_code in employee_countries:
-            # Si es un código ISO, convertir a nombre de país
-            if country_code in ISO_TO_COUNTRY_NAME:
-                countries_to_search.append(ISO_TO_COUNTRY_NAME[country_code])
-            # Si ya es un nombre de país, usarlo directamente
-            elif country_code:
-                countries_to_search.append(country_code)
+        for country_input in employee_countries:
+            if not country_input:
+                continue
+            
+            # Normalizar país y obtener todas las variantes
+            variants = get_country_variants(country_input)
+            if variants:
+                # Agregar nombre en inglés (formato estándar en BD)
+                countries_to_search.add(variants['en'])
+                # También agregar nombre en español por si acaso
+                countries_to_search.add(variants['es'])
+            else:
+                # Si no se encuentra en el mapeo, usar el valor original
+                countries_to_search.add(country_input)
         
+        # Buscar festivos para todos los países posibles
         holidays = []
         for country in countries_to_search:
             country_holidays = Holiday.query.filter(

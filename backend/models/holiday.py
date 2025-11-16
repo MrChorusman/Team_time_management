@@ -44,8 +44,20 @@ class Holiday(db.Model):
     @classmethod
     def get_holidays_for_location(cls, country, region=None, city=None, year=None):
         """Obtiene todos los festivos para una ubicación específica"""
+        from utils.country_mapper import get_country_variants
+        
+        # Normalizar país y obtener variantes (inglés y español)
+        variants = get_country_variants(country)
+        countries_to_search = []
+        
+        if variants:
+            countries_to_search = [variants['en'], variants['es']]
+        else:
+            countries_to_search = [country]
+        
+        # Buscar festivos que coincidan con cualquiera de las variantes del país
         query = cls.query.filter(
-            cls.country == country,
+            cls.country.in_(countries_to_search),
             cls.active == True
         )
         
@@ -69,9 +81,20 @@ class Holiday(db.Model):
     @classmethod
     def get_holidays_for_date(cls, target_date, country, region=None, city=None):
         """Verifica si una fecha específica es festivo en una ubicación"""
+        from utils.country_mapper import get_country_variants
+        
+        # Normalizar país y obtener variantes (inglés y español)
+        variants = get_country_variants(country)
+        countries_to_search = []
+        
+        if variants:
+            countries_to_search = [variants['en'], variants['es']]
+        else:
+            countries_to_search = [country]
+        
         return cls.query.filter(
             cls.date == target_date,
-            cls.country == country,
+            cls.country.in_(countries_to_search),
             cls.active == True,
             db.or_(
                 cls.region.is_(None),  # Festivos nacionales

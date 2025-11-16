@@ -102,10 +102,20 @@ class Employee(db.Model):
     def is_holiday(self, target_date):
         """Verifica si una fecha es festivo para este empleado"""
         from .holiday import Holiday
+        from utils.country_mapper import get_country_variants
+        
+        # Obtener variantes del país del empleado
+        variants = get_country_variants(self.country)
+        countries_to_search = []
+        
+        if variants:
+            countries_to_search = [variants['en'], variants['es']]
+        else:
+            countries_to_search = [self.country]
         
         holidays = Holiday.query.filter(
             Holiday.date == target_date,
-            Holiday.country == self.country
+            Holiday.country.in_(countries_to_search)
         ).filter(
             (Holiday.region.is_(None)) |  # Festivos nacionales
             (Holiday.region == self.region) |  # Festivos regionales

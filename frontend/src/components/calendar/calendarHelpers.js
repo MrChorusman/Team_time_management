@@ -2,7 +2,132 @@
 // Separadas en archivo independiente para evitar problemas de inicialización durante minificación
 // Export único como objeto al final para asegurar que todas las funciones estén definidas antes de exportarse
 
-// Mapeo de códigos ISO a nombres de países
+// Mapeo completo bidireccional de países (inglés/español/códigos ISO)
+const COUNTRY_MAPPING = {
+  'ES': { en: 'Spain', es: 'España' },
+  'ESP': { en: 'Spain', es: 'España' },
+  'US': { en: 'United States', es: 'Estados Unidos' },
+  'USA': { en: 'United States', es: 'Estados Unidos' },
+  'GB': { en: 'United Kingdom', es: 'Reino Unido' },
+  'GBR': { en: 'United Kingdom', es: 'Reino Unido' },
+  'FR': { en: 'France', es: 'Francia' },
+  'FRA': { en: 'France', es: 'Francia' },
+  'DE': { en: 'Germany', es: 'Alemania' },
+  'DEU': { en: 'Germany', es: 'Alemania' },
+  'IT': { en: 'Italy', es: 'Italia' },
+  'ITA': { en: 'Italy', es: 'Italia' },
+  'PT': { en: 'Portugal', es: 'Portugal' },
+  'PRT': { en: 'Portugal', es: 'Portugal' },
+  'MX': { en: 'Mexico', es: 'México' },
+  'AR': { en: 'Argentina', es: 'Argentina' },
+  'CO': { en: 'Colombia', es: 'Colombia' },
+  'CL': { en: 'Chile', es: 'Chile' },
+  'PE': { en: 'Peru', es: 'Perú' },
+  'VE': { en: 'Venezuela', es: 'Venezuela' },
+  'EC': { en: 'Ecuador', es: 'Ecuador' },
+  'BO': { en: 'Bolivia', es: 'Bolivia' },
+  'PY': { en: 'Paraguay', es: 'Paraguay' },
+  'UY': { en: 'Uruguay', es: 'Uruguay' },
+  'CR': { en: 'Costa Rica', es: 'Costa Rica' },
+  'PA': { en: 'Panama', es: 'Panamá' },
+  'DO': { en: 'Dominican Republic', es: 'República Dominicana' },
+  'CA': { en: 'Canada', es: 'Canadá' },
+  'BR': { en: 'Brazil', es: 'Brasil' },
+  'AU': { en: 'Australia', es: 'Australia' },
+  'NZ': { en: 'New Zealand', es: 'Nueva Zelanda' },
+  'NL': { en: 'Netherlands', es: 'Países Bajos' },
+  'BE': { en: 'Belgium', es: 'Bélgica' },
+  'CH': { en: 'Switzerland', es: 'Suiza' },
+  'AT': { en: 'Austria', es: 'Austria' },
+  'SE': { en: 'Sweden', es: 'Suecia' },
+  'NO': { en: 'Norway', es: 'Noruega' },
+  'DK': { en: 'Denmark', es: 'Dinamarca' },
+  'FI': { en: 'Finland', es: 'Finlandia' },
+  'PL': { en: 'Poland', es: 'Polonia' },
+  'GR': { en: 'Greece', es: 'Grecia' },
+  'IE': { en: 'Ireland', es: 'Irlanda' }
+}
+
+// Función para normalizar nombre de país
+function normalizeCountryName(countryInput) {
+  if (!countryInput) return null
+  
+  const input = String(countryInput).trim()
+  
+  // Si es código ISO (2 o 3 letras), buscar directamente
+  if (input.length === 2 && input.toUpperCase() in COUNTRY_MAPPING) {
+    return COUNTRY_MAPPING[input.toUpperCase()].en
+  }
+  
+  if (input.length === 3) {
+    const iso3ToIso2 = {
+      'ESP': 'ES', 'USA': 'US', 'GBR': 'GB', 'FRA': 'FR',
+      'DEU': 'DE', 'ITA': 'IT', 'PRT': 'PT'
+    }
+    if (input.toUpperCase() in iso3ToIso2) {
+      const code = iso3ToIso2[input.toUpperCase()]
+      return COUNTRY_MAPPING[code].en
+    }
+  }
+  
+  // Buscar por nombre (inglés o español)
+  const inputLower = input.toLowerCase()
+  for (const code in COUNTRY_MAPPING) {
+    const names = COUNTRY_MAPPING[code]
+    if (names.en.toLowerCase() === inputLower || names.es.toLowerCase() === inputLower) {
+      return names.en
+    }
+  }
+  
+  // Búsqueda parcial
+  for (const code in COUNTRY_MAPPING) {
+    const names = COUNTRY_MAPPING[code]
+    if (inputLower.includes(names.en.toLowerCase()) || names.en.toLowerCase().includes(inputLower) ||
+        inputLower.includes(names.es.toLowerCase()) || names.es.toLowerCase().includes(inputLower)) {
+      return names.en
+    }
+  }
+  
+  // Si no se encuentra, devolver el input original
+  return input
+}
+
+// Función para obtener todas las variantes de un país
+function getCountryVariants(countryInput) {
+  if (!countryInput) return null
+  
+  const normalized = normalizeCountryName(countryInput)
+  if (!normalized) return null
+  
+  // Buscar el código ISO correspondiente
+  for (const code in COUNTRY_MAPPING) {
+    if (COUNTRY_MAPPING[code].en === normalized || COUNTRY_MAPPING[code].es === normalized) {
+      return {
+        en: COUNTRY_MAPPING[code].en,
+        es: COUNTRY_MAPPING[code].es,
+        code: code
+      }
+    }
+  }
+  
+  return { en: normalized, es: normalized, code: null }
+}
+
+// Función para verificar si dos países coinciden
+function countriesMatch(country1, country2) {
+  if (!country1 || !country2) return false
+  
+  const norm1 = normalizeCountryName(country1)
+  const norm2 = normalizeCountryName(country2)
+  
+  if (norm1 && norm2) {
+    return norm1.toLowerCase() === norm2.toLowerCase()
+  }
+  
+  return String(country1).toLowerCase() === String(country2).toLowerCase()
+}
+
+// Mantener compatibilidad con código existente
 const ISO_TO_COUNTRY_NAME = {
   'ESP': 'España',
   'ES': 'España',
@@ -72,42 +197,54 @@ function getMonthsInYear(date) {
 function isHolidayHelper(dateString, employeeLocation, holidays) {
   if (!holidays || !Array.isArray(holidays) || !employeeLocation) return false
   
-  // Convertir código ISO a nombre de país si es necesario
-  const employeeCountryCode = employeeLocation?.country || ''
-  const employeeCountry = ISO_TO_COUNTRY_NAME[employeeCountryCode] || employeeCountryCode
+  // Obtener variantes del país del empleado
+  const employeeCountryInput = employeeLocation?.country || ''
+  const employeeVariants = getCountryVariants(employeeCountryInput)
+  const employeeCountries = employeeVariants 
+    ? [employeeVariants.en, employeeVariants.es, employeeLocation?.country].filter(Boolean)
+    : [employeeLocation?.country].filter(Boolean)
   
   return holidays.some(holiday => {
     // Verificar que la fecha coincida
     if (holiday.date !== dateString) return false
+    
+    // Obtener variantes del país del festivo
+    const holidayVariants = getCountryVariants(holiday.country)
+    const holidayCountries = holidayVariants
+      ? [holidayVariants.en, holidayVariants.es, holiday.country].filter(Boolean)
+      : [holiday.country].filter(Boolean)
+    
+    // Verificar si los países coinciden (en cualquier variante)
+    const countriesMatch = employeeCountries.some(empCountry => 
+      holidayCountries.some(holCountry => 
+        normalizeCountryName(empCountry) === normalizeCountryName(holCountry) ||
+        empCountry === holCountry
+      )
+    )
+    
+    if (!countriesMatch) return false
     
     // Usar holiday_type (la columna hierarchy_level no existe en BD)
     const holidayType = holiday.holiday_type || holiday.type || ''
     
     // Festivos nacionales se aplican a todos del mismo país
     if (holidayType === 'national') {
-      return holiday.country === employeeCountry || 
-             holiday.country === employeeLocation?.country
+      return true
     }
     
     // Festivos regionales solo para la misma región
     if (holidayType === 'regional') {
-      return (holiday.country === employeeCountry || holiday.country === employeeLocation?.country) && 
-             holiday.region === employeeLocation?.region
+      return holiday.region === employeeLocation?.region
     }
     
     // Festivos locales solo para la misma ciudad
     if (holidayType === 'local') {
-      return (holiday.country === employeeCountry || holiday.country === employeeLocation?.country) && 
-             holiday.region === employeeLocation?.region &&
+      return holiday.region === employeeLocation?.region &&
              holiday.city === employeeLocation?.city
     }
     
     // Si no tiene tipo específico pero coincide el país, considerarlo festivo nacional
-    if (holiday.country === employeeCountry || holiday.country === employeeLocation?.country) {
-      return true
-    }
-    
-    return false
+    return true
   })
 }
 
@@ -315,6 +452,10 @@ function getMonthHolidaysHelper(monthDate, holidays) {
 // Esto evita problemas de hoisting durante la minificación
 export default {
   ISO_TO_COUNTRY_NAME,
+  COUNTRY_MAPPING,
+  normalizeCountryName,
+  getCountryVariants,
+  countriesMatch,
   getDaysInMonth,
   getMonthsInYear,
   isHolidayHelper,
