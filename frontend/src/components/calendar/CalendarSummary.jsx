@@ -149,87 +149,85 @@ const CalendarSummary = ({ employee, activities, currentMonth }) => {
   }, [employee, activities, currentMonth])
 
   return (
-    <Card className="mt-4">
-      <CardContent className="p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Columna 1: Vacaciones */}
-          <div className="border-r border-gray-200 dark:border-gray-700 pr-6 last:border-r-0">
-            <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Vacaciones</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600 dark:text-gray-400">- Total</span>
-                <span className="font-medium text-gray-900 dark:text-white">{summary.vacationTotal} días</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600 dark:text-gray-400">- Planificadas</span>
-                <span className="font-medium text-gray-900 dark:text-white">{summary.vacationPlanned} días</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600 dark:text-gray-400">- Consumidas</span>
-                <span className="font-medium text-gray-900 dark:text-white">{summary.vacationConsumed} días</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600 dark:text-gray-400">- Restan</span>
-                <span className="font-medium text-gray-900 dark:text-white">{summary.vacationRemaining} días</span>
-              </div>
+    <div className="mt-4">
+      <div className="flex flex-wrap gap-4">
+        {/* Caja 1: Vacaciones */}
+        <div className="flex-1 min-w-[200px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Vacaciones</h3>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600 dark:text-gray-400">- Total</span>
+              <span className="font-medium text-gray-900 dark:text-white">{summary.vacationTotal} días</span>
             </div>
-          </div>
-
-          {/* Columna 2: Horas de Libre Disposición */}
-          <div className="border-r border-gray-200 dark:border-gray-700 pr-6 last:border-r-0">
-            <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Horas de Libre Disposición</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600 dark:text-gray-400">- Total</span>
-                <span className="font-medium text-gray-900 dark:text-white">{summary.hldTotal}h</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600 dark:text-gray-400">- Planificadas</span>
-                <span className="font-medium text-gray-900 dark:text-white">{summary.hldPlanned}h</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600 dark:text-gray-400">- Consumidas</span>
-                <span className="font-medium text-gray-900 dark:text-white">{summary.hldConsumed}h</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600 dark:text-gray-400">- Restan</span>
-                <span className="font-medium text-gray-900 dark:text-white">{summary.hldRemaining}h</span>
-              </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600 dark:text-gray-400">- Planificadas</span>
+              <span className="font-medium text-gray-900 dark:text-white">{summary.vacationPlanned} días</span>
             </div>
-          </div>
-
-          {/* Columna 3: Guardias */}
-          <div className="border-r border-gray-200 dark:border-gray-700 pr-6 last:border-r-0">
-            <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Guardias</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600 dark:text-gray-400">- Guardias mensuales</span>
-                <span className="font-medium text-gray-900 dark:text-white">{summary.guardMonthly}h</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600 dark:text-gray-400">- Guardias anuales</span>
-                <span className="font-medium text-gray-900 dark:text-white">{summary.guardAnnual}h</span>
-              </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600 dark:text-gray-400">- Consumidas</span>
+              <span className="font-medium text-gray-900 dark:text-white">{summary.vacationConsumed} días</span>
             </div>
-          </div>
-
-          {/* Columna 4: Formación */}
-          <div>
-            <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Formación</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600 dark:text-gray-400">- Formación mensual</span>
-                <span className="font-medium text-gray-900 dark:text-white">{summary.trainingMonthly}h</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600 dark:text-gray-400">- Formación anual</span>
-                <span className="font-medium text-gray-900 dark:text-white">{summary.trainingAnnual}h</span>
-              </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600 dark:text-gray-400">- Restan</span>
+              <span className="font-medium text-gray-900 dark:text-white">{summary.vacationRemaining} días</span>
             </div>
           </div>
         </div>
-      </CardContent>
-    </Card>
+
+        {/* Caja 2: Horas de Libre Disposición */}
+        <div className="flex-1 min-w-[200px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Horas de Libre Disposición</h3>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600 dark:text-gray-400">- Total</span>
+              <span className="font-medium text-gray-900 dark:text-white">{summary.hldTotal}h</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600 dark:text-gray-400">- Planificadas</span>
+              <span className="font-medium text-gray-900 dark:text-white">{summary.hldPlanned}h</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600 dark:text-gray-400">- Consumidas</span>
+              <span className="font-medium text-gray-900 dark:text-white">{summary.hldConsumed}h</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600 dark:text-gray-400">- Restan</span>
+              <span className="font-medium text-gray-900 dark:text-white">{summary.hldRemaining}h</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Caja 3: Guardias */}
+        <div className="flex-1 min-w-[200px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Guardias</h3>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600 dark:text-gray-400">- Guardias mensuales</span>
+              <span className="font-medium text-gray-900 dark:text-white">{summary.guardMonthly}h</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600 dark:text-gray-400">- Guardias anuales</span>
+              <span className="font-medium text-gray-900 dark:text-white">{summary.guardAnnual}h</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Caja 4: Formación */}
+        <div className="flex-1 min-w-[200px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Formación</h3>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600 dark:text-gray-400">- Formación mensual</span>
+              <span className="font-medium text-gray-900 dark:text-white">{summary.trainingMonthly}h</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600 dark:text-gray-400">- Formación anual</span>
+              <span className="font-medium text-gray-900 dark:text-white">{summary.trainingAnnual}h</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
 
