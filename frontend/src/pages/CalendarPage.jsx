@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { 
   Calendar as CalendarIcon, 
   Plus, 
@@ -41,10 +41,96 @@ const CalendarPage = () => {
   const [showNewActivityDialog, setShowNewActivityDialog] = useState(false)
   const [activityFilter, setActivityFilter] = useState('all')
   const [calendarViewMode, setCalendarViewMode] = useState('monthly') // Modo de vista del calendario (monthly/annual)
+  const [allYearActivities, setAllYearActivities] = useState([]) // Todas las actividades del año para estadísticas globales
+  const [loadedYear, setLoadedYear] = useState(null) // Año para el que se cargaron las actividades
 
   useEffect(() => {
     loadCalendarData()
   }, [currentMonth, activityFilter, calendarViewMode, employee])
+
+  // Cargar todas las actividades del año para estadísticas globales (solo cuando cambia el empleado o el año)
+  useEffect(() => {
+    const year = currentMonth.getFullYear()
+    const employeeId = employee?.id
+    
+    // Solo cargar si el año o el empleado han cambiado
+    if (year !== loadedYear || (employeeId && (!allYearActivities.length || allYearActivities[0]?.employee_id !== employeeId))) {
+      loadAllYearActivities()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [employee?.id, currentMonth.getFullYear()]) // Solo cuando cambia el empleado o el año
+
+  // Función para cargar todas las actividades del año para estadísticas globales
+  const loadAllYearActivities = async () => {
+    if (!employee) {
+      setAllYearActivities([])
+      setLoadedYear(null)
+      return
+    }
+
+    try {
+      const year = currentMonth.getFullYear()
+      const allActivities = []
+
+      // Cargar actividades de todos los meses del año en paralelo
+      const monthPromises = []
+      for (let m = 1; m <= 12; m++) {
+        let url = `${import.meta.env.VITE_API_BASE_URL}/calendar?year=${year}&month=${m}`
+        
+        // Solo agregar filtros si no es admin
+        if (!isAdmin()) {
+          if (employee) {
+            url += `&employee_id=${employee.id}`
+          } else if (isManager() && employee?.team_id) {
+            url += `&team_id=${employee.team_id}`
+          }
+        }
+        
+        monthPromises.push(
+          fetch(url, { credentials: 'include' })
+            .then(response => {
+              if (response.ok) {
+                return response.json()
+              }
+              return null
+            })
+            .catch(error => {
+              console.error(`Error cargando mes ${m} para estadísticas:`, error)
+              return null
+            })
+        )
+      }
+
+      // Esperar todas las peticiones
+      const monthResults = await Promise.all(monthPromises)
+
+      // Procesar resultados y recopilar todas las actividades
+      monthResults.forEach((data) => {
+        if (data && data.success && data.calendar?.employees) {
+          data.calendar.employees.forEach(emp => {
+            const empData = emp.employee || emp
+            
+            if (emp.activities) {
+              Object.values(emp.activities).forEach(activity => {
+                allActivities.push({
+                  ...activity,
+                  employee_id: empData.id
+                })
+              })
+            }
+          })
+        }
+      })
+
+      console.log('📊 Actividades del año cargadas para estadísticas:', allActivities.length)
+      setAllYearActivities(allActivities)
+      setLoadedYear(year)
+    } catch (error) {
+      console.error('Error cargando actividades del año:', error)
+      setAllYearActivities([])
+      setLoadedYear(null)
+    }
+  }
 
   const loadCalendarData = async () => {
     setLoading(true)
@@ -326,6 +412,8 @@ const CalendarPage = () => {
       
       // Recargar datos del calendario después de crear
       await loadCalendarData()
+      // También recargar actividades del año para estadísticas
+      await loadAllYearActivities()
       
       return result
     } catch (error) {
@@ -352,6 +440,8 @@ const CalendarPage = () => {
 
       // Recargar datos del calendario después de eliminar
       await loadCalendarData()
+      // También recargar actividades del año para estadísticas
+      await loadAllYearActivities()
     } catch (error) {
       console.error('Error eliminando actividad:', error)
       throw error
@@ -710,7 +800,7 @@ const CalendarPage = () => {
           {employee && calendarData && (
             <CalendarSummary 
               employee={employee}
-              activities={calendarData?.activities || []}
+              activities={allYearActivities.length > 0 ? allYearActivities : (calendarData?.activities || [])}
               currentMonth={currentMonth}
             />
           )}
