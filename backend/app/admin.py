@@ -970,10 +970,16 @@ def test_google_oauth_configuration():
 
 @admin_bp.route('/companies', methods=['GET'])
 @auth_required()
-@admin_required()
 def list_companies():
-    """Lista todas las empresas"""
+    """Lista todas las empresas (admins y managers pueden acceder)"""
     try:
+        # Permitir acceso a admins y managers
+        if not (current_user.is_admin() or current_user.is_manager()):
+            return jsonify({
+                'success': False,
+                'message': 'Acceso denegado'
+            }), 403
+        
         active_only = request.args.get('active_only', 'false').lower() == 'true'
         
         query = Company.query

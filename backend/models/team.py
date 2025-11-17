@@ -121,6 +121,11 @@ class Team(db.Model):
             'description': self.description,
             'manager_id': self.manager_id,
             'manager_name': self.manager.full_name if self.manager else None,
+            'manager': {
+                'id': self.manager.id,
+                'full_name': self.manager.full_name,
+                'name': self.manager.full_name
+            } if self.manager else None,
             'active': True,  # Todos los equipos están activos (no hay columna active en DB)
             'employee_count': self.employee_count,
             'created_at': self.created_at.isoformat() if self.created_at else None,

@@ -339,9 +339,13 @@ def list_employees():
             # Admin puede ver todos
             pass
         elif current_user.is_manager():
-            # Manager solo puede ver empleados de sus equipos
+            # Manager solo puede ver empleados de sus equipos (incluyéndose a sí mismo)
             managed_teams = current_user.get_managed_teams()
             team_ids = [team.id for team in managed_teams]
+            # Incluir también el equipo del manager si está en uno
+            if current_user.employee and current_user.employee.team_id:
+                if current_user.employee.team_id not in team_ids:
+                    team_ids.append(current_user.employee.team_id)
             query = query.filter(Employee.team_id.in_(team_ids))
         elif current_user.is_employee():
             # Employee solo puede ver empleados de su equipo

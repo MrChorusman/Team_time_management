@@ -285,7 +285,8 @@ def get_team_summary(team_id):
             can_access = True
         elif current_user.is_manager():
             managed_teams = current_user.get_managed_teams()
-            can_access = team in managed_teams
+            # Manager puede ver si gestiona el equipo O si es miembro del equipo
+            can_access = team in managed_teams or (current_user.employee and current_user.employee.team_id == team_id)
         elif current_user.is_employee():
             can_access = current_user.employee and current_user.employee.team_id == team_id
         
@@ -331,7 +332,8 @@ def get_team_employees(team_id):
             can_access = True
         elif current_user.is_manager():
             managed_teams = current_user.get_managed_teams()
-            can_access = team in managed_teams
+            # Manager puede ver si gestiona el equipo O si es miembro del equipo
+            can_access = team in managed_teams or (current_user.employee and current_user.employee.team_id == team_id)
         elif current_user.is_employee():
             can_access = current_user.employee and current_user.employee.team_id == team_id
         

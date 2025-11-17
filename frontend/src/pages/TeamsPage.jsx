@@ -33,17 +33,25 @@ import { Alert, AlertDescription } from '../components/ui/alert'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 
 const TeamsPage = () => {
-  const { user, isAdmin, isManager } = useAuth()
+  const { user, employee, isAdmin, isManager } = useAuth()
   const [teams, setTeams] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedTeam, setSelectedTeam] = useState(null)
   const [showTeamDetail, setShowTeamDetail] = useState(false)
   const [showNewTeamDialog, setShowNewTeamDialog] = useState(false)
+  const [teamDetailLoading, setTeamDetailLoading] = useState(false)
 
   useEffect(() => {
     loadTeams()
   }, [])
+
+  // Cargar detalles del equipo cuando se selecciona
+  useEffect(() => {
+    if (selectedTeam && showTeamDetail) {
+      loadTeamDetails(selectedTeam.id)
+    }
+  }, [selectedTeam?.id, showTeamDetail])
 
   const loadTeams = async () => {
     setLoading(true)
@@ -66,6 +74,64 @@ const TeamsPage = () => {
       setTeams([])
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadTeamDetails = async (teamId) => {
+    setTeamDetailLoading(true)
+    try {
+      // Cargar miembros del equipo
+      const membersResponse = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/teams/${teamId}/employees?approved_only=false&include_summary=true`,
+        { credentials: 'include' }
+      )
+      
+      // Cargar métricas del equipo
+      const now = new Date()
+      const metricsResponse = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/teams/${teamId}/summary?year=${now.getFullYear()}&month=${now.getMonth() + 1}`,
+        { credentials: 'include' }
+      )
+
+      let members = []
+      let metrics = null
+
+      if (membersResponse.ok) {
+        const membersData = await membersResponse.json()
+        if (membersData.success) {
+          members = membersData.employees || []
+        }
+      }
+
+      if (metricsResponse.ok) {
+        const metricsData = await metricsResponse.json()
+        if (metricsData.success && metricsData.team_summary) {
+          metrics = {
+            average_efficiency: metricsData.team_summary.efficiency || 0,
+            total_theoretical_hours: metricsData.team_summary.total_theoretical_hours || 0,
+            total_actual_hours: metricsData.team_summary.total_actual_hours || 0,
+            monthly_vacation_days: metricsData.team_summary.total_vacation_days || 0,
+            monthly_hld_hours: metricsData.team_summary.total_hld_hours || 0,
+            team_ranking: 0 // TODO: Calcular ranking si es necesario
+          }
+        }
+      }
+
+      // Actualizar el equipo seleccionado con los datos cargados
+      setSelectedTeam(prev => ({
+        ...prev,
+        members: members.map(emp => ({
+          id: emp.id,
+          name: emp.full_name,
+          role: emp.user_roles?.[0] || 'Empleado',
+          efficiency: emp.monthly_stats?.efficiency || 0
+        })),
+        metrics
+      }))
+    } catch (error) {
+      console.error('Error cargando detalles del equipo:', error)
+    } finally {
+      setTeamDetailLoading(false)
     }
   }
 
@@ -437,16 +503,16 @@ const TeamsPage = () => {
                         <div className="flex items-center space-x-3">
                           <Avatar>
                             <AvatarImage src={`/avatars/${selectedTeam.manager.id}.jpg`} />
-                            <AvatarFallback>{getInitials(selectedTeam.manager.name)}</AvatarFallback>
+                            <AvatarFallback>{getInitials(selectedTeam.manager.name || selectedTeam.manager.full_name)}</AvatarFallback>
                           </Avatar>
                           <div>
-                            <p className="font-medium">{selectedTeam.manager.name}</p>
+                            <p className="font-medium">{selectedTeam.manager.name || selectedTeam.manager.full_name}</p>
                             <p className="text-sm text-gray-500">Team Manager</p>
                           </div>
                         </div>
                       ) : (
                         <div className="text-sm text-gray-500">
-                          <p>Manager: No asignado</p>
+                          <p>Manager: {employee && selectedTeam.manager_id === employee.id ? employee.full_name : 'No asignado'}</p>
                         </div>
                       )}
                       {selectedTeam.created_at && (
@@ -532,7 +598,11 @@ const TeamsPage = () => {
                   )}
                 </div>
                 
-                {selectedTeam.members && selectedTeam.members.length > 0 ? (
+                {teamDetailLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <LoadingSpinner text="Cargando miembros..." />
+                  </div>
+                ) : selectedTeam.members && selectedTeam.members.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {selectedTeam.members.map((member) => (
                     <Card key={member.id}>
@@ -547,9 +617,9 @@ const TeamsPage = () => {
                             <p className="text-sm text-gray-500">{member.role}</p>
                             <div className="flex items-center space-x-2 mt-2">
                               <div className="flex-1">
-                                <Progress value={member.efficiency} className="h-1" />
+                                <Progress value={member.efficiency || 0} className="h-1" />
                               </div>
-                              <span className="text-xs font-medium">{member.efficiency}%</span>
+                              <span className="text-xs font-medium">{member.efficiency || 0}%</span>
                             </div>
                           </div>
                         </div>
@@ -575,7 +645,11 @@ const TeamsPage = () => {
               </TabsContent>
               
               <TabsContent value="metrics" className="space-y-6">
-                {selectedTeam.metrics ? (
+                {teamDetailLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <LoadingSpinner text="Cargando métricas..." />
+                  </div>
+                ) : selectedTeam.metrics ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Card>
                       <CardHeader>
@@ -587,17 +661,17 @@ const TeamsPage = () => {
                       <CardContent className="space-y-4">
                         <div className="flex justify-between">
                           <span>Horas Teóricas:</span>
-                          <span className="font-medium">{selectedTeam.metrics.total_theoretical_hours}h</span>
+                          <span className="font-medium">{selectedTeam.metrics.total_theoretical_hours || 0}h</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Horas Reales:</span>
-                          <span className="font-medium">{selectedTeam.metrics.total_actual_hours}h</span>
+                          <span className="font-medium">{selectedTeam.metrics.total_actual_hours || 0}h</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Eficiencia:</span>
-                          <span className="font-medium">{selectedTeam.metrics.average_efficiency}%</span>
+                          <span className="font-medium">{selectedTeam.metrics.average_efficiency || 0}%</span>
                         </div>
-                        <Progress value={selectedTeam.metrics.average_efficiency} className="h-3" />
+                        <Progress value={selectedTeam.metrics.average_efficiency || 0} className="h-3" />
                       </CardContent>
                     </Card>
                     
@@ -611,18 +685,20 @@ const TeamsPage = () => {
                       <CardContent className="space-y-4">
                         <div className="flex justify-between">
                           <span>Días de Vacaciones:</span>
-                          <span className="font-medium">{selectedTeam.metrics.monthly_vacation_days}</span>
+                          <span className="font-medium">{selectedTeam.metrics.monthly_vacation_days || 0}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Horas HLD:</span>
-                          <span className="font-medium">{selectedTeam.metrics.monthly_hld_hours}h</span>
+                          <span className="font-medium">{selectedTeam.metrics.monthly_hld_hours || 0}h</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span>Ranking:</span>
-                          <span className={`font-medium ${getRankingColor(selectedTeam.metrics.team_ranking)}`}>
-                            #{selectedTeam.metrics.team_ranking}
-                          </span>
-                        </div>
+                        {selectedTeam.metrics.team_ranking !== undefined && (
+                          <div className="flex justify-between">
+                            <span>Ranking:</span>
+                            <span className={`font-medium ${getRankingColor(selectedTeam.metrics.team_ranking)}`}>
+                              #{selectedTeam.metrics.team_ranking}
+                            </span>
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   </div>
