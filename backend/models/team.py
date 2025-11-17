@@ -115,27 +115,51 @@ class Team(db.Model):
     
     def to_dict(self, include_employees=False):
         """Convierte el equipo a diccionario para JSON"""
-        data = {
-            'id': self.id,
-            'name': self.name,
-            'description': self.description,
-            'manager_id': self.manager_id,
-            'manager_name': self.manager.full_name if self.manager else None,
-            'manager': {
-                'id': self.manager.id,
-                'full_name': self.manager.full_name,
-                'name': self.manager.full_name
-            } if self.manager else None,
-            'active': True,  # Todos los equipos están activos (no hay columna active en DB)
-            'employee_count': self.employee_count,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            'updated_at': self.updated_at.isoformat() if self.updated_at else None
-        }
-        
-        if include_employees:
-            data['employees'] = [emp.to_dict() for emp in self.active_employees]
-        
-        return data
+        try:
+            data = {
+                'id': self.id,
+                'name': self.name,
+                'description': self.description,
+                'manager_id': self.manager_id,
+                'manager_name': self.manager.full_name if self.manager else None,
+                'manager': {
+                    'id': self.manager.id,
+                    'full_name': self.manager.full_name,
+                    'name': self.manager.full_name
+                } if self.manager else None,
+                'active': True,  # Todos los equipos están activos (no hay columna active en DB)
+                'employee_count': self.employee_count,
+                'created_at': self.created_at.isoformat() if self.created_at else None,
+                'updated_at': self.updated_at.isoformat() if self.updated_at else None
+            }
+            
+            if include_employees:
+                try:
+                    data['employees'] = [emp.to_dict() for emp in self.active_employees]
+                except Exception as e:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(f"Error serializando empleados del equipo {self.id}: {e}")
+                    data['employees'] = []
+            
+            return data
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error serializando equipo {self.id}: {e}")
+            # Devolver datos mínimos en caso de error
+            return {
+                'id': self.id,
+                'name': self.name or 'Sin nombre',
+                'description': self.description,
+                'manager_id': self.manager_id,
+                'manager_name': None,
+                'manager': None,
+                'active': True,
+                'employee_count': 0,
+                'created_at': None,
+                'updated_at': None
+            }
     
     def __str__(self):
         return self.name
