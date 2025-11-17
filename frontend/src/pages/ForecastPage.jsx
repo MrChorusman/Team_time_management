@@ -476,11 +476,6 @@ const ForecastPage = () => {
       {forecastData && (
         <div className="space-y-6">
           {/* Desglose de actividades */}
-
-      {/* Contenido adicional del Forecast (desglose, tablas) */}
-      {forecastData && (
-        <div className="space-y-6">
-          {/* Desglose de actividades */}
           {forecastData.breakdown && (
             <Card>
               <CardHeader>
