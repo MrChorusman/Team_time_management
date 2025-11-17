@@ -409,9 +409,9 @@ const TeamsPage = () => {
           )}
 
           {/* Dialog de edición de equipo */}
-          <Dialog open={showEditTeamDialog && !!selectedTeam} onOpenChange={(open) => {
+          <Dialog open={showEditTeamDialog} onOpenChange={(open) => {
+            setShowEditTeamDialog(open)
             if (!open) {
-              setShowEditTeamDialog(false)
               setSelectedTeam(null)
             }
           }}>
