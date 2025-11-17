@@ -521,45 +521,51 @@ const DashboardPage = () => {
           </Badge>
         </div>
 
-        {/* Estadísticas principales - Listas desplegables */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Estadísticas principales - Listas desplegables - Diseño compacto */}
+        <div className="flex flex-wrap gap-4">
           {/* Equipos Gestionados */}
           <Collapsible>
-            <Card>
+            <Card className="hover:shadow-md transition-shadow flex-shrink-0" style={{ minWidth: '200px', maxWidth: '280px' }}>
               <CollapsibleTrigger className="w-full">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                  <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    Equipos Gestionados
+                  </CardTitle>
                   <div className="flex items-center gap-2">
-                    <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                      Equipos Gestionados
-                    </CardTitle>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                      <Target className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    <div className="p-1.5 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                      <Target className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                     </div>
-                    <ChevronDown className="h-4 w-4 text-gray-400" />
+                    <ChevronDown className="h-3 w-3 text-gray-400" />
                   </div>
                 </CardHeader>
               </CollapsibleTrigger>
-              <CardContent>
-                <div className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
+              <CardContent className="pt-2">
+                <div className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                   {dashboardData.statistics?.managed_teams || 0}
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 font-medium mb-4">
+                <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
                   Bajo tu supervisión
                 </p>
                 <CollapsibleContent>
-                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
+                  <div className="pt-3 border-t border-gray-200 dark:border-gray-700 space-y-2">
                     {dashboardData.team_performance && dashboardData.team_performance.length > 0 ? (
                       dashboardData.team_performance.map((team, index) => (
-                        <div key={index} className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600 dark:text-gray-400">{team.team_name}</span>
-                          <Badge variant="outline">{team.members_count} miembros</Badge>
+                        <div key={index} className="flex items-center justify-between text-xs py-1">
+                          <span className="text-gray-600 dark:text-gray-400 truncate flex-1 mr-2">{team.team_name}</span>
+                          <Badge variant="outline" className="text-xs px-1.5 py-0">{team.members_count} miembros</Badge>
                         </div>
                       ))
                     ) : (
-                      <p className="text-sm text-gray-500 dark:text-gray-400">No hay equipos asignados</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">No hay equipos asignados</p>
                     )}
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => navigate('/teams')}
+                      className="w-full mt-2 text-xs"
+                    >
+                      Ver todos los equipos
+                    </Button>
                   </div>
                 </CollapsibleContent>
               </CardContent>
@@ -568,41 +574,47 @@ const DashboardPage = () => {
 
           {/* Total Empleados */}
           <Collapsible>
-            <Card>
+            <Card className="hover:shadow-md transition-shadow flex-shrink-0" style={{ minWidth: '200px', maxWidth: '280px' }}>
               <CollapsibleTrigger className="w-full">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                  <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    Total Empleados
+                  </CardTitle>
                   <div className="flex items-center gap-2">
-                    <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                      Total Empleados
-                    </CardTitle>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                      <Users className="h-5 w-5 text-green-600 dark:text-green-400" />
+                    <div className="p-1.5 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                      <Users className="h-4 w-4 text-green-600 dark:text-green-400" />
                     </div>
-                    <ChevronDown className="h-4 w-4 text-gray-400" />
+                    <ChevronDown className="h-3 w-3 text-gray-400" />
                   </div>
                 </CardHeader>
               </CollapsibleTrigger>
-              <CardContent>
-                <div className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
+              <CardContent className="pt-2">
+                <div className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                   {dashboardData.statistics?.total_employees || 0}
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 font-medium mb-4">
+                <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
                   En tus equipos
                 </p>
                 <CollapsibleContent>
-                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
+                  <div className="pt-3 border-t border-gray-200 dark:border-gray-700 space-y-2">
                     {dashboardData.team_performance && dashboardData.team_performance.length > 0 ? (
                       dashboardData.team_performance.map((team, index) => (
-                        <div key={index} className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600 dark:text-gray-400">{team.team_name}</span>
-                          <span className="font-medium">{team.members_count} empleados</span>
+                        <div key={index} className="flex items-center justify-between text-xs py-1">
+                          <span className="text-gray-600 dark:text-gray-400 truncate flex-1 mr-2">{team.team_name}</span>
+                          <span className="font-medium text-xs">{team.members_count} empleados</span>
                         </div>
                       ))
                     ) : (
-                      <p className="text-sm text-gray-500 dark:text-gray-400">No hay empleados asignados</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">No hay empleados asignados</p>
                     )}
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => navigate('/employees')}
+                      className="w-full mt-2 text-xs"
+                    >
+                      Ver todos los empleados
+                    </Button>
                   </div>
                 </CollapsibleContent>
               </CardContent>
@@ -611,37 +623,35 @@ const DashboardPage = () => {
 
           {/* Aprobaciones Pendientes */}
           <Collapsible>
-            <Card>
+            <Card className="hover:shadow-md transition-shadow flex-shrink-0" style={{ minWidth: '200px', maxWidth: '280px' }}>
               <CollapsibleTrigger className="w-full">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                  <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    Aprobaciones Pendientes
+                  </CardTitle>
                   <div className="flex items-center gap-2">
-                    <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                      Aprobaciones Pendientes
-                    </CardTitle>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
-                      <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                    <div className="p-1.5 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                      <AlertCircle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
                     </div>
-                    <ChevronDown className="h-4 w-4 text-gray-400" />
+                    <ChevronDown className="h-3 w-3 text-gray-400" />
                   </div>
                 </CardHeader>
               </CollapsibleTrigger>
-              <CardContent>
-                <div className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
+              <CardContent className="pt-2">
+                <div className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                   {dashboardData.statistics?.pending_approvals || 0}
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 font-medium mb-4">
+                <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
                   Requieren tu atención
                 </p>
                 <CollapsibleContent>
-                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
                     {(dashboardData.pending_requests || []).length > 0 ? (
                       <div className="space-y-2">
                         {(dashboardData.pending_requests || []).slice(0, 5).map((request, index) => (
-                          <div key={index} className="text-sm p-2 bg-yellow-50 dark:bg-yellow-900/10 rounded">
-                            <p className="font-medium text-gray-900 dark:text-white">{request.employee}</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                          <div key={index} className="text-xs p-2 bg-yellow-50 dark:bg-yellow-900/10 rounded">
+                            <p className="font-medium text-gray-900 dark:text-white text-xs">{request.employee}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                               {request.type === 'vacation' && `Vacaciones: ${request.dates}`}
                               {request.type === 'approval' && request.description}
                               {request.type === 'calendar_change' && request.description}
@@ -655,8 +665,16 @@ const DashboardPage = () => {
                         )}
                       </div>
                     ) : (
-                      <p className="text-sm text-gray-500 dark:text-gray-400">No hay aprobaciones pendientes</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">No hay aprobaciones pendientes</p>
                     )}
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => navigate('/employees')}
+                      className="w-full mt-2 text-xs"
+                    >
+                      Revisar todas
+                    </Button>
                   </div>
                 </CollapsibleContent>
               </CardContent>
@@ -665,49 +683,55 @@ const DashboardPage = () => {
 
           {/* Eficiencia Promedio */}
           <Collapsible>
-            <Card>
+            <Card className="hover:shadow-md transition-shadow flex-shrink-0" style={{ minWidth: '200px', maxWidth: '280px' }}>
               <CollapsibleTrigger className="w-full">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                  <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    Eficiencia Promedio
+                  </CardTitle>
                   <div className="flex items-center gap-2">
-                    <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                      Eficiencia Promedio
-                    </CardTitle>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                      <TrendingUp className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                    <div className="p-1.5 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                      <TrendingUp className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                     </div>
-                    <ChevronDown className="h-4 w-4 text-gray-400" />
+                    <ChevronDown className="h-3 w-3 text-gray-400" />
                   </div>
                 </CardHeader>
               </CollapsibleTrigger>
-              <CardContent>
-                <div className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
+              <CardContent className="pt-2">
+                <div className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                   {dashboardData.statistics?.average_efficiency || 0}%
                 </div>
-                <div className="flex items-center justify-between mb-4">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
                     De tus equipos
                   </p>
-                  <Badge variant="outline" className="text-xs font-semibold text-green-600">
+                  <Badge variant="outline" className="text-xs font-semibold text-green-600 px-1.5 py-0">
                     ↗ +1.8%
                   </Badge>
                 </div>
                 <CollapsibleContent>
-                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
+                  <div className="pt-3 border-t border-gray-200 dark:border-gray-700 space-y-2">
                     {dashboardData.team_performance && dashboardData.team_performance.length > 0 ? (
                       dashboardData.team_performance.map((team, index) => (
-                        <div key={index} className="space-y-2">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-600 dark:text-gray-400">{team.team_name}</span>
-                            <span className="font-medium">{team.efficiency || 0}%</span>
+                        <div key={index} className="space-y-1">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-gray-600 dark:text-gray-400 truncate flex-1 mr-2">{team.team_name}</span>
+                            <span className="font-medium text-xs">{team.efficiency || 0}%</span>
                           </div>
-                          <Progress value={team.efficiency || 0} className="h-2" />
+                          <Progress value={team.efficiency || 0} className="h-1.5" />
                         </div>
                       ))
                     ) : (
-                      <p className="text-sm text-gray-500 dark:text-gray-400">No hay datos de eficiencia</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">No hay datos de eficiencia</p>
                     )}
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => navigate('/reports')}
+                      className="w-full mt-2 text-xs"
+                    >
+                      Ver reportes
+                    </Button>
                   </div>
                 </CollapsibleContent>
               </CardContent>
