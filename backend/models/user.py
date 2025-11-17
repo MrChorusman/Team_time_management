@@ -101,6 +101,23 @@ class User(db.Model, UserMixin):
         """Verifica si el usuario es solo viewer"""
         return self.has_role('viewer')
     
+    def get_primary_role(self):
+        """Retorna el rol primario del usuario (el más importante según jerarquía)"""
+        if not self.roles:
+            return None
+        
+        # Jerarquía de roles: admin > manager > employee > viewer
+        role_hierarchy = ['admin', 'manager', 'employee', 'viewer']
+        role_names = [role.name for role in self.roles]
+        
+        # Retornar el rol más importante que tenga el usuario
+        for role_name in role_hierarchy:
+            if role_name in role_names:
+                return role_name
+        
+        # Si no coincide con ninguno, retornar el primero
+        return role_names[0] if role_names else None
+    
     def get_managed_teams(self):
         """Retorna los equipos que gestiona este usuario (si es manager)"""
         if not self.is_manager() or not self.employee:
