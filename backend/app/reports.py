@@ -192,7 +192,7 @@ def get_dashboard_report():
             # Dashboard de administrador - vista global
             from models.user import User
             
-            # Estadísticas generales
+            # Estadísticas generales - contar TODOS los empleados activos (sin filtro de approved)
             total_employees = Employee.query.filter(Employee.active == True).count()
             total_teams = Team.query.count()  # Todos los equipos (no hay columna active)
             pending_approvals = Employee.query.filter(
@@ -211,13 +211,16 @@ def get_dashboard_report():
                     'team': team.to_dict(),
                     'summary': team_summary
                 })
-                global_efficiency += team_summary.get('average_efficiency', 0)
+                team_efficiency = team_summary.get('efficiency', team_summary.get('average_efficiency', 0))
+                if team_efficiency > 0:
+                    global_efficiency += team_efficiency
             
             if all_teams:
                 global_efficiency = global_efficiency / len(all_teams)
             
             report_data.update({
                 'dashboard_type': 'admin',
+                'type': 'admin',  # Formato esperado por frontend
                 'statistics': {
                     'total_employees': total_employees,
                     'total_teams': total_teams,

@@ -53,7 +53,7 @@ const DashboardPage = () => {
           // Transformar datos del backend al formato esperado por el frontend
           const report = data.report
           const transformedData = {
-            type: report.dashboard_type || report.type || 'manager',
+            type: report.dashboard_type || report.type || (isAdmin() ? 'admin' : 'manager'),
             statistics: report.statistics || {},
             team_performance: report.team_performance || (report.team_summaries || []).map(ts => ({
               team_name: ts.team?.name || 'Sin nombre',

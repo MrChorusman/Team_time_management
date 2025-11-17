@@ -23,7 +23,6 @@ import {
   Search,
   Building,
   UserPlus,
-  MoreVertical
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { Button } from '../components/ui/button'
@@ -667,28 +666,28 @@ const AdminPage = () => {
                         <div className="flex justify-between">
                           <span className="text-sm">Usuarios Totales</span>
                           <span className="text-sm font-medium">{stats.users?.total || 0} ({stats.users?.active || 0} activos)</span>
-                        </div>
+                  </div>
                         <Progress value={stats.users?.total > 0 ? ((stats.users?.active || 0) / stats.users.total) * 100 : 0} className="h-2" />
-                      </div>
+                  </div>
                       <div className="space-y-2">
                         <div className="flex justify-between">
                           <span className="text-sm">Empleados</span>
                           <span className="text-sm font-medium">{stats.employees?.total || 0} ({stats.employees?.approved || 0} aprobados)</span>
-                        </div>
+                  </div>
                         <Progress value={stats.employees?.total > 0 ? ((stats.employees?.approved || 0) / stats.employees.total) * 100 : 0} className="h-2" />
-                      </div>
+                </div>
                       <div className="space-y-2">
                         <div className="flex justify-between">
                           <span className="text-sm">Equipos</span>
                           <span className="text-sm font-medium">{stats.teams?.total || 0} ({stats.teams?.with_manager || 0} con manager)</span>
-                        </div>
+                    </div>
                         <Progress value={stats.teams?.total > 0 ? ((stats.teams?.with_manager || 0) / stats.teams.total) * 100 : 0} className="h-2" />
-                      </div>
+                    </div>
                       <div className="space-y-2">
                         <div className="flex justify-between">
                           <span className="text-sm">Aprobaciones Pendientes</span>
                           <span className="text-sm font-medium">{stats.employees?.pending_approval || 0}</span>
-                        </div>
+                  </div>
                         <Progress value={stats.employees?.pending_approval > 0 ? Math.min((stats.employees.pending_approval / (stats.employees?.total || 1)) * 100, 100) : 0} className="h-2" />
                       </div>
                     </>
@@ -745,14 +744,14 @@ const AdminPage = () => {
                       <div key={index} className="flex items-start space-x-3">
                         <div className={`mt-1 ${getSeverityColor(activity.severity || 'info')}`}>
                           {getSeverityIcon(activity.severity || 'info')}
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">{activity.description}</p>
-                          <p className="text-xs text-gray-500">
-                            {new Date(activity.timestamp).toLocaleString('es-ES')}
-                          </p>
-                        </div>
                       </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{activity.description}</p>
+                        <p className="text-xs text-gray-500">
+                          {new Date(activity.timestamp).toLocaleString('es-ES')}
+                        </p>
+                      </div>
+                    </div>
                     ))
                   ) : (
                     <p className="text-sm text-gray-500">No hay actividad reciente</p>
@@ -785,7 +784,7 @@ const AdminPage = () => {
                       onChange={(e) => setUsersSearch(e.target.value)}
                       className="pl-10"
                     />
-                  </div>
+                </div>
                 </div>
                 
                 <Select 
@@ -811,7 +810,7 @@ const AdminPage = () => {
                 >
                   {usersFilter.active_only ? 'Solo activos' : 'Todos'}
                 </Button>
-              </div>
+                </div>
 
               {/* Tabla de usuarios */}
               {usersLoading ? (
@@ -879,7 +878,7 @@ const AdminPage = () => {
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                   <Button variant="ghost" size="sm">
-                                    <MoreVertical className="w-4 h-4" />
+                                    <Edit className="w-4 h-4" />
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
@@ -984,8 +983,8 @@ const AdminPage = () => {
                         >
                           Siguiente
                         </Button>
-                      </div>
-                    </div>
+                </div>
+              </div>
                   )}
                 </>
               )}
@@ -993,15 +992,15 @@ const AdminPage = () => {
           </Card>
 
           {/* Estadísticas de usuarios en formato de barras */}
-          <Card>
-            <CardHeader>
+            <Card>
+              <CardHeader>
               <CardTitle className="flex items-center">
                 <BarChart3 className="w-5 h-5 mr-2" />
                 Estadísticas de Usuarios
               </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
                 {dashboardData ? (
                   <>
                     <div className="space-y-2">
@@ -1029,15 +1028,15 @@ const AdminPage = () => {
                 ) : (
                   <p className="text-sm text-gray-500">Cargando datos...</p>
                 )}
-              </div>
-            </CardContent>
-          </Card>
+                </div>
+              </CardContent>
+            </Card>
         </TabsContent>
 
         {/* Pestaña de Empresas */}
         <TabsContent value="companies" className="space-y-6">
-          <Card>
-            <CardHeader>
+            <Card>
+              <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle>Gestión de Empresas</CardTitle>
@@ -1050,12 +1049,12 @@ const AdminPage = () => {
                   Nueva Empresa
                 </Button>
               </div>
-            </CardHeader>
-            <CardContent>
+              </CardHeader>
+              <CardContent>
               {companiesLoading ? (
                 <div className="flex items-center justify-center py-12">
                   <LoadingSpinner />
-                </div>
+                    </div>
               ) : companies.length === 0 ? (
                 <Alert>
                   <AlertTriangle className="w-4 h-4" />
@@ -1083,7 +1082,7 @@ const AdminPage = () => {
                             {company.billing_period_start_day > company.billing_period_end_day && (
                               <span className="text-gray-500 ml-1">(cruza meses)</span>
                             )}
-                          </div>
+                </div>
                         </TableCell>
                         <TableCell>
                           <Badge variant={company.active ? 'default' : 'secondary'}>
@@ -1094,7 +1093,7 @@ const AdminPage = () => {
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="sm">
-                                <MoreVertical className="w-4 h-4" />
+                                <Edit className="w-4 h-4" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
@@ -1122,8 +1121,8 @@ const AdminPage = () => {
                   </TableBody>
                 </Table>
               )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
         </TabsContent>
 
         {/* Pestaña de Sistema */}
@@ -1337,7 +1336,7 @@ const AdminPage = () => {
                   <Label htmlFor={`role-${role.name}`} className="cursor-pointer">
                     {role.description}
                   </Label>
-                </div>
+                          </div>
               )
             })}
           </div>
@@ -1407,7 +1406,7 @@ const AdminPage = () => {
                 ))}
               </SelectContent>
             </Select>
-          </div>
+              </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowTeamDialog(false)}>
               Cerrar

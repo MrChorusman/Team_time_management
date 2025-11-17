@@ -6,8 +6,6 @@ import {
   Users,
   Building,
   Calendar,
-  ChevronLeft,
-  ChevronRight,
   BarChart3,
   Target,
   AlertCircle,
@@ -212,23 +210,6 @@ const ForecastPage = () => {
     return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value)
   }
 
-  const handlePreviousMonth = () => {
-    if (currentMonth === 1) {
-      setCurrentMonth(12)
-      setCurrentYear(currentYear - 1)
-    } else {
-      setCurrentMonth(currentMonth - 1)
-    }
-  }
-
-  const handleNextMonth = () => {
-    if (currentMonth === 12) {
-      setCurrentMonth(1)
-      setCurrentYear(currentYear + 1)
-    } else {
-      setCurrentMonth(currentMonth + 1)
-    }
-  }
 
   const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
                       'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
@@ -259,119 +240,227 @@ const ForecastPage = () => {
         </div>
       </div>
 
-      {/* Filtros */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Filter className="w-5 h-5 mr-2" />
-            Filtros
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Selector de Empresa */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Empresa</label>
-              <Select 
-                value={selectedCompanyId?.toString() || ''} 
-                onValueChange={(value) => setSelectedCompanyId(parseInt(value))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar empresa" />
-                </SelectTrigger>
-                <SelectContent>
-                  {companies.map(company => (
-                    <SelectItem key={company.id} value={company.id.toString()}>
-                      {company.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+      {/* Layout: Información a la izquierda, Filtros a la derecha */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Columna izquierda: Información en lista */}
+        <div className="lg:col-span-2 space-y-4">
+          {forecastData ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Información del Forecast</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {/* Horas Teóricas */}
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <Clock className="w-5 h-5 text-gray-500" />
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-white">Horas Teóricas</p>
+                        <p className="text-sm text-gray-500">
+                          Período: {forecastData.period_start ? new Date(forecastData.period_start).toLocaleDateString('es-ES') : 'N/A'} - {forecastData.period_end ? new Date(forecastData.period_end).toLocaleDateString('es-ES') : 'N/A'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {forecastData.theoretical_hours || 0}h
+                    </div>
+                  </div>
 
-            {/* Selector de Vista */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Vista</label>
-              <Select value={selectedView} onValueChange={setSelectedView}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {isEmployee() && (
-                    <SelectItem value="employee">Por Empleado</SelectItem>
-                  )}
-                  {(isManager() || isAdmin()) && (
-                    <>
-                      <SelectItem value="team">Por Equipo</SelectItem>
-                      {isAdmin() && <SelectItem value="global">Vista Global</SelectItem>}
-                    </>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
+                  {/* Horas Reales */}
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <Clock className="w-5 h-5 text-gray-500" />
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-white">Horas Reales</p>
+                        <p className="text-sm text-gray-500">Sin incluir guardias</p>
+                      </div>
+                    </div>
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {forecastData.actual_hours || 0}h
+                    </div>
+                  </div>
 
-            {/* Selector de Empleado (si vista es employee) */}
-            {selectedView === 'employee' && (isAdmin() || isManager()) && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Empleado</label>
-                <Select 
-                  value={selectedEmployeeId?.toString() || ''} 
-                  onValueChange={(value) => setSelectedEmployeeId(parseInt(value))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar empleado" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {employees.map(emp => (
-                      <SelectItem key={emp.id} value={emp.id.toString()}>
-                        {emp.full_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+                  {/* Eficiencia */}
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <TrendingUp className="w-5 h-5 text-gray-500" />
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900 dark:text-white">Eficiencia</p>
+                        <div className="mt-2">
+                          <Progress value={forecastData.efficiency || 0} className="h-2" />
+                        </div>
+                        <div className="mt-2">
+                          {getPerformanceBadge(forecastData.performance_status)}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {forecastData.efficiency || 0}%
+                    </div>
+                  </div>
 
-            {/* Selector de Equipo (si vista es team) */}
-            {selectedView === 'team' && (isAdmin() || isManager()) && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Equipo</label>
-                <Select 
-                  value={selectedTeamId?.toString() || ''} 
-                  onValueChange={(value) => setSelectedTeamId(parseInt(value))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar equipo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {teams.map(team => (
-                      <SelectItem key={team.id} value={team.id.toString()}>
-                        {team.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Selector de Mes/Año */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Período</label>
-              <div className="flex items-center space-x-2">
-                <Button variant="outline" size="sm" onClick={handlePreviousMonth}>
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                <div className="flex-1 text-center font-medium">
-                  {monthNames[currentMonth - 1]} {currentYear}
+                  {/* Valor Económico */}
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <DollarSign className="w-5 h-5 text-gray-500" />
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-white">Valor Económico</p>
+                        <p className="text-sm text-gray-500">
+                          {forecastData.hourly_rate ? `Tarifa: ${formatCurrency(forecastData.hourly_rate)}/h` : 'Sin tarifa configurada'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {forecastData.economic_value ? formatCurrency(forecastData.economic_value) : 'N/A'}
+                    </div>
+                  </div>
                 </div>
-                <Button variant="outline" size="sm" onClick={handleNextMonth}>
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent className="py-12">
+                <div className="text-center text-gray-500">
+                  {loading ? 'Calculando forecast...' : 'Selecciona los filtros para ver el forecast'}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {/* Columna derecha: Filtros */}
+        <div className="lg:col-span-1">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Filter className="w-5 h-5 mr-2" />
+                Filtros
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {/* Selector de Empresa */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Empresa</label>
+                  <Select 
+                    value={selectedCompanyId?.toString() || ''} 
+                    onValueChange={(value) => setSelectedCompanyId(parseInt(value))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar empresa" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {companies.map(company => (
+                        <SelectItem key={company.id} value={company.id.toString()}>
+                          {company.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Selector de Vista */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Vista</label>
+                  <Select value={selectedView} onValueChange={setSelectedView}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {isEmployee() && (
+                        <SelectItem value="employee">Por Empleado</SelectItem>
+                      )}
+                      {(isManager() || isAdmin()) && (
+                        <>
+                          <SelectItem value="team">Por Equipo</SelectItem>
+                          {isAdmin() && <SelectItem value="global">Vista Global</SelectItem>}
+                        </>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Selector de Empleado (si vista es employee) */}
+                {selectedView === 'employee' && (isAdmin() || isManager()) && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Empleado</label>
+                    <Select 
+                      value={selectedEmployeeId?.toString() || ''} 
+                      onValueChange={(value) => setSelectedEmployeeId(parseInt(value))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar empleado" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {employees.map(emp => (
+                          <SelectItem key={emp.id} value={emp.id.toString()}>
+                            {emp.full_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Selector de Equipo (si vista es team) */}
+                {selectedView === 'team' && (isAdmin() || isManager()) && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Equipo</label>
+                    <Select 
+                      value={selectedTeamId?.toString() || ''} 
+                      onValueChange={(value) => setSelectedTeamId(parseInt(value))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar equipo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {teams.map(team => (
+                          <SelectItem key={team.id} value={team.id.toString()}>
+                            {team.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Selector de Período (lista desplegable) */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Período</label>
+                  <Select 
+                    value={`${currentYear}-${currentMonth.toString().padStart(2, '0')}`}
+                    onValueChange={(value) => {
+                      const [year, month] = value.split('-')
+                      setCurrentYear(parseInt(year))
+                      setCurrentMonth(parseInt(month))
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {/* Generar opciones para los últimos 12 meses */}
+                      {Array.from({ length: 12 }, (_, i) => {
+                        const date = new Date()
+                        date.setMonth(date.getMonth() - i)
+                        const year = date.getFullYear()
+                        const month = date.getMonth() + 1
+                        const monthName = monthNames[month - 1]
+                        return (
+                          <SelectItem key={`${year}-${month.toString().padStart(2, '0')}`} value={`${year}-${month.toString().padStart(2, '0')}`}>
+                            {monthName} {year}
+                          </SelectItem>
+                        )
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
       {/* Contenido del Forecast */}
       {companiesLoading ? (
@@ -405,70 +494,6 @@ const ForecastPage = () => {
         </div>
       ) : forecastData ? (
         <div className="space-y-6">
-          {/* Métricas principales */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Horas Teóricas
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{forecastData.theoretical_hours || 0}h</div>
-                <div className="text-xs text-gray-500 mt-1">
-                  Período: {forecastData.period_start ? new Date(forecastData.period_start).toLocaleDateString('es-ES') : 'N/A'} - {forecastData.period_end ? new Date(forecastData.period_end).toLocaleDateString('es-ES') : 'N/A'}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Horas Reales
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{forecastData.actual_hours || 0}h</div>
-                <div className="text-xs text-gray-500 mt-1">
-                  Sin incluir guardias
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Eficiencia
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{forecastData.efficiency || 0}%</div>
-                <div className="mt-2">
-                  <Progress value={forecastData.efficiency || 0} className="h-2" />
-                </div>
-                <div className="mt-2">
-                  {getPerformanceBadge(forecastData.performance_status)}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Valor Económico
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">
-                  {forecastData.economic_value ? formatCurrency(forecastData.economic_value) : 'N/A'}
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  {forecastData.hourly_rate ? `Tarifa: ${formatCurrency(forecastData.hourly_rate)}/h` : 'Sin tarifa configurada'}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
           {/* Desglose de actividades */}
           {forecastData.breakdown && (
             <Card>
