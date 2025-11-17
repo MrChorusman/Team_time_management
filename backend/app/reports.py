@@ -204,19 +204,28 @@ def get_dashboard_report():
             all_teams = Team.query.all()  # Todos los equipos (no hay columna active)
             global_efficiency = 0
             team_summaries = []
+            teams_with_efficiency = 0
             
             for team in all_teams:
-                team_summary = HoursCalculator.calculate_team_efficiency(team, year, month)
-                team_summaries.append({
-                    'team': team.to_dict(),
-                    'summary': team_summary
-                })
-                team_efficiency = team_summary.get('efficiency', team_summary.get('average_efficiency', 0))
-                if team_efficiency > 0:
-                    global_efficiency += team_efficiency
+                try:
+                    team_summary = HoursCalculator.calculate_team_efficiency(team, year, month)
+                    team_summaries.append({
+                        'team': team.to_dict(),
+                        'summary': team_summary
+                    })
+                    team_efficiency = team_summary.get('efficiency', team_summary.get('average_efficiency', 0))
+                    if team_efficiency > 0:
+                        global_efficiency += team_efficiency
+                        teams_with_efficiency += 1
+                except Exception as e:
+                    logger.error(f"Error calculando eficiencia del equipo {team.id}: {e}")
+                    # Continuar con el siguiente equipo aunque falle uno
+                    continue
             
-            if all_teams:
-                global_efficiency = global_efficiency / len(all_teams)
+            if teams_with_efficiency > 0:
+                global_efficiency = global_efficiency / teams_with_efficiency
+            else:
+                global_efficiency = 0
             
             report_data.update({
                 'dashboard_type': 'admin',

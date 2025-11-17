@@ -172,18 +172,23 @@ class HoursCalculator:
                 active_employees.append(team.manager)
         
         for employee in active_employees:
-            emp_efficiency = HoursCalculator.calculate_employee_efficiency(employee, year, month)
-            
-            team_summary['total_theoretical_hours'] += emp_efficiency['theoretical_hours']
-            team_summary['total_actual_hours'] += emp_efficiency['actual_hours']
-            team_summary['total_vacation_days'] += emp_efficiency['vacation_days']
-            team_summary['total_absence_days'] += emp_efficiency['absence_days']
-            team_summary['total_hld_hours'] += emp_efficiency['hld_hours']
-            team_summary['total_guard_hours'] += emp_efficiency['guard_hours']
-            team_summary['total_training_hours'] += emp_efficiency['training_hours']
-            team_summary['total_other_days'] += emp_efficiency['other_days']
-            
-            team_summary['employees'].append(emp_efficiency)
+            try:
+                emp_efficiency = HoursCalculator.calculate_employee_efficiency(employee, year, month)
+                
+                team_summary['total_theoretical_hours'] += emp_efficiency.get('theoretical_hours', 0) or 0
+                team_summary['total_actual_hours'] += emp_efficiency.get('actual_hours', 0) or 0
+                team_summary['total_vacation_days'] += emp_efficiency.get('vacation_days', 0) or 0
+                team_summary['total_absence_days'] += emp_efficiency.get('absence_days', 0) or 0
+                team_summary['total_hld_hours'] += emp_efficiency.get('hld_hours', 0) or 0
+                team_summary['total_guard_hours'] += emp_efficiency.get('guard_hours', 0) or 0
+                team_summary['total_training_hours'] += emp_efficiency.get('training_hours', 0) or 0
+                team_summary['total_other_days'] += emp_efficiency.get('other_days', 0) or 0
+                
+                team_summary['employees'].append(emp_efficiency)
+            except Exception as e:
+                logger.error(f"Error calculando eficiencia del empleado {employee.id} en equipo {team.id}: {e}")
+                # Continuar con el siguiente empleado aunque falle uno
+                continue
         
         # Calcular eficiencia del equipo
         if team_summary['total_theoretical_hours'] > 0:
