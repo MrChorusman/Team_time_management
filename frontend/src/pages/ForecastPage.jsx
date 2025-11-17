@@ -374,79 +374,227 @@ const ForecastPage = () => {
         {/* Columna derecha: Información en lista */}
         <div className="lg:col-span-2 space-y-4">
           {forecastData ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>Información del Forecast</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {/* Horas Teóricas */}
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <Clock className="w-5 h-5 text-gray-500" />
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-white">Horas Teóricas</p>
-                        <p className="text-sm text-gray-500">
-                          Período: {forecastData.period_start ? new Date(forecastData.period_start).toLocaleDateString('es-ES') : 'N/A'} - {forecastData.period_end ? new Date(forecastData.period_end).toLocaleDateString('es-ES') : 'N/A'}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {forecastData.theoretical_hours || 0}h
-                    </div>
-                  </div>
-
-                  {/* Horas Reales */}
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <Clock className="w-5 h-5 text-gray-500" />
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-white">Horas Reales</p>
-                        <p className="text-sm text-gray-500">Sin incluir guardias</p>
-                      </div>
-                    </div>
-                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {forecastData.actual_hours || 0}h
-                    </div>
-                  </div>
-
-                  {/* Eficiencia */}
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <TrendingUp className="w-5 h-5 text-gray-500" />
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-900 dark:text-white">Eficiencia</p>
-                        <div className="mt-2">
-                          <Progress value={forecastData.efficiency || 0} className="h-2" />
-                        </div>
-                        <div className="mt-2">
-                          {getPerformanceBadge(forecastData.performance_status)}
+            <>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Información del Forecast</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {/* Horas Teóricas */}
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <Clock className="w-5 h-5 text-gray-500" />
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">Horas Teóricas</p>
+                          <p className="text-sm text-gray-500">
+                            Período: {forecastData.period_start ? new Date(forecastData.period_start).toLocaleDateString('es-ES') : 'N/A'} - {forecastData.period_end ? new Date(forecastData.period_end).toLocaleDateString('es-ES') : 'N/A'}
+                          </p>
                         </div>
                       </div>
-                    </div>
-                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {forecastData.efficiency || 0}%
-                    </div>
-                  </div>
-
-                  {/* Valor Económico */}
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <DollarSign className="w-5 h-5 text-gray-500" />
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-white">Valor Económico</p>
-                        <p className="text-sm text-gray-500">
-                          {forecastData.hourly_rate ? `Tarifa: ${formatCurrency(forecastData.hourly_rate)}/h` : 'Sin tarifa configurada'}
-                        </p>
+                      <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                        {forecastData.theoretical_hours || 0}h
                       </div>
                     </div>
-                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {forecastData.economic_value ? formatCurrency(forecastData.economic_value) : 'N/A'}
+
+                    {/* Horas Reales */}
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <Clock className="w-5 h-5 text-gray-500" />
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">Horas Reales</p>
+                          <p className="text-sm text-gray-500">Sin incluir guardias</p>
+                        </div>
+                      </div>
+                      <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                        {forecastData.actual_hours || 0}h
+                      </div>
+                    </div>
+
+                    {/* Eficiencia */}
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <TrendingUp className="w-5 h-5 text-gray-500" />
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900 dark:text-white">Eficiencia</p>
+                          <div className="mt-2">
+                            <Progress value={forecastData.efficiency || 0} className="h-2" />
+                          </div>
+                          <div className="mt-2">
+                            {getPerformanceBadge(forecastData.performance_status)}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                        {forecastData.efficiency || 0}%
+                      </div>
+                    </div>
+
+                    {/* Valor Económico */}
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <DollarSign className="w-5 h-5 text-gray-500" />
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">Valor Económico</p>
+                          <p className="text-sm text-gray-500">
+                            {forecastData.hourly_rate ? `Tarifa: ${formatCurrency(forecastData.hourly_rate)}/h` : 'Sin tarifa configurada'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                        {forecastData.economic_value ? formatCurrency(forecastData.economic_value) : 'N/A'}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+
+              {/* Contenido adicional del Forecast (desglose, tablas) dentro de la misma columna */}
+              {/* Desglose de actividades */}
+              {forecastData.breakdown && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Desglose de Actividades</CardTitle>
+                    <CardDescription>
+                      Detalle de horas por tipo de actividad en el período seleccionado
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                      <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                        <div className="text-2xl font-bold text-blue-700 dark:text-blue-400">
+                          {forecastData.breakdown.vacation_days || 0}
+                        </div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">Vacaciones</div>
+                      </div>
+                      <div className="text-center p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                        <div className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">
+                          {forecastData.breakdown.absence_days || 0}
+                        </div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">Ausencias</div>
+                      </div>
+                      <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                        <div className="text-2xl font-bold text-green-700 dark:text-green-400">
+                          {forecastData.breakdown.hld_hours || 0}h
+                        </div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">HLD</div>
+                      </div>
+                      <div className="text-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                        <div className="text-2xl font-bold text-purple-700 dark:text-purple-400">
+                          {forecastData.breakdown.guard_hours || 0}h
+                        </div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">Guardias*</div>
+                        <div className="text-xs text-gray-500 mt-1 italic">*Solo informativo</div>
+                      </div>
+                      <div className="text-center p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">
+                        <div className="text-2xl font-bold text-indigo-700 dark:text-indigo-400">
+                          {forecastData.breakdown.training_hours || 0}h
+                        </div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">Formación</div>
+                      </div>
+                      <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div className="text-2xl font-bold text-gray-700 dark:text-gray-400">
+                          {forecastData.breakdown.other_days || 0}
+                        </div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">Otros</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Tabla de empleados (si vista es team o global) */}
+              {(selectedView === 'team' || selectedView === 'global') && forecastData.employees && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Empleados</CardTitle>
+                    <CardDescription>
+                      {selectedView === 'team' ? 'Forecast por empleado del equipo' : 'Forecast de todos los empleados'}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Empleado</TableHead>
+                          <TableHead className="text-right">Horas Teóricas</TableHead>
+                          <TableHead className="text-right">Horas Reales</TableHead>
+                          <TableHead className="text-right">Eficiencia</TableHead>
+                          <TableHead className="text-right">Valor Económico</TableHead>
+                          <TableHead>Estado</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {forecastData.employees.map((emp) => (
+                          <TableRow key={emp.employee_id}>
+                            <TableCell className="font-medium">{emp.employee_name}</TableCell>
+                            <TableCell className="text-right">{emp.theoretical_hours}h</TableCell>
+                            <TableCell className="text-right">{emp.actual_hours}h</TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end space-x-2">
+                                <span>{emp.efficiency}%</span>
+                                <Progress value={emp.efficiency} className="w-16 h-2" />
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {emp.economic_value ? formatCurrency(emp.economic_value) : 'N/A'}
+                            </TableCell>
+                            <TableCell>{getPerformanceBadge(emp.performance_status)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Tabla de equipos (si vista es global) */}
+              {selectedView === 'global' && forecastData.teams && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Equipos</CardTitle>
+                    <CardDescription>
+                      Forecast consolidado por equipo
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Equipo</TableHead>
+                          <TableHead className="text-right">Empleados</TableHead>
+                          <TableHead className="text-right">Horas Teóricas</TableHead>
+                          <TableHead className="text-right">Horas Reales</TableHead>
+                          <TableHead className="text-right">Eficiencia</TableHead>
+                          <TableHead className="text-right">Valor Económico</TableHead>
+                          <TableHead>Estado</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {forecastData.teams.map((team) => (
+                          <TableRow key={team.team_id}>
+                            <TableCell className="font-medium">{team.team_name}</TableCell>
+                            <TableCell className="text-right">{team.employee_count}</TableCell>
+                            <TableCell className="text-right">{team.total_theoretical_hours}h</TableCell>
+                            <TableCell className="text-right">{team.total_actual_hours}h</TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end space-x-2">
+                                <span>{team.efficiency}%</span>
+                                <Progress value={team.efficiency} className="w-16 h-2" />
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {team.total_economic_value ? formatCurrency(team.total_economic_value) : 'N/A'}
+                            </TableCell>
+                            <TableCell>{getPerformanceBadge(team.performance_status)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              )}
+            </>
           ) : (
             <Card>
               <CardContent className="py-12">
@@ -458,156 +606,6 @@ const ForecastPage = () => {
           )}
         </div>
       </div>
-
-      {/* Contenido adicional del Forecast (desglose, tablas) */}
-      {forecastData ? (
-        <div className="space-y-6">
-          {/* Desglose de actividades */}
-          {forecastData.breakdown && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Desglose de Actividades</CardTitle>
-                <CardDescription>
-                  Detalle de horas por tipo de actividad en el período seleccionado
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                  <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-700 dark:text-blue-400">
-                      {forecastData.breakdown.vacation_days || 0}
-                    </div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">Vacaciones</div>
-                  </div>
-                  <div className="text-center p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
-                    <div className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">
-                      {forecastData.breakdown.absence_days || 0}
-                    </div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">Ausencias</div>
-                  </div>
-                  <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                    <div className="text-2xl font-bold text-green-700 dark:text-green-400">
-                      {forecastData.breakdown.hld_hours || 0}h
-                    </div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">HLD</div>
-                  </div>
-                  <div className="text-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                    <div className="text-2xl font-bold text-purple-700 dark:text-purple-400">
-                      {forecastData.breakdown.guard_hours || 0}h
-                    </div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">Guardias*</div>
-                    <div className="text-xs text-gray-500 mt-1 italic">*Solo informativo</div>
-                  </div>
-                  <div className="text-center p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">
-                    <div className="text-2xl font-bold text-indigo-700 dark:text-indigo-400">
-                      {forecastData.breakdown.training_hours || 0}h
-                    </div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">Formación</div>
-                  </div>
-                  <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <div className="text-2xl font-bold text-gray-700 dark:text-gray-400">
-                      {forecastData.breakdown.other_days || 0}
-                    </div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">Otros</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Tabla de empleados (si vista es team o global) */}
-          {(selectedView === 'team' || selectedView === 'global') && forecastData.employees && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Empleados</CardTitle>
-                <CardDescription>
-                  {selectedView === 'team' ? 'Forecast por empleado del equipo' : 'Forecast de todos los empleados'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Empleado</TableHead>
-                      <TableHead className="text-right">Horas Teóricas</TableHead>
-                      <TableHead className="text-right">Horas Reales</TableHead>
-                      <TableHead className="text-right">Eficiencia</TableHead>
-                      <TableHead className="text-right">Valor Económico</TableHead>
-                      <TableHead>Estado</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {forecastData.employees.map((emp) => (
-                      <TableRow key={emp.employee_id}>
-                        <TableCell className="font-medium">{emp.employee_name}</TableCell>
-                        <TableCell className="text-right">{emp.theoretical_hours}h</TableCell>
-                        <TableCell className="text-right">{emp.actual_hours}h</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end space-x-2">
-                            <span>{emp.efficiency}%</span>
-                            <Progress value={emp.efficiency} className="w-16 h-2" />
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {emp.economic_value ? formatCurrency(emp.economic_value) : 'N/A'}
-                        </TableCell>
-                        <TableCell>{getPerformanceBadge(emp.performance_status)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Tabla de equipos (si vista es global) */}
-          {selectedView === 'global' && forecastData.teams && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Equipos</CardTitle>
-                <CardDescription>
-                  Forecast consolidado por equipo
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Equipo</TableHead>
-                      <TableHead className="text-right">Empleados</TableHead>
-                      <TableHead className="text-right">Horas Teóricas</TableHead>
-                      <TableHead className="text-right">Horas Reales</TableHead>
-                      <TableHead className="text-right">Eficiencia</TableHead>
-                      <TableHead className="text-right">Valor Económico</TableHead>
-                      <TableHead>Estado</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {forecastData.teams.map((team) => (
-                      <TableRow key={team.team_id}>
-                        <TableCell className="font-medium">{team.team_name}</TableCell>
-                        <TableCell className="text-right">{team.employee_count}</TableCell>
-                        <TableCell className="text-right">{team.total_theoretical_hours}h</TableCell>
-                        <TableCell className="text-right">{team.total_actual_hours}h</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end space-x-2">
-                            <span>{team.efficiency}%</span>
-                            <Progress value={team.efficiency} className="w-16 h-2" />
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {team.total_economic_value ? formatCurrency(team.total_economic_value) : 'N/A'}
-                        </TableCell>
-                        <TableCell>{getPerformanceBadge(team.performance_status)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      ) : null}
     </div>
   )
 }

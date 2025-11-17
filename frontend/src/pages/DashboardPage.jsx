@@ -52,6 +52,7 @@ const DashboardPage = () => {
         if (data.success && data.report) {
           // Transformar datos del backend al formato esperado por el frontend
           const report = data.report
+          console.log('📊 Dashboard data recibida:', report) // Debug
           const transformedData = {
             type: report.dashboard_type || report.type || (isAdmin() ? 'admin' : 'manager'),
             statistics: report.statistics || {},
@@ -65,12 +66,16 @@ const DashboardPage = () => {
             recent_activity: report.recent_activity || [],
             alerts: report.alerts || []
           }
+          console.log('📊 Dashboard data transformada:', transformedData) // Debug
           setDashboardData(transformedData)
         } else {
+          console.warn('⚠️ Dashboard: respuesta sin report o success=false', data)
           setDashboardData(getEmptyDashboardData())
         }
       } else {
         // Si el endpoint no existe o hay error, mostrar dashboard vacío
+        const errorText = await response.text()
+        console.error('❌ Dashboard: Error en respuesta', response.status, errorText)
         setDashboardData(getEmptyDashboardData())
       }
     } catch (error) {
