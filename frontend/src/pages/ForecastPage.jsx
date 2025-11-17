@@ -460,7 +460,7 @@ const ForecastPage = () => {
       </div>
 
       {/* Contenido adicional del Forecast (desglose, tablas) */}
-      {forecastData && (
+      {forecastData ? (
         <div className="space-y-6">
           {/* Desglose de actividades */}
           {forecastData.breakdown && (
@@ -607,14 +607,7 @@ const ForecastPage = () => {
             </Card>
           )}
         </div>
-      ) : (
-        <Alert>
-          <AlertCircle className="w-4 h-4" />
-          <AlertDescription>
-            No se pudo cargar el forecast. Por favor, intenta de nuevo.
-          </AlertDescription>
-        </Alert>
-      )}
+      ) : null}
     </div>
   )
 }
