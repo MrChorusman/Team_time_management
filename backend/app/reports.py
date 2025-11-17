@@ -180,6 +180,8 @@ def get_dashboard_report():
         year = request.args.get('year', datetime.now().year, type=int)
         month = request.args.get('month', datetime.now().month, type=int)
         
+        logger.info(f"Generando dashboard para usuario {current_user.id}, rol: {current_user.get_primary_role()}")
+        
         report_data = {
             'period': {
                 'year': year,
@@ -193,15 +195,38 @@ def get_dashboard_report():
             from models.user import User
             
             # Estadísticas generales - contar TODOS los empleados activos (sin filtro de approved)
-            total_employees = Employee.query.filter(Employee.active == True).count()
-            total_teams = Team.query.count()  # Todos los equipos (no hay columna active)
-            pending_approvals = Employee.query.filter(
-                Employee.active == True,
-                Employee.approved == False
-            ).count()
+            try:
+                total_employees = Employee.query.filter(Employee.active == True).count()
+                logger.info(f"Total empleados activos: {total_employees}")
+            except Exception as e:
+                logger.error(f"Error contando empleados: {e}")
+                total_employees = 0
+            
+            try:
+                total_teams = Team.query.count()  # Todos los equipos (no hay columna active)
+                logger.info(f"Total equipos: {total_teams}")
+            except Exception as e:
+                logger.error(f"Error contando equipos: {e}")
+                total_teams = 0
+            
+            try:
+                pending_approvals = Employee.query.filter(
+                    Employee.active == True,
+                    Employee.approved == False
+                ).count()
+                logger.info(f"Pendientes de aprobación: {pending_approvals}")
+            except Exception as e:
+                logger.error(f"Error contando aprobaciones pendientes: {e}")
+                pending_approvals = 0
             
             # Eficiencia global
-            all_teams = Team.query.all()  # Todos los equipos (no hay columna active)
+            try:
+                all_teams = Team.query.all()  # Todos los equipos (no hay columna active)
+                logger.info(f"Equipos encontrados: {len(all_teams)}")
+            except Exception as e:
+                logger.error(f"Error obteniendo equipos: {e}")
+                all_teams = []
+            
             global_efficiency = 0
             team_summaries = []
             teams_with_efficiency = 0
@@ -209,8 +234,9 @@ def get_dashboard_report():
             for team in all_teams:
                 try:
                     team_summary = HoursCalculator.calculate_team_efficiency(team, year, month)
+                    team_dict = team.to_dict()
                     team_summaries.append({
-                        'team': team.to_dict(),
+                        'team': team_dict,
                         'summary': team_summary
                     })
                     team_efficiency = team_summary.get('efficiency', team_summary.get('average_efficiency', 0))
@@ -218,7 +244,7 @@ def get_dashboard_report():
                         global_efficiency += team_efficiency
                         teams_with_efficiency += 1
                 except Exception as e:
-                    logger.error(f"Error calculando eficiencia del equipo {team.id}: {e}")
+                    logger.error(f"Error calculando eficiencia del equipo {team.id if team else 'Unknown'}: {e}", exc_info=True)
                     # Continuar con el siguiente equipo aunque falle uno
                     continue
             
@@ -347,10 +373,12 @@ def get_dashboard_report():
         })
         
     except Exception as e:
-        logger.error(f"Error generando reporte de dashboard: {e}")
+        logger.error(f"Error generando reporte de dashboard: {e}", exc_info=True)
+        import traceback
+        logger.error(f"Traceback completo: {traceback.format_exc()}")
         return jsonify({
             'success': False,
-            'message': 'Error generando reporte de dashboard'
+            'message': f'Error generando reporte de dashboard: {str(e)}'
         }), 500
 
 @reports_bp.route('/export/employee/<int:employee_id>', methods=['GET'])
