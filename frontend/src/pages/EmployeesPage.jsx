@@ -6,7 +6,7 @@ import {
   Filter, 
   Plus,
   Download,
-  Eye,
+  Edit,
   Trash2,
   CheckCircle,
   XCircle,
@@ -452,7 +452,7 @@ const EmployeesPage = () => {
                             }
                           }}
                         >
-                          <Eye className="w-4 h-4" />
+                          <Edit className="w-4 h-4" />
                         </Button>
                         
                         {(isAdmin() || isManager()) && employee.approved === false && employee.active === true && (
