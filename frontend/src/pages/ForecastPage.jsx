@@ -240,9 +240,138 @@ const ForecastPage = () => {
         </div>
       </div>
 
-      {/* Layout: Información a la izquierda, Filtros a la derecha */}
+      {/* Layout: Filtros a la izquierda, Información a la derecha */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Columna izquierda: Información en lista */}
+        {/* Columna izquierda: Filtros */}
+        <div className="lg:col-span-1">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Filter className="w-5 h-5 mr-2" />
+                Filtros
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {/* Selector de Empresa */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Empresa</label>
+                  <Select 
+                    value={selectedCompanyId?.toString() || ''} 
+                    onValueChange={(value) => setSelectedCompanyId(parseInt(value))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar empresa" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {companies.map(company => (
+                        <SelectItem key={company.id} value={company.id.toString()}>
+                          {company.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Selector de Vista */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Vista</label>
+                  <Select value={selectedView} onValueChange={setSelectedView}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {isEmployee() && (
+                        <SelectItem value="employee">Por Empleado</SelectItem>
+                      )}
+                      {(isManager() || isAdmin()) && (
+                        <>
+                          <SelectItem value="team">Por Equipo</SelectItem>
+                          {isAdmin() && <SelectItem value="global">Vista Global</SelectItem>}
+                        </>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Selector de Empleado (si vista es employee) */}
+                {selectedView === 'employee' && (isAdmin() || isManager()) && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Empleado</label>
+                    <Select 
+                      value={selectedEmployeeId?.toString() || ''} 
+                      onValueChange={(value) => setSelectedEmployeeId(parseInt(value))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar empleado" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {employees.map(emp => (
+                          <SelectItem key={emp.id} value={emp.id.toString()}>
+                            {emp.full_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Selector de Equipo (si vista es team) */}
+                {selectedView === 'team' && (isAdmin() || isManager()) && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Equipo</label>
+                    <Select 
+                      value={selectedTeamId?.toString() || ''} 
+                      onValueChange={(value) => setSelectedTeamId(parseInt(value))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar equipo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {teams.map(team => (
+                          <SelectItem key={team.id} value={team.id.toString()}>
+                            {team.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Selector de Período (lista desplegable) */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Período</label>
+                  <Select 
+                    value={`${currentYear}-${currentMonth.toString().padStart(2, '0')}`}
+                    onValueChange={(value) => {
+                      const [year, month] = value.split('-')
+                      setCurrentYear(parseInt(year))
+                      setCurrentMonth(parseInt(month))
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {/* Generar opciones para el año actual: Enero a Diciembre */}
+                      {Array.from({ length: 12 }, (_, i) => {
+                        const month = i + 1
+                        const monthName = monthNames[month - 1]
+                        return (
+                          <SelectItem key={`${currentYear}-${month.toString().padStart(2, '0')}`} value={`${currentYear}-${month.toString().padStart(2, '0')}`}>
+                            {monthName} {currentYear}
+                          </SelectItem>
+                        )
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Columna derecha: Información en lista */}
         <div className="lg:col-span-2 space-y-4">
           {forecastData ? (
             <Card>
@@ -326,151 +455,9 @@ const ForecastPage = () => {
                 </div>
               </CardContent>
             </Card>
-              ) : (
-                <Card>
-                  <CardContent className="py-12">
-                    <div className="text-center text-gray-500">
-                      Selecciona los filtros para ver el forecast
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-
-            {/* Columna derecha: Filtros */}
-            <div className="lg:col-span-1">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Filter className="w-5 h-5 mr-2" />
-                    Filtros
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {/* Selector de Empresa */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Empresa</label>
-                      <Select 
-                        value={selectedCompanyId?.toString() || ''} 
-                        onValueChange={(value) => setSelectedCompanyId(parseInt(value))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar empresa" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {companies.map(company => (
-                            <SelectItem key={company.id} value={company.id.toString()}>
-                              {company.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Selector de Vista */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Vista</label>
-                      <Select value={selectedView} onValueChange={setSelectedView}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {isEmployee() && (
-                            <SelectItem value="employee">Por Empleado</SelectItem>
-                          )}
-                          {(isManager() || isAdmin()) && (
-                            <>
-                              <SelectItem value="team">Por Equipo</SelectItem>
-                              {isAdmin() && <SelectItem value="global">Vista Global</SelectItem>}
-                            </>
-                          )}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Selector de Empleado (si vista es employee) */}
-                    {selectedView === 'employee' && (isAdmin() || isManager()) && (
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Empleado</label>
-                        <Select 
-                          value={selectedEmployeeId?.toString() || ''} 
-                          onValueChange={(value) => setSelectedEmployeeId(parseInt(value))}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Seleccionar empleado" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {employees.map(emp => (
-                              <SelectItem key={emp.id} value={emp.id.toString()}>
-                                {emp.full_name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-
-                    {/* Selector de Equipo (si vista es team) */}
-                    {selectedView === 'team' && (isAdmin() || isManager()) && (
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Equipo</label>
-                        <Select 
-                          value={selectedTeamId?.toString() || ''} 
-                          onValueChange={(value) => setSelectedTeamId(parseInt(value))}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Seleccionar equipo" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {teams.map(team => (
-                              <SelectItem key={team.id} value={team.id.toString()}>
-                                {team.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-
-                    {/* Selector de Período (lista desplegable) */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Período</label>
-                      <Select 
-                        value={`${currentYear}-${currentMonth.toString().padStart(2, '0')}`}
-                        onValueChange={(value) => {
-                          const [year, month] = value.split('-')
-                          setCurrentYear(parseInt(year))
-                          setCurrentMonth(parseInt(month))
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {/* Generar opciones para los últimos 12 meses */}
-                          {Array.from({ length: 12 }, (_, i) => {
-                            const date = new Date()
-                            date.setMonth(date.getMonth() - i)
-                            const year = date.getFullYear()
-                            const month = date.getMonth() + 1
-                            const monthName = monthNames[month - 1]
-                            return (
-                              <SelectItem key={`${year}-${month.toString().padStart(2, '0')}`} value={`${year}-${month.toString().padStart(2, '0')}`}>
-                                {monthName} {year}
-                              </SelectItem>
-                            )
-                          })}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </>
-      )}
+          )}
+        </div>
+      </div>
 
       {/* Contenido adicional del Forecast (desglose, tablas) */}
       {forecastData && (
