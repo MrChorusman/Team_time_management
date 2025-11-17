@@ -231,38 +231,68 @@ def get_dashboard_report():
             # Dashboard de manager - equipos gestionados
             managed_teams = current_user.get_managed_teams()
             
+            # Incluir también el equipo del manager si es miembro de uno
+            if current_user.employee and current_user.employee.team_id:
+                manager_team = Team.query.get(current_user.employee.team_id)
+                if manager_team and manager_team not in managed_teams:
+                    managed_teams.append(manager_team)
+            
             team_summaries = []
+            team_performance = []
             total_employees = 0
-            average_efficiency = 0
+            total_efficiency_sum = 0
+            total_efficiency_count = 0
             
             for team in managed_teams:
                 team_summary = HoursCalculator.calculate_team_efficiency(team, year, month)
+                
+                # Usar el employee_count del summary que ya incluye al manager si está en el equipo
+                employee_count = team_summary.get('employee_count', 0)
+                
                 team_summaries.append({
                     'team': team.to_dict(include_employees=True),
                     'summary': team_summary
                 })
-                total_employees += len(team.active_employees)
-                average_efficiency += team_summary.get('average_efficiency', 0)
+                
+                # Preparar datos para team_performance (formato esperado por frontend)
+                team_performance.append({
+                    'team_name': team.name,
+                    'team_id': team.id,
+                    'members_count': employee_count,
+                    'efficiency': team_summary.get('efficiency', team_summary.get('average_efficiency', 0))
+                })
+                
+                total_employees += employee_count
+                
+                # Calcular eficiencia promedio (incluyendo al manager si está en el equipo)
+                team_efficiency = team_summary.get('efficiency', team_summary.get('average_efficiency', 0))
+                if team_efficiency > 0:
+                    total_efficiency_sum += team_efficiency
+                    total_efficiency_count += 1
             
-            if managed_teams:
-                average_efficiency = average_efficiency / len(managed_teams)
+            # Calcular eficiencia promedio
+            average_efficiency = (total_efficiency_sum / total_efficiency_count) if total_efficiency_count > 0 else 0
             
             # Empleados pendientes de aprobación
+            team_ids = [team.id for team in managed_teams]
             pending_approvals = Employee.query.filter(
-                Employee.team_id.in_([team.id for team in managed_teams]),
+                Employee.team_id.in_(team_ids),
                 Employee.active == True,
                 Employee.approved == False
             ).count()
             
             report_data.update({
                 'dashboard_type': 'manager',
+                'type': 'manager',  # Formato esperado por frontend
                 'statistics': {
                     'managed_teams': len(managed_teams),
                     'total_employees': total_employees,
                     'pending_approvals': pending_approvals,
                     'average_efficiency': round(average_efficiency, 2)
                 },
-                'team_summaries': team_summaries
+                'team_summaries': team_summaries,
+                'team_performance': team_performance,  # Formato esperado por frontend
+                'pending_requests': []  # Inicializar como array vacío
             })
         
         elif current_user.is_employee():

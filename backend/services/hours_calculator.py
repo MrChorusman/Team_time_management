@@ -162,7 +162,14 @@ class HoursCalculator:
             'employee_count': 0
         }
         
-        active_employees = team.active_employees
+        active_employees = list(team.active_employees)
+        
+        # Incluir también al manager si es miembro del equipo pero no está en active_employees
+        # (por ejemplo, si no está aprobado pero es manager)
+        if team.manager and team.manager.team_id == team.id and team.manager.active:
+            manager_in_list = any(emp.id == team.manager.id for emp in active_employees)
+            if not manager_in_list:
+                active_employees.append(team.manager)
         
         for employee in active_employees:
             emp_efficiency = HoursCalculator.calculate_employee_efficiency(employee, year, month)
@@ -183,6 +190,7 @@ class HoursCalculator:
             team_summary['efficiency'] = round(
                 (team_summary['total_actual_hours'] / team_summary['total_theoretical_hours']) * 100, 2
             )
+            team_summary['average_efficiency'] = team_summary['efficiency']  # Alias para compatibilidad
         
         team_summary['employee_count'] = len(active_employees)
         

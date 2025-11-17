@@ -43,13 +43,32 @@ const DashboardPage = () => {
     setLoading(true)
     try {
       // Obtener datos reales del backend
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/dashboard/stats`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/reports/dashboard`, {
         credentials: 'include'
       })
       
       if (response.ok) {
         const data = await response.json()
-        setDashboardData(data)
+        if (data.success && data.report) {
+          // Transformar datos del backend al formato esperado por el frontend
+          const report = data.report
+          const transformedData = {
+            type: report.dashboard_type || report.type || 'manager',
+            statistics: report.statistics || {},
+            team_performance: report.team_performance || (report.team_summaries || []).map(ts => ({
+              team_name: ts.team?.name || 'Sin nombre',
+              team_id: ts.team?.id,
+              members_count: ts.summary?.employee_count || ts.team?.employee_count || 0,
+              efficiency: ts.summary?.efficiency || 0
+            })),
+            pending_requests: report.pending_requests || [],
+            recent_activity: report.recent_activity || [],
+            alerts: report.alerts || []
+          }
+          setDashboardData(transformedData)
+        } else {
+          setDashboardData(getEmptyDashboardData())
+        }
       } else {
         // Si el endpoint no existe o hay error, mostrar dashboard vacío
         setDashboardData(getEmptyDashboardData())
