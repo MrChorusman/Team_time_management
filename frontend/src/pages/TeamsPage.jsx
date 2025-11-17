@@ -571,8 +571,11 @@ const TeamsPage = () => {
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation()
+                      e.preventDefault()
+                      console.log('Botón de edición clickeado, equipo:', team)
                       setSelectedTeam(team)
                       setShowEditTeamDialog(true)
+                      console.log('Estado actualizado: selectedTeam y showEditTeamDialog')
                     }}
                   >
                     <Edit className="w-4 h-4" />
