@@ -419,6 +419,7 @@ def assign_manager(team_id):
         team.updated_at = datetime.utcnow()
         
         # Asignar rol de manager al usuario del empleado
+        from models.user import Role
         manager_role = Role.query.filter_by(name='manager').first()
         if manager_role and employee.user and manager_role not in employee.user.roles:
             employee.user.roles.append(manager_role)

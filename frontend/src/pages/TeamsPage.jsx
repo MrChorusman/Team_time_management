@@ -31,6 +31,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Textarea } from '../components/ui/textarea'
 import { Alert, AlertDescription } from '../components/ui/alert'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
+import { toast } from 'sonner'
 
 const TeamsPage = () => {
   const { user, employee, isAdmin, isManager } = useAuth()
@@ -40,10 +41,15 @@ const TeamsPage = () => {
   const [selectedTeam, setSelectedTeam] = useState(null)
   const [showTeamDetail, setShowTeamDetail] = useState(false)
   const [showNewTeamDialog, setShowNewTeamDialog] = useState(false)
+  const [showEditTeamDialog, setShowEditTeamDialog] = useState(false)
   const [teamDetailLoading, setTeamDetailLoading] = useState(false)
+  const [employees, setEmployees] = useState([])
 
   useEffect(() => {
     loadTeams()
+    if (isAdmin()) {
+      loadEmployees()
+    }
   }, [])
 
   // Cargar detalles del equipo cuando se selecciona
@@ -74,6 +80,59 @@ const TeamsPage = () => {
       setTeams([])
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadEmployees = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/employees?approved_only=true`, {
+        credentials: 'include'
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setEmployees(data.employees || [])
+      }
+    } catch (error) {
+      console.error('Error cargando empleados:', error)
+    }
+  }
+
+  const handleAssignManager = async (teamId, employeeId) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/teams/${teamId}/assign-manager`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          employee_id: employeeId
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || 'Error asignando manager')
+      }
+
+      const data = await response.json()
+      
+      if (data.success) {
+        // Recargar equipos y cerrar diálogo
+        await loadTeams()
+        setShowEditTeamDialog(false)
+        // Si el equipo estaba seleccionado, actualizar sus datos
+        if (selectedTeam && selectedTeam.id === teamId) {
+          await loadTeamDetails(teamId)
+        }
+        toast.success('Manager asignado exitosamente')
+      }
+    } catch (error) {
+      console.error('Error asignando manager:', error)
+      toast.error('Error al asignar manager', {
+        description: error.message || 'Por favor, intenta de nuevo.'
+      })
     }
   }
 
@@ -348,6 +407,50 @@ const TeamsPage = () => {
               </DialogContent>
             </Dialog>
           )}
+
+          {/* Dialog de edición de equipo */}
+          {selectedTeam && (
+            <Dialog open={showEditTeamDialog} onOpenChange={setShowEditTeamDialog}>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Editar Equipo</DialogTitle>
+                  <DialogDescription>
+                    Asigna un manager al equipo {selectedTeam.name}
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="manager">Manager</Label>
+                    <Select
+                      value={selectedTeam.manager_id?.toString() || ''}
+                      onValueChange={(value) => {
+                        if (value) {
+                          handleAssignManager(selectedTeam.id, parseInt(value))
+                        } else {
+                          // Si se selecciona "Sin manager", actualizar el equipo sin manager
+                          handleAssignManager(selectedTeam.id, null)
+                        }
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar manager" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Sin manager</SelectItem>
+                        {employees
+                          .filter(emp => emp.approved && emp.active)
+                          .map(emp => (
+                            <SelectItem key={emp.id} value={emp.id.toString()}>
+                              {emp.full_name}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
       </div>
 
@@ -458,7 +561,15 @@ const TeamsPage = () => {
                 </Button>
                 
                 {(isAdmin() || isManager()) && (
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setSelectedTeam(team)
+                      setShowEditTeamDialog(true)
+                    }}
+                  >
                     <Edit className="w-4 h-4" />
                   </Button>
                 )}
