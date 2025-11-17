@@ -409,15 +409,20 @@ const TeamsPage = () => {
           )}
 
           {/* Dialog de edición de equipo */}
-          {selectedTeam && (
-            <Dialog open={showEditTeamDialog} onOpenChange={setShowEditTeamDialog}>
-              <DialogContent className="max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Editar Equipo</DialogTitle>
-                  <DialogDescription>
-                    Asigna un manager al equipo {selectedTeam.name}
-                  </DialogDescription>
-                </DialogHeader>
+          <Dialog open={showEditTeamDialog && !!selectedTeam} onOpenChange={(open) => {
+            if (!open) {
+              setShowEditTeamDialog(false)
+              setSelectedTeam(null)
+            }
+          }}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Editar Equipo</DialogTitle>
+                <DialogDescription>
+                  {selectedTeam ? `Asigna un manager al equipo ${selectedTeam.name}` : 'Asigna un manager al equipo'}
+                </DialogDescription>
+              </DialogHeader>
+              {selectedTeam && (
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
                     <Label htmlFor="manager">Manager</Label>
@@ -448,9 +453,9 @@ const TeamsPage = () => {
                     </Select>
                   </div>
                 </div>
-              </DialogContent>
-            </Dialog>
-          )}
+              )}
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
