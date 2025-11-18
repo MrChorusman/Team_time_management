@@ -427,9 +427,9 @@ const TeamsPage = () => {
                   <div className="space-y-2">
                     <Label htmlFor="manager">Manager</Label>
                     <Select
-                      value={selectedTeam.manager_id?.toString() || ''}
+                      value={selectedTeam.manager_id ? selectedTeam.manager_id.toString() : 'none'}
                       onValueChange={(value) => {
-                        if (value) {
+                        if (value && value !== 'none') {
                           handleAssignManager(selectedTeam.id, parseInt(value))
                         } else {
                           // Si se selecciona "Sin manager", actualizar el equipo sin manager
@@ -441,7 +441,7 @@ const TeamsPage = () => {
                         <SelectValue placeholder="Seleccionar manager" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Sin manager</SelectItem>
+                        <SelectItem value="none">Sin manager</SelectItem>
                         {employees
                           .filter(emp => emp.approved && emp.active)
                           .map(emp => (
