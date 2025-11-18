@@ -1,5 +1,9 @@
 from datetime import datetime
+from types import SimpleNamespace
+
 from .base import db
+from .team_membership import TeamMembership
+from .project import project_team_link
 
 class Team(db.Model):
     """Modelo para equipos de trabajo"""
@@ -17,8 +21,24 @@ class Team(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relaciones
-    employees = db.relationship('Employee', backref='team', lazy='dynamic', 
-                               foreign_keys='Employee.team_id')
+    employees = db.relationship(
+        'Employee',
+        backref='team',
+        lazy='dynamic',
+        foreign_keys='Employee.team_id'
+    )
+    memberships = db.relationship(
+        'TeamMembership',
+        back_populates='team',
+        cascade='all, delete-orphan',
+        lazy='selectin'
+    )
+    projects = db.relationship(
+        'Project',
+        secondary=project_team_link,
+        back_populates='teams',
+        lazy='selectin'
+    )
     
     # Relación con el manager (evitar referencia circular)
     manager = db.relationship('Employee', foreign_keys=[manager_id], 
@@ -26,21 +46,51 @@ class Team(db.Model):
     
     @property
     def employee_count(self):
-        """Retorna el número de empleados en el equipo"""
-        # Filtrar por empleados activos si la columna existe en Employee
-        try:
-            return self.employees.filter_by(active=True).count()
-        except:
-            return self.employees.count()
+        """Retorna el número de empleados en el equipo considerando membresías activas."""
+        return len(self._active_memberships())
+
+    def _active_memberships(self):
+        def build_membership_stub(employee):
+            return SimpleNamespace(
+                id=None,
+                employee=employee,
+                employee_id=employee.id if employee else None,
+                team_id=self.id,
+                allocation_percent=None,
+                role=None,
+                is_primary=True if employee and employee.team_id == self.id else False,
+                active=True
+            )
+
+        if not self.memberships or len(self.memberships) == 0:
+            # Fallback temporal para compatibilidad con datos anteriores
+            fallback_employees = []
+            try:
+                fallback_employees = self.employees.filter_by(active=True).all()
+            except Exception:
+                fallback_employees = self.employees.all()
+
+            memberships = [build_membership_stub(employee) for employee in fallback_employees]
+        else:
+            memberships = [
+                membership for membership in self.memberships
+                if membership.active and membership.employee and membership.employee.active
+            ]
+
+        # Asegurar que el manager esté incluido si es miembro activo
+        if self.manager and self.manager.active:
+            manager_present = any(
+                membership.employee_id == self.manager.id for membership in memberships
+            )
+            if not manager_present and self.manager.team_id == self.id:
+                memberships.append(build_membership_stub(self.manager))
+
+        return memberships
     
     @property
     def active_employees(self):
-        """Retorna solo los empleados activos del equipo"""
-        # Filtrar por empleados activos si la columna existe en Employee
-        try:
-            return self.employees.filter_by(active=True).all()
-        except:
-            return self.employees.all()
+        """Retorna solo los empleados activos del equipo mediante membresías."""
+        return [membership.employee for membership in self._active_memberships()]
     
     def get_team_calendar_activities(self, start_date=None, end_date=None):
         """Obtiene todas las actividades del calendario del equipo"""

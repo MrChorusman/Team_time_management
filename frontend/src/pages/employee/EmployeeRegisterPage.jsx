@@ -36,10 +36,29 @@ const EmployeeRegisterPage = () => {
   const [loadingTeams, setLoadingTeams] = useState(true)
   const [hasSummerSchedule, setHasSummerSchedule] = useState(false)
   const [selectedSummerMonths, setSelectedSummerMonths] = useState([])
+  const [selectedTeamIds, setSelectedTeamIds] = useState([])
+  const [primaryTeamId, setPrimaryTeamId] = useState(null)
   const [invitationToken, setInvitationToken] = useState(null)
   const [invitationEmail, setInvitationEmail] = useState(null)
   const [tokenValidating, setTokenValidating] = useState(false)
   const [tokenError, setTokenError] = useState(null)
+
+  const toggleTeamSelection = (teamId) => {
+    setSelectedTeamIds((prev) => {
+      if (prev.includes(teamId)) {
+        const updated = prev.filter(id => id !== teamId)
+        if (primaryTeamId === teamId) {
+          setPrimaryTeamId(updated[0] || null)
+        }
+        return updated
+      }
+      const updated = [...prev, teamId]
+      if (!primaryTeamId) {
+        setPrimaryTeamId(teamId)
+      }
+      return updated
+    })
+  }
   
   // Estados para países, regiones y ciudades desde BD
   const [countries, setCountries] = useState([])
@@ -235,12 +254,17 @@ const EmployeeRegisterPage = () => {
     setError(null)
     
     try {
-      // Validar que se haya seleccionado un equipo
-      if (!data.team) {
-        setError('Por favor, selecciona un equipo')
+      const normalizedTeamIds = selectedTeamIds.length > 0
+        ? selectedTeamIds
+        : (primaryTeamId ? [primaryTeamId] : [])
+
+      if (normalizedTeamIds.length === 0) {
+        setError('Por favor, selecciona al menos un equipo')
         setIsSubmitting(false)
         return
       }
+
+      const effectivePrimaryTeamId = primaryTeamId || normalizedTeamIds[0]
 
       // Validar horario de verano si está activado
       if (hasSummerSchedule) {
@@ -259,7 +283,7 @@ const EmployeeRegisterPage = () => {
       // Preparar datos del empleado
       const employeeData = {
         full_name: data.fullName,
-        team_id: parseInt(data.team), // CRÍTICO: Equipo es obligatorio
+        team_id: parseInt(effectivePrimaryTeamId, 10),
         country: data.country,
         region: data.region,
         city: data.city,
@@ -271,6 +295,8 @@ const EmployeeRegisterPage = () => {
         hours_summer: hasSummerSchedule ? parseFloat(data.hoursSummer) : null,
         summer_months: hasSummerSchedule ? selectedSummerMonths : []
       }
+
+      employeeData.team_ids = normalizedTeamIds.map((id) => parseInt(id, 10))
 
       // Llamada real al API para crear el empleado
       const response = await employeeService.createEmployee(employeeData)
@@ -492,33 +518,72 @@ const EmployeeRegisterPage = () => {
                 )}
               </div>
 
-              {/* Equipo */}
-              <div className="space-y-2">
-                <Label htmlFor="team">Equipo *</Label>
-                <Select 
-                  onValueChange={(value) => setValue('team', value)}
-                  disabled={loadingTeams}
-                >
-                  <SelectTrigger>
-                    <Users className="w-4 h-4 mr-2" />
-                    <SelectValue placeholder={loadingTeams ? "Cargando equipos..." : "Selecciona equipo"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {teams.map((team) => (
-                      <SelectItem key={team.id} value={team.id.toString()}>
-                        {team.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.team && (
-                  <p className="text-sm text-red-600 dark:text-red-400">
-                    El equipo es requerido
-                  </p>
+              {/* Equipos */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Equipos *</Label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Selecciona uno o varios equipos a los que perteneces
+                    </p>
+                  </div>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {selectedTeamIds.length} seleccionados
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {teams.map((team) => {
+                    const selected = selectedTeamIds.includes(team.id)
+                    return (
+                      <button
+                        key={team.id}
+                        type="button"
+                        disabled={loadingTeams}
+                        onClick={() => toggleTeamSelection(team.id)}
+                        className={`flex items-center justify-between border rounded-lg px-3 py-2 text-left transition ${
+                          selected
+                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-200'
+                            : 'border-gray-200 hover:border-blue-200 dark:border-gray-700 dark:hover:border-blue-800'
+                        }`}
+                      >
+                        <span className="text-sm font-medium">{team.name}</span>
+                        {selected && (
+                          <span className="text-xs font-semibold text-blue-600 dark:text-blue-300">
+                            Seleccionado
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+                {selectedTeamIds.length > 0 && (
+                  <div className="pt-2 space-y-2">
+                    <Label>Equipo principal</Label>
+                    <Select
+                      value={primaryTeamId?.toString() || ''}
+                      onValueChange={(value) => setPrimaryTeamId(parseInt(value, 10))}
+                    >
+                      <SelectTrigger>
+                        <Users className="w-4 h-4 mr-2" />
+                        <SelectValue placeholder="Selecciona equipo principal" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {selectedTeamIds.map((teamId) => {
+                          const team = teams.find((t) => t.id === teamId)
+                          if (!team) return null
+                          return (
+                            <SelectItem key={team.id} value={team.id.toString()}>
+                              {team.name}
+                            </SelectItem>
+                          )
+                        })}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      El equipo principal se utilizará como referencia por defecto hasta que un manager configure los porcentajes.
+                    </p>
+                  </div>
                 )}
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Selecciona el equipo al que perteneces
-                </p>
               </div>
 
               {/* Ubicación */}

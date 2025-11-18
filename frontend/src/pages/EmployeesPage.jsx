@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { 
   Users, 
@@ -18,7 +19,9 @@ import {
   Calendar,
   TrendingUp,
   AlertCircle,
-  Shield
+  Shield,
+  Briefcase,
+  PlusCircle
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { Button } from '../components/ui/button'
@@ -36,6 +39,8 @@ import { StatsCard } from '../components/ui/stats-card'
 import { Label } from '../components/ui/label'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import InviteEmployeeModal from '../components/employees/InviteEmployeeModal'
+import { Checkbox } from '../components/ui/checkbox'
+import teamService from '../services/teamService'
 
 const EmployeesPage = () => {
   const { user, isAdmin, isManager, isEmployee } = useAuth()
@@ -50,10 +55,52 @@ const EmployeesPage = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
   const [availableRoles] = useState(['admin', 'manager', 'employee', 'viewer'])
+  const [availableTeams, setAvailableTeams] = useState([])
+  const [memberships, setMemberships] = useState([])
+  const [membershipEdits, setMembershipEdits] = useState({})
+  const [loadingMemberships, setLoadingMemberships] = useState(false)
+  const [showManageTeamsDialog, setShowManageTeamsDialog] = useState(false)
+  const [newMembership, setNewMembership] = useState({
+    teamId: '',
+    allocationPercent: '',
+    role: '',
+    isPrimary: false
+  })
 
   useEffect(() => {
     loadEmployees()
   }, [statusFilter, teamFilter])
+
+  useEffect(() => {
+    loadAvailableTeams()
+  }, [])
+
+  useEffect(() => {
+    if (selectedEmployee?.id) {
+      loadEmployeeMemberships(selectedEmployee.id)
+    } else {
+      setMemberships([])
+    }
+  }, [selectedEmployee?.id])
+
+  useEffect(() => {
+    if (!showEmployeeDetail) {
+      setShowManageTeamsDialog(false)
+    }
+  }, [showEmployeeDetail])
+
+  useEffect(() => {
+    if (!showManageTeamsDialog) {
+      setNewMembership({
+        teamId: '',
+        allocationPercent: '',
+        role: '',
+        isPrimary: false
+      })
+    }
+  }, [showManageTeamsDialog])
+
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
   const loadEmployees = async () => {
     setLoading(true)
@@ -79,6 +126,197 @@ const EmployeesPage = () => {
       setEmployees([])
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadAvailableTeams = async () => {
+    try {
+      const response = await teamService.getAllTeams()
+      if (response.success && response.teams) {
+        setAvailableTeams(response.teams)
+      }
+    } catch (error) {
+      console.error('Error cargando equipos disponibles:', error)
+    }
+  }
+
+  const buildMembershipEdits = (records) => {
+    const initial = {}
+    records.forEach((membership) => {
+      if (membership.id) {
+        initial[membership.id] = {
+          allocation_percent: membership.allocation_percent ?? '',
+          role: membership.role || ''
+        }
+      }
+    })
+    return initial
+  }
+
+  const loadEmployeeMemberships = async (employeeId) => {
+    if (!employeeId) return
+    try {
+      setLoadingMemberships(true)
+      const response = await fetch(`${API_BASE_URL}/employees/${employeeId}/memberships`, {
+        credentials: 'include'
+      })
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success) {
+          const list = data.memberships || []
+          setMemberships(list)
+          setMembershipEdits(buildMembershipEdits(list))
+          setSelectedEmployee((prev) => prev && prev.id === employeeId ? { ...prev, teams: list } : prev)
+          setEmployees((prev) => prev.map((emp) => emp.id === employeeId ? { ...emp, teams: list } : emp))
+        }
+      }
+    } catch (error) {
+      console.error('Error cargando membresías:', error)
+    } finally {
+      setLoadingMemberships(false)
+    }
+  }
+
+  const updateMembershipEdit = (membershipId, field, value) => {
+    setMembershipEdits((prev) => ({
+      ...prev,
+      [membershipId]: {
+        ...prev[membershipId],
+        [field]: value
+      }
+    }))
+  }
+
+  const handleAddMembership = async () => {
+    if (!selectedEmployee?.id || !newMembership.teamId) {
+      toast.error('Selecciona un equipo para asignar')
+      return
+    }
+    if (memberships.some((membership) => membership.team_id?.toString() === newMembership.teamId)) {
+      toast.error('El empleado ya pertenece a ese equipo')
+      return
+    }
+
+    const payload = {
+      team_id: parseInt(newMembership.teamId, 10),
+      role: newMembership.role || undefined,
+      is_primary: newMembership.isPrimary,
+      allocation_percent: newMembership.allocationPercent !== ''
+        ? parseFloat(newMembership.allocationPercent)
+        : null
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/employees/${selectedEmployee.id}/memberships`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || 'Error asignando equipo')
+      }
+
+      toast.success('Equipo asignado correctamente')
+      setNewMembership({
+        teamId: '',
+        allocationPercent: '',
+        role: '',
+        isPrimary: false
+      })
+      await loadEmployeeMemberships(selectedEmployee.id)
+    } catch (error) {
+      console.error('Error asignando equipo:', error)
+      toast.error('No se pudo asignar el equipo', {
+        description: error.message
+      })
+    }
+  }
+
+  const handleSaveMembership = async (membershipId) => {
+    if (!selectedEmployee?.id) return
+    const edits = membershipEdits[membershipId]
+    if (!edits) return
+
+    const payload = {
+      role: edits.role,
+      allocation_percent: edits.allocation_percent !== ''
+        ? parseFloat(edits.allocation_percent)
+        : null
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/employees/${selectedEmployee.id}/memberships/${membershipId}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || 'Error actualizando membresía')
+      }
+
+      toast.success('Membresía actualizada')
+      await loadEmployeeMemberships(selectedEmployee.id)
+    } catch (error) {
+      console.error('Error actualizando membresía:', error)
+      toast.error('No se pudo actualizar la membresía', {
+        description: error.message
+      })
+    }
+  }
+
+  const handleSetPrimaryMembership = async (membershipId) => {
+    if (!selectedEmployee?.id) return
+    try {
+      const response = await fetch(`${API_BASE_URL}/employees/${selectedEmployee.id}/memberships/${membershipId}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ is_primary: true })
+      })
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || 'Error actualizando membresía')
+      }
+      toast.success('Equipo principal actualizado')
+      await loadEmployeeMemberships(selectedEmployee.id)
+    } catch (error) {
+      console.error('Error estableciendo equipo principal:', error)
+      toast.error('No se pudo actualizar el equipo principal', {
+        description: error.message
+      })
+    }
+  }
+
+  const handleRemoveMembership = async (membershipId) => {
+    if (!selectedEmployee?.id) return
+    try {
+      const response = await fetch(`${API_BASE_URL}/employees/${selectedEmployee.id}/memberships/${membershipId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      })
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || 'Error eliminando membresía')
+      }
+      toast.success('Membresía eliminada')
+      await loadEmployeeMemberships(selectedEmployee.id)
+    } catch (error) {
+      console.error('Error eliminando membresía:', error)
+      toast.error('No se pudo eliminar la membresía', {
+        description: error.message
+      })
     }
   }
 
@@ -109,10 +347,14 @@ const EmployeesPage = () => {
   }
 
   const filteredEmployees = employees.filter(employee => {
-    const teamName = employee.team_name || employee.team?.name || ''
-    const matchesSearch = employee.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         employee.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         teamName.toLowerCase().includes(searchTerm.toLowerCase())
+    const teamNames = employee.teams?.map(team => team.team_name || team.name).filter(Boolean) || []
+    const primaryTeamName = employee.team_name || employee.team?.name || ''
+    const searchableTeams = [...teamNames, primaryTeamName].filter(Boolean).join(' ').toLowerCase()
+    const employeeEmail = employee.email ? employee.email.toLowerCase() : ''
+    const matchesSearch =
+      employee.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      employeeEmail.includes(searchTerm.toLowerCase()) ||
+      searchableTeams.includes(searchTerm.toLowerCase())
     
     // Convertir boolean a string para comparar con el filtro
     let employeeStatus = 'pending'
@@ -123,7 +365,7 @@ const EmployeesPage = () => {
     }
     
     const matchesStatus = statusFilter === 'all' || employeeStatus === statusFilter
-    const matchesTeam = teamFilter === 'all' || teamName === teamFilter
+    const matchesTeam = teamFilter === 'all' || teamNames.includes(teamFilter) || primaryTeamName === teamFilter
     
     return matchesSearch && matchesStatus && matchesTeam
   })
@@ -238,6 +480,47 @@ const EmployeesPage = () => {
   }
 
 
+  const renderTeamBadges = (employee) => {
+    const list = employee.teams && employee.teams.length > 0
+      ? employee.teams
+      : (employee.team_name || employee.team?.name)
+        ? [{
+            team_id: employee.team_id,
+            team_name: employee.team_name || employee.team?.name,
+            allocation_percent: null,
+            is_primary: true
+          }]
+        : []
+
+    if (list.length === 0) {
+      return (
+        <Badge variant="outline">
+          Sin equipo
+        </Badge>
+      )
+    }
+
+    return (
+      <div className="flex flex-wrap gap-2">
+        {list.slice(0, 2).map((team) => (
+          <Badge
+            key={`${employee.id}-${team.team_id || team.team_name}`}
+            variant={team.is_primary ? 'default' : 'outline'}
+            className="flex items-center space-x-1"
+          >
+            <span>{team.team_name || team.name}</span>
+            {team.allocation_percent ? (
+              <span className="text-xs opacity-80">{team.allocation_percent}%</span>
+            ) : null}
+          </Badge>
+        ))}
+        {list.length > 2 && (
+          <Badge variant="secondary">+{list.length - 2}</Badge>
+        )}
+      </div>
+    )
+  }
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -313,11 +596,11 @@ const EmployeesPage = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos los equipos</SelectItem>
-                <SelectItem value="Frontend Development">Frontend Development</SelectItem>
-                <SelectItem value="Backend Development">Backend Development</SelectItem>
-                <SelectItem value="QA Testing">QA Testing</SelectItem>
-                <SelectItem value="UI/UX Design">UI/UX Design</SelectItem>
-                <SelectItem value="DevOps">DevOps</SelectItem>
+                {availableTeams.map((team) => (
+                  <SelectItem key={team.id} value={team.name}>
+                    {team.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -366,11 +649,7 @@ const EmployeesPage = () => {
                       </div>
                     </TableCell>
                     
-                    <TableCell>
-                      <Badge variant="outline">
-                        {employee.team_name || employee.team?.name || 'Sin equipo'}
-                      </Badge>
-                    </TableCell>
+                    <TableCell>{renderTeamBadges(employee)}</TableCell>
                     
                     <TableCell>
                       <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
@@ -644,6 +923,95 @@ const EmployeesPage = () => {
                       )}
                     </CardContent>
                   </Card>
+
+                  <div className="md:col-span-2">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Equipos asignados</CardTitle>
+                        <CardDescription>Distribución del empleado por equipos</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {loadingMemberships ? (
+                          <div className="py-4 text-center">
+                            <LoadingSpinner size="sm" text="Cargando equipos..." />
+                          </div>
+                        ) : memberships.length > 0 ? (
+                          memberships.map((membership) => (
+                            <div key={`${membership.team_id}-${membership.id || 'temp'}`} className="border rounded-lg p-3 flex flex-col gap-1">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="font-semibold">{membership.team_name || 'Equipo sin nombre'}</p>
+                                  {membership.role && (
+                                    <p className="text-xs text-gray-500">{membership.role}</p>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  {membership.allocation_percent !== null && (
+                                    <Badge variant="secondary">{membership.allocation_percent}%</Badge>
+                                  )}
+                                  {membership.is_primary && (
+                                    <Badge variant="outline">Principal</Badge>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-sm text-gray-500">
+                            Sin asignaciones registradas. Usa el botón para gestionarlas.
+                          </p>
+                        )}
+
+                        {(isAdmin() || isManager()) && (
+                          <Button variant="outline" size="sm" onClick={() => setShowManageTeamsDialog(true)}>
+                            <Users className="w-4 h-4 mr-2" />
+                            Gestionar equipos
+                          </Button>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Proyectos</CardTitle>
+                        <CardDescription>Asignaciones y porcentajes por proyecto</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {selectedEmployee.projects && selectedEmployee.projects.length > 0 ? (
+                          selectedEmployee.projects.map((project) => (
+                            <div key={`${project.project_id}-${project.id || 'assignment'}`} className="border rounded-lg p-3 flex items-center justify-between">
+                              <div>
+                                <p className="font-semibold">{project.project_name || `Proyecto ${project.project_id}`}</p>
+                                <p className="text-xs text-gray-500">
+                                  {project.team_name ? `Equipo: ${project.team_name}` : 'Sin equipo asociado'}
+                                </p>
+                                {project.role && (
+                                  <p className="text-xs text-gray-500">Rol: {project.role}</p>
+                                )}
+                              </div>
+                              <div className="text-right">
+                                {project.allocation_percent !== null && (
+                                  <p className="text-sm font-semibold">{project.allocation_percent}%</p>
+                                )}
+                                <p className="text-xs text-gray-500">ID: {project.project_code || project.project_id}</p>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-sm text-gray-500">Este empleado no tiene proyectos asignados.</p>
+                        )}
+
+                        <Button variant="outline" size="sm" asChild>
+                          <Link to="/projects" className="flex items-center">
+                            <Briefcase className="w-4 h-4 mr-2" />
+                            Ver panel de proyectos
+                          </Link>
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </div>
                 </div>
               </TabsContent>
               
@@ -755,6 +1123,181 @@ const EmployeesPage = () => {
       )}
 
       {/* Estadísticas como headers expandibles - AL FINAL */}
+
+      <Dialog open={showManageTeamsDialog} onOpenChange={setShowManageTeamsDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Gestionar equipos de {selectedEmployee?.full_name || 'empleado'}</DialogTitle>
+            <DialogDescription>
+              Ajusta las asignaciones del empleado entre diferentes equipos y define los porcentajes de dedicación.
+            </DialogDescription>
+          </DialogHeader>
+          {!selectedEmployee ? (
+            <p className="text-sm text-gray-500">
+              Selecciona un empleado para actualizar sus equipos.
+            </p>
+          ) : (
+            <>
+              {loadingMemberships ? (
+                <div className="py-6 text-center">
+                  <LoadingSpinner size="sm" text="Cargando equipos..." />
+                </div>
+              ) : (
+                <div className="space-y-4 max-h-[45vh] overflow-y-auto pr-1">
+                  {memberships.length > 0 ? memberships.map((membership) => (
+                    <Card key={`${membership.team_id}-${membership.id || 'fallback'}`}>
+                      <CardContent className="space-y-3 pt-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-semibold">{membership.team_name || 'Equipo sin nombre'}</p>
+                            {membership.role && (
+                              <p className="text-xs text-gray-500">{membership.role}</p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {membership.allocation_percent !== null && (
+                              <Badge variant="secondary">{membership.allocation_percent}%</Badge>
+                            )}
+                            {membership.is_primary && (
+                              <Badge variant="outline">Principal</Badge>
+                            )}
+                          </div>
+                        </div>
+
+                        {membership.id ? (
+                          <>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              <div>
+                                <Label>Rol</Label>
+                                <Input
+                                  value={membershipEdits[membership.id]?.role ?? ''}
+                                  onChange={(e) => updateMembershipEdit(membership.id, 'role', e.target.value)}
+                                  placeholder="Rol dentro del equipo"
+                                />
+                              </div>
+                              <div>
+                                <Label>% dedicación</Label>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  value={membershipEdits[membership.id]?.allocation_percent ?? ''}
+                                  onChange={(e) => updateMembershipEdit(membership.id, 'allocation_percent', e.target.value)}
+                                  placeholder="Ej. 50"
+                                />
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap gap-2 justify-end">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleSetPrimaryMembership(membership.id)}
+                                disabled={membership.is_primary}
+                              >
+                                Marcar principal
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleSaveMembership(membership.id)}
+                              >
+                                Guardar cambios
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-red-600 hover:text-red-700"
+                                onClick={() => handleRemoveMembership(membership.id)}
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Eliminar
+                              </Button>
+                            </div>
+                          </>
+                        ) : (
+                          <p className="text-xs text-yellow-600">
+                            Registro histórico sin detalle. Añade nuevamente el equipo para habilitar la edición.
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  )) : (
+                    <p className="text-sm text-gray-500">
+                      El empleado aún no tiene equipos asignados.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <div className="border-t pt-4 space-y-3 mt-4">
+                <div>
+                  <Label className="font-semibold">Añadir equipo</Label>
+                  <p className="text-xs text-gray-500">
+                    Selecciona un nuevo equipo y define el porcentaje estimado de dedicación.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <Label>Equipo</Label>
+                    <Select
+                      value={newMembership.teamId}
+                      onValueChange={(value) => setNewMembership((prev) => ({ ...prev, teamId: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona equipo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableTeams
+                          .filter((team) => !memberships.some((membership) => membership.team_id === team.id))
+                          .map((team) => (
+                            <SelectItem key={team.id} value={team.id.toString()}>
+                              {team.name}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>% dedicación</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={newMembership.allocationPercent}
+                      onChange={(e) => setNewMembership((prev) => ({ ...prev, allocationPercent: e.target.value }))}
+                      placeholder="Ej. 50"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <Label>Rol</Label>
+                    <Input
+                      value={newMembership.role}
+                      onChange={(e) => setNewMembership((prev) => ({ ...prev, role: e.target.value }))}
+                      placeholder="Rol dentro del equipo"
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2 pt-6">
+                    <Checkbox
+                      id="new-membership-primary"
+                      checked={newMembership.isPrimary}
+                      onCheckedChange={(checked) => setNewMembership((prev) => ({ ...prev, isPrimary: !!checked }))}
+                    />
+                    <Label htmlFor="new-membership-primary">Marcar como equipo principal</Label>
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <Button onClick={handleAddMembership} disabled={!newMembership.teamId}>
+                    <PlusCircle className="w-4 h-4 mr-2" />
+                    Añadir equipo
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Modal de invitación */}
       <InviteEmployeeModal

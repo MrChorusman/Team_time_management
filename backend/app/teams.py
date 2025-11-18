@@ -3,16 +3,28 @@ from flask_security import auth_required, current_user
 from datetime import datetime
 import logging
 
-from models.team import Team
+from sqlalchemy import or_, and_
 from sqlalchemy.orm import load_only
+
+from models import db
+from models.team import Team
 from models.employee import Employee
-from models.user import db
+from models.team_membership import TeamMembership
 from services.hours_calculator import HoursCalculator
 from utils.decorators import admin_required, manager_or_admin_required
 
 logger = logging.getLogger(__name__)
 
 teams_bp = Blueprint('teams', __name__)
+
+
+def _user_belongs_to_team(user, team_id):
+    if not user or not user.employee:
+        return False
+    if user.employee.team_id == team_id:
+        return True
+    memberships = getattr(user.employee, 'memberships', []) or []
+    return any(membership.team_id == team_id and membership.active for membership in memberships)
 
 @teams_bp.route('/', methods=['GET'])
 @auth_required()
@@ -32,21 +44,25 @@ def list_teams():
         
         # Filtros según permisos
         if current_user.is_manager() and not current_user.is_admin():
-            # Manager solo puede ver sus equipos
             managed_teams = current_user.get_managed_teams()
-            team_ids = [team.id for team in managed_teams]
-            if current_user.employee and current_user.employee.team_id:
-                team_ids.append(current_user.employee.team_id)
-            query = query.filter(Team.id.in_(team_ids))
+            team_ids = {team.id for team in managed_teams}
+            if current_user.employee:
+                if current_user.employee.team_id:
+                    team_ids.add(current_user.employee.team_id)
+                for membership in current_user.employee.memberships or []:
+                    if membership.active:
+                        team_ids.add(membership.team_id)
+            query = query.filter(Team.id.in_(team_ids)) if team_ids else query
         elif current_user.is_employee() and not current_user.is_manager():
-            # Employee solo puede ver su equipo
-            if current_user.employee and current_user.employee.team_id:
-                query = query.filter(Team.id == current_user.employee.team_id)
-            else:
-                # Si el empleado no tiene perfil registrado aún, mostrar todos los equipos
-                # para que pueda seleccionar uno durante el registro
-                # No aplicar ningún filtro (mostrar todos los equipos)
-                pass
+            if current_user.employee and (current_user.employee.team_id or current_user.employee.memberships):
+                allowed_ids = set()
+                if current_user.employee.team_id:
+                    allowed_ids.add(current_user.employee.team_id)
+                for membership in current_user.employee.memberships or []:
+                    if membership.active:
+                        allowed_ids.add(membership.team_id)
+                if allowed_ids:
+                    query = query.filter(Team.id.in_(allowed_ids))
         
         # Reducir columnas para evitar tocar campos no existentes en despliegues desincronizados
         query = query.options(load_only(Team.id, Team.name, Team.description))
@@ -172,9 +188,9 @@ def get_team(team_id):
             can_access = True
         elif current_user.is_manager():
             managed_teams = current_user.get_managed_teams()
-            can_access = team in managed_teams or (current_user.employee and current_user.employee.team_id == team_id)
+            can_access = team in managed_teams or _user_belongs_to_team(current_user, team_id)
         elif current_user.is_employee():
-            can_access = current_user.employee and current_user.employee.team_id == team_id
+            can_access = _user_belongs_to_team(current_user, team_id)
         
         if not can_access:
             return jsonify({
@@ -285,10 +301,9 @@ def get_team_summary(team_id):
             can_access = True
         elif current_user.is_manager():
             managed_teams = current_user.get_managed_teams()
-            # Manager puede ver si gestiona el equipo O si es miembro del equipo
-            can_access = team in managed_teams or (current_user.employee and current_user.employee.team_id == team_id)
+            can_access = team in managed_teams or _user_belongs_to_team(current_user, team_id)
         elif current_user.is_employee():
-            can_access = current_user.employee and current_user.employee.team_id == team_id
+            can_access = _user_belongs_to_team(current_user, team_id)
         
         if not can_access:
             return jsonify({
@@ -332,10 +347,9 @@ def get_team_employees(team_id):
             can_access = True
         elif current_user.is_manager():
             managed_teams = current_user.get_managed_teams()
-            # Manager puede ver si gestiona el equipo O si es miembro del equipo
-            can_access = team in managed_teams or (current_user.employee and current_user.employee.team_id == team_id)
+            can_access = team in managed_teams or _user_belongs_to_team(current_user, team_id)
         elif current_user.is_employee():
-            can_access = current_user.employee and current_user.employee.team_id == team_id
+            can_access = _user_belongs_to_team(current_user, team_id)
         
         if not can_access:
             return jsonify({
@@ -346,16 +360,25 @@ def get_team_employees(team_id):
         approved_only = request.args.get('approved_only', 'true').lower() == 'true'
         include_summary = request.args.get('include_summary', 'false').lower() == 'true'
         
-        # Obtener empleados
-        query = Employee.query.filter(
-            Employee.team_id == team_id,
-            Employee.active == True
+        # Obtener empleados (considerando membresías adicionales)
+        query = Employee.query.outerjoin(
+            TeamMembership,
+            TeamMembership.employee_id == Employee.id
+        ).filter(
+            Employee.active == True,
+            or_(
+                Employee.team_id == team_id,
+                and_(
+                    TeamMembership.team_id == team_id,
+                    TeamMembership.active == True
+                )
+            )
         )
         
         if approved_only:
             query = query.filter(Employee.approved == True)
         
-        employees = query.order_by(Employee.full_name).all()
+        employees = query.distinct().order_by(Employee.full_name).all()
         
         employees_data = []
         for employee in employees:

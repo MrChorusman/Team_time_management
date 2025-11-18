@@ -13,7 +13,8 @@ import {
   User,
   Shield,
   LogOut,
-  TrendingUp
+  TrendingUp,
+  Briefcase
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useNotifications } from '../../contexts/NotificationContext'
@@ -44,6 +45,12 @@ const Sidebar = ({ isOpen, onToggle }) => {
       icon: TrendingUp,
       path: '/forecast',
       show: isAdmin() || employee?.approved
+    },
+    {
+      title: 'Proyectos',
+      icon: Briefcase,
+      path: '/projects',
+      show: isAdmin() || isManager()
     },
     {
       title: 'Empleados',

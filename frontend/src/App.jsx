@@ -27,6 +27,7 @@ import AdminPage from './pages/AdminPage'
 import AdminCalendarsPage from './pages/admin/AdminCalendarsPage'
 import EmployeeRegisterPage from './pages/employee/EmployeeRegisterPage'
 import CalendarDemoPage from './pages/CalendarDemoPage'
+import ProjectsPage from './pages/ProjectsPage'
 
 import './App.css'
 
@@ -166,6 +167,14 @@ function AppContent() {
         <ProtectedRoute>
           <AppLayout>
             <TeamsPage />
+          </AppLayout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/projects" element={
+        <ProtectedRoute>
+          <AppLayout>
+            <ProjectsPage />
           </AppLayout>
         </ProtectedRoute>
       } />

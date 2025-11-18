@@ -4,10 +4,13 @@ from datetime import datetime, timedelta
 import logging
 import secrets
 
+from sqlalchemy import or_
+
 from models.user import User, Role, db
 from models.employee import Employee
 from models.employee_invitation import EmployeeInvitation
 from models.team import Team
+from models.team_membership import TeamMembership
 from models.notification import Notification
 from services.notification_service import NotificationService
 from services.holiday_service import HolidayService
@@ -18,6 +21,62 @@ logger = logging.getLogger(__name__)
 
 employees_bp = Blueprint('employees', __name__)
 
+
+def _get_accessible_team_ids(user):
+    """Obtiene los IDs de equipos a los que el usuario tiene acceso."""
+    if user.is_admin():
+        return None
+    
+    team_ids = set()
+    
+    if user.is_manager():
+        managed_teams = user.get_managed_teams()
+        team_ids.update([team.id for team in managed_teams])
+    
+    if user.employee:
+        if user.employee.team_id:
+            team_ids.add(user.employee.team_id)
+        
+        # Incluir membresías adicionales
+        memberships = getattr(user.employee, 'memberships', []) or []
+        for membership in memberships:
+            if membership.active:
+                team_ids.add(membership.team_id)
+    
+    return team_ids
+
+
+def _user_can_manage_employee(user, employee):
+    """Verifica si el usuario puede gestionar al empleado."""
+    if user.is_admin() or user.id == employee.user_id:
+        return True
+    
+    accessible_team_ids = _get_accessible_team_ids(user)
+    if accessible_team_ids is None:
+        return True
+    
+    employee_team_ids = set()
+    if employee.team_id:
+        employee_team_ids.add(employee.team_id)
+    for membership in employee.memberships or []:
+        if membership.active:
+            employee_team_ids.add(membership.team_id)
+    
+    return bool(accessible_team_ids.intersection(employee_team_ids))
+
+
+def _set_primary_membership(employee, team_id):
+    """Marca la membresía primaria y actualiza el team_id del empleado."""
+    updated = False
+    for membership in employee.memberships or []:
+        if membership.team_id == team_id and membership.active:
+            membership.is_primary = True
+            updated = True
+        else:
+            membership.is_primary = False
+    if updated:
+        employee.team_id = team_id
+
 @employees_bp.route('/register', methods=['POST'])
 @auth_required()
 def register_employee():
@@ -27,7 +86,7 @@ def register_employee():
         
         # Validar datos requeridos
         required_fields = [
-            'full_name', 'team_id', 'hours_monday_thursday', 'hours_friday',
+            'full_name', 'hours_monday_thursday', 'hours_friday',
             'annual_vacation_days', 'annual_hld_hours', 'country'
         ]
         
@@ -81,14 +140,34 @@ def register_employee():
                 'message': 'Ya tienes un perfil de empleado registrado'
             }), 409
         
-        # Validar que el equipo existe
-        team_id = data.get('team_id')
-        team = Team.query.get(team_id)
-        if not team:
+        # Validar equipos seleccionados (al menos uno)
+        primary_team_id = data.get('team_id')
+        extra_team_ids = data.get('team_ids', [])
+        team_ids = []
+
+        if isinstance(extra_team_ids, list) and len(extra_team_ids) > 0:
+            team_ids = [int(tid) for tid in extra_team_ids if tid]
+        if primary_team_id and primary_team_id not in team_ids:
+            team_ids.insert(0, primary_team_id)
+
+        # Asegurar que exista al menos un equipo válido
+        if not team_ids:
             return jsonify({
                 'success': False,
-                'message': 'Equipo no encontrado'
+                'message': 'Debes seleccionar al menos un equipo'
+            }), 400
+
+        # Validar existencia de los equipos
+        unique_team_ids = list(dict.fromkeys(team_ids))
+        teams = Team.query.filter(Team.id.in_(unique_team_ids)).all()
+        if len(teams) != len(unique_team_ids):
+            return jsonify({
+                'success': False,
+                'message': 'Uno o más equipos no existen'
             }), 404
+        
+        primary_team_id = unique_team_ids[0]
+        primary_team = next((team for team in teams if team.id == primary_team_id), teams[0])
         
         # Validar horario de verano si está habilitado
         has_summer = bool(data.get('has_summer_schedule', False))
@@ -128,7 +207,7 @@ def register_employee():
         employee = Employee(
             user_id=current_user.id,
             full_name=data['full_name'].strip(),
-            team_id=team_id,
+            team_id=primary_team_id,
             hours_monday_thursday=hours_mon_thu,
             hours_friday=hours_fri,
             hours_summer=hours_summer,
@@ -147,6 +226,16 @@ def register_employee():
             employee.summer_months_list = summer_months
         
         db.session.add(employee)
+        db.session.flush()
+
+        for index, membership_team_id in enumerate(unique_team_ids):
+            membership = TeamMembership(
+                employee_id=employee.id,
+                team_id=membership_team_id,
+                is_primary=(index == 0),
+                allocation_percent=None
+            )
+            db.session.add(membership)
         
         # ⚠️ NO confirmar email automáticamente - el usuario debe verificar su email primero
         # El email debe estar verificado antes de completar el registro de empleado
@@ -172,7 +261,7 @@ def register_employee():
                 notification = Notification(
                     user_id=admin_user.id,
                     title="Nuevo empleado registrado",
-                    message=f"{employee.full_name} se ha registrado en el equipo {team.name}. Estado: {'Aprobado' if employee.approved else 'Pendiente de aprobación'}",
+                    message=f"{employee.full_name} se ha registrado en el equipo {primary_team.name}. Estado: {'Aprobado' if employee.approved else 'Pendiente de aprobación'}",
                     notification_type=NotificationType.EMPLOYEE_REGISTRATION,
                     priority=NotificationPriority.HIGH if not employee.approved else NotificationPriority.MEDIUM,
                     send_email=False,
@@ -180,8 +269,8 @@ def register_employee():
                     data={
                         'employee_id': employee.id,
                         'employee_name': employee.full_name,
-                        'team_id': team.id,
-                        'team_name': team.name,
+                        'team_id': primary_team.id,
+                        'team_name': primary_team.name,
                         'approved': employee.approved,
                         'created_at': datetime.utcnow().isoformat()
                     }
@@ -214,7 +303,7 @@ def register_employee():
             
             db.session.commit()
         
-        logger.info(f"Empleado registrado: {employee.full_name} en equipo {team.name}")
+        logger.info(f"Empleado registrado: {employee.full_name} en equipo {primary_team.name}")
         
         return jsonify({
             'success': True,
@@ -335,24 +424,27 @@ def list_employees():
         query = Employee.query.filter(Employee.active == True)
         
         # Filtros según permisos del usuario
-        if current_user.is_admin():
-            # Admin puede ver todos
+        accessible_team_ids = _get_accessible_team_ids(current_user)
+        
+        if accessible_team_ids is None:
+            # Admin ve todos
             pass
-        elif current_user.is_manager():
-            # Manager solo puede ver empleados de sus equipos (incluyéndose a sí mismo)
-            managed_teams = current_user.get_managed_teams()
-            team_ids = [team.id for team in managed_teams]
-            # Incluir también el equipo del manager si está en uno
-            if current_user.employee and current_user.employee.team_id:
-                if current_user.employee.team_id not in team_ids:
-                    team_ids.append(current_user.employee.team_id)
-            query = query.filter(Employee.team_id.in_(team_ids))
-        elif current_user.is_employee():
-            # Employee solo puede ver empleados de su equipo
-            if current_user.employee and current_user.employee.team_id:
-                query = query.filter(Employee.team_id == current_user.employee.team_id)
-            else:
-                query = query.filter(Employee.id == -1)  # No mostrar nada
+        elif accessible_team_ids:
+            query = query.outerjoin(
+                TeamMembership,
+                TeamMembership.employee_id == Employee.id
+            ).filter(
+                or_(
+                    Employee.team_id.in_(accessible_team_ids),
+                    TeamMembership.team_id.in_(accessible_team_ids)
+                )
+            )
+        else:
+            # Usuarios sin equipos asociados no pueden ver empleados
+            return jsonify({
+                'success': False,
+                'message': 'Acceso denegado'
+            }), 403
         else:
             # Viewer no puede ver empleados
             return jsonify({
@@ -362,13 +454,21 @@ def list_employees():
         
         # Aplicar filtros adicionales
         if team_id:
-            query = query.filter(Employee.team_id == team_id)
+            query = query.outerjoin(
+                TeamMembership,
+                TeamMembership.employee_id == Employee.id
+            ).filter(
+                or_(
+                    Employee.team_id == team_id,
+                    TeamMembership.team_id == team_id
+                )
+            )
         
         if approved_only:
             query = query.filter(Employee.approved == True)
         
         # Paginación
-        pagination = query.paginate(
+        pagination = query.distinct().paginate(
             page=page, per_page=per_page, error_out=False
         )
         
@@ -397,6 +497,186 @@ def list_employees():
             }
         })
         
+
+@employees_bp.route('/<int:employee_id>/memberships', methods=['GET'])
+@auth_required()
+def get_employee_memberships(employee_id):
+    """Obtiene las membresías de equipos de un empleado."""
+    employee = Employee.query.get(employee_id)
+    if not employee:
+        return jsonify({'success': False, 'message': 'Empleado no encontrado'}), 404
+
+    if not _user_can_manage_employee(current_user, employee):
+        return jsonify({'success': False, 'message': 'Acceso denegado'}), 403
+
+    memberships = employee.get_active_memberships()
+    if memberships:
+        membership_list = [membership.to_dict() for membership in memberships]
+    else:
+        membership_list = []
+        if employee.team:
+            membership_list.append({
+                'id': None,
+                'employee_id': employee.id,
+                'team_id': employee.team.id,
+                'team_name': employee.team.name,
+                'role': None,
+                'allocation_percent': None,
+                'is_primary': True,
+                'active': True,
+                'notes': None
+            })
+
+    return jsonify({'success': True, 'memberships': membership_list})
+
+
+@employees_bp.route('/<int:employee_id>/memberships', methods=['POST'])
+@auth_required()
+def add_employee_membership(employee_id):
+    """Asigna un empleado a un nuevo equipo."""
+    if not (current_user.is_admin() or current_user.is_manager()):
+        return jsonify({'success': False, 'message': 'Acceso denegado'}), 403
+
+    employee = Employee.query.get(employee_id)
+    if not employee:
+        return jsonify({'success': False, 'message': 'Empleado no encontrado'}), 404
+
+    if not _user_can_manage_employee(current_user, employee):
+        return jsonify({'success': False, 'message': 'Acceso denegado'}), 403
+
+    data = request.get_json() or {}
+    team_id = data.get('team_id')
+    if not team_id:
+        return jsonify({'success': False, 'message': 'team_id es requerido'}), 400
+
+    team = Team.query.get(team_id)
+    if not team:
+        return jsonify({'success': False, 'message': 'Equipo no encontrado'}), 404
+
+    existing = TeamMembership.query.filter_by(employee_id=employee.id, team_id=team_id).first()
+    if existing and existing.active:
+        return jsonify({'success': False, 'message': 'El empleado ya pertenece a este equipo'}), 409
+
+    allocation_percent = data.get('allocation_percent')
+    if allocation_percent is not None:
+        try:
+            allocation_percent = float(allocation_percent)
+            if allocation_percent < 0 or allocation_percent > 100:
+                return jsonify({'success': False, 'message': 'El porcentaje debe estar entre 0 y 100'}), 400
+        except (ValueError, TypeError):
+            return jsonify({'success': False, 'message': 'Porcentaje inválido'}), 400
+
+    is_primary = bool(data.get('is_primary', False))
+    role = data.get('role')
+    notes = data.get('notes')
+
+    if existing:
+        existing.allocation_percent = allocation_percent
+        existing.role = role
+        existing.is_primary = is_primary
+        existing.notes = notes
+        existing.active = True
+        membership = existing
+    else:
+        membership = TeamMembership(
+            employee_id=employee.id,
+            team_id=team_id,
+            allocation_percent=allocation_percent,
+            role=role,
+            is_primary=is_primary,
+            notes=notes,
+            active=True
+        )
+        db.session.add(membership)
+
+    if is_primary:
+        _set_primary_membership(employee, team_id)
+
+    db.session.commit()
+
+    return jsonify({'success': True, 'membership': membership.to_dict()}), 201
+
+
+@employees_bp.route('/<int:employee_id>/memberships/<int:membership_id>', methods=['PUT'])
+@auth_required()
+def update_employee_membership(employee_id, membership_id):
+    """Actualiza una membresía de equipo."""
+    if not (current_user.is_admin() or current_user.is_manager()):
+        return jsonify({'success': False, 'message': 'Acceso denegado'}), 403
+
+    employee = Employee.query.get(employee_id)
+    if not employee:
+        return jsonify({'success': False, 'message': 'Empleado no encontrado'}), 404
+
+    membership = TeamMembership.query.filter_by(id=membership_id, employee_id=employee.id).first()
+    if not membership:
+        return jsonify({'success': False, 'message': 'Membresía no encontrada'}), 404
+
+    if not _user_can_manage_employee(current_user, employee):
+        return jsonify({'success': False, 'message': 'Acceso denegado'}), 403
+
+    data = request.get_json() or {}
+
+    if 'allocation_percent' in data:
+        allocation_percent = data['allocation_percent']
+        if allocation_percent is not None:
+            try:
+                allocation_percent = float(allocation_percent)
+                if allocation_percent < 0 or allocation_percent > 100:
+                    return jsonify({'success': False, 'message': 'El porcentaje debe estar entre 0 y 100'}), 400
+            except (ValueError, TypeError):
+                return jsonify({'success': False, 'message': 'Porcentaje inválido'}), 400
+        membership.allocation_percent = allocation_percent
+
+    if 'role' in data:
+        membership.role = data['role']
+
+    if 'notes' in data:
+        membership.notes = data['notes']
+
+    if 'is_primary' in data:
+        is_primary = bool(data['is_primary'])
+        membership.is_primary = is_primary
+        if is_primary:
+            _set_primary_membership(employee, membership.team_id)
+
+    db.session.commit()
+
+    return jsonify({'success': True, 'membership': membership.to_dict()})
+
+
+@employees_bp.route('/<int:employee_id>/memberships/<int:membership_id>', methods=['DELETE'])
+@auth_required()
+def remove_employee_membership(employee_id, membership_id):
+    """Elimina (desactiva) una membresía de equipo."""
+    if not (current_user.is_admin() or current_user.is_manager()):
+        return jsonify({'success': False, 'message': 'Acceso denegado'}), 403
+
+    employee = Employee.query.get(employee_id)
+    if not employee:
+        return jsonify({'success': False, 'message': 'Empleado no encontrado'}), 404
+
+    membership = TeamMembership.query.filter_by(id=membership_id, employee_id=employee.id).first()
+    if not membership:
+        return jsonify({'success': False, 'message': 'Membresía no encontrada'}), 404
+
+    if not _user_can_manage_employee(current_user, employee):
+        return jsonify({'success': False, 'message': 'Acceso denegado'}), 403
+
+    membership.active = False
+    membership.is_primary = False
+
+    # Seleccionar nueva membresía primaria si era la principal
+    remaining = [m for m in employee.memberships if m.active and m.id != membership.id]
+    if membership.team_id == employee.team_id:
+        if remaining:
+            _set_primary_membership(employee, remaining[0].team_id)
+        else:
+            employee.team_id = None
+
+    db.session.commit()
+
+    return jsonify({'success': True, 'message': 'Membresía eliminada'})
     except Exception as e:
         logger.error(f"Error listando empleados: {e}")
         return jsonify({

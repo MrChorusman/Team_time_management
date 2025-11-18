@@ -10,7 +10,7 @@ class TeamService {
    */
   async getAllTeams() {
     try {
-      const response = await apiClient.get('/teams')
+      const response = await apiClient.get('/teams?per_page=200')
       return response.data
     } catch (error) {
       console.error('Error obteniendo equipos:', error)

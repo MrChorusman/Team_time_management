@@ -47,8 +47,24 @@ class Employee(db.Model):
     approved_at = db.Column(db.DateTime, nullable=True)
     
     # Relaciones
-    calendar_activities = db.relationship('CalendarActivity', backref='employee', 
-                                        lazy='dynamic', cascade='all, delete-orphan')
+    calendar_activities = db.relationship(
+        'CalendarActivity',
+        backref='employee',
+        lazy='dynamic',
+        cascade='all, delete-orphan'
+    )
+    memberships = db.relationship(
+        'TeamMembership',
+        back_populates='employee',
+        cascade='all, delete-orphan',
+        lazy='selectin'
+    )
+    project_assignments = db.relationship(
+        'ProjectAssignment',
+        back_populates='employee',
+        cascade='all, delete-orphan',
+        lazy='selectin'
+    )
     
     @property
     def summer_months_list(self):
@@ -251,6 +267,22 @@ class Employee(db.Model):
             'used_hld_hours': summary['hld_hours']
         }
     
+    def get_active_memberships(self):
+        """Retorna solo las membresías activas."""
+        if not self.memberships:
+            return []
+        return [membership for membership in self.memberships if membership.active]
+
+    def get_primary_membership(self):
+        """Obtiene la membresía primaria (o None)."""
+        active_memberships = self.get_active_memberships()
+        if not active_memberships:
+            return None
+        for membership in active_memberships:
+            if membership.is_primary:
+                return membership
+        return active_memberships[0]
+
     def to_dict(self, include_summary=False, year=None):
         """Convierte el empleado a diccionario para JSON"""
         # Obtener team_name de forma segura sin lazy loading
@@ -288,6 +320,34 @@ class Employee(db.Model):
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'approved_at': self.approved_at.isoformat() if self.approved_at else None
         }
+
+        # Equipos (membresías)
+        active_memberships = self.get_active_memberships()
+        if active_memberships:
+            data['teams'] = [
+                {
+                    'membership_id': membership.id,
+                    'team_id': membership.team_id,
+                    'team_name': membership.team.name if membership.team else None,
+                    'role': membership.role,
+                    'allocation_percent': membership.allocation_percent,
+                    'is_primary': membership.is_primary,
+                    'active': membership.active,
+                    'notes': membership.notes
+                } for membership in active_memberships
+            ]
+        else:
+            data['teams'] = []
+
+        # Proyectos asignados
+        if self.project_assignments:
+            data['projects'] = [
+                assignment.to_dict(include_employee=False)
+                for assignment in self.project_assignments
+                if assignment.active
+            ]
+        else:
+            data['projects'] = []
         
         if include_summary:
             data['hours_summary'] = self.get_hours_summary(year)

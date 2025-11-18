@@ -207,21 +207,31 @@ class ForecastCalculator:
             'employee_count': 0
         }
         
-        active_employees = team.active_employees
+        memberships = team._active_memberships()
         
-        for employee in active_employees:
+        for membership in memberships:
+            employee = getattr(membership, 'employee', None)
+            if not employee:
+                continue
+            
             emp_forecast = ForecastCalculator.calculate_forecast_for_employee(
                 employee, company, year, month
             )
             
-            team_forecast['total_theoretical_hours'] += emp_forecast['theoretical_hours']
-            team_forecast['total_actual_hours'] += emp_forecast['actual_hours']
-            team_forecast['total_guard_hours'] += emp_forecast['breakdown']['guard_hours']
+            allocation_percent = membership.allocation_percent or 100.0
+            weight = max(0.0, min(allocation_percent / 100.0, 1.0))
+            
+            team_forecast['total_theoretical_hours'] += emp_forecast['theoretical_hours'] * weight
+            team_forecast['total_actual_hours'] += emp_forecast['actual_hours'] * weight
+            team_forecast['total_guard_hours'] += emp_forecast['breakdown']['guard_hours'] * weight
             
             if emp_forecast['economic_value']:
-                team_forecast['total_economic_value'] += emp_forecast['economic_value']
+                team_forecast['total_economic_value'] += emp_forecast['economic_value'] * weight
             
-            team_forecast['employees'].append(emp_forecast)
+            emp_entry = dict(emp_forecast)
+            emp_entry['allocation_percent'] = allocation_percent
+            emp_entry['team_membership_id'] = getattr(membership, 'id', None)
+            team_forecast['employees'].append(emp_entry)
         
         # Calcular eficiencia del equipo
         if team_forecast['total_theoretical_hours'] > 0:
@@ -240,7 +250,7 @@ class ForecastCalculator:
                 team_forecast['performance_status'] = 'needs_improvement'
                 team_forecast['performance_label'] = 'Mejorable'
         
-        team_forecast['employee_count'] = len(active_employees)
+        team_forecast['employee_count'] = len(memberships)
         
         return team_forecast
     

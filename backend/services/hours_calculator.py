@@ -162,29 +162,37 @@ class HoursCalculator:
             'employee_count': 0
         }
         
-        active_employees = list(team.active_employees)
+        memberships = team._active_memberships()
+        active_employees = []
         
-        # Incluir también al manager si es miembro del equipo pero no está en active_employees
-        # (por ejemplo, si no está aprobado pero es manager)
-        if team.manager and team.manager.team_id == team.id and team.manager.active:
-            manager_in_list = any(emp.id == team.manager.id for emp in active_employees)
-            if not manager_in_list:
-                active_employees.append(team.manager)
-        
-        for employee in active_employees:
+        for membership in memberships:
+            employee = getattr(membership, 'employee', None)
+            if not employee:
+                continue
+            
             try:
                 emp_efficiency = HoursCalculator.calculate_employee_efficiency(employee, year, month)
                 
-                team_summary['total_theoretical_hours'] += emp_efficiency.get('theoretical_hours', 0) or 0
-                team_summary['total_actual_hours'] += emp_efficiency.get('actual_hours', 0) or 0
-                team_summary['total_vacation_days'] += emp_efficiency.get('vacation_days', 0) or 0
-                team_summary['total_absence_days'] += emp_efficiency.get('absence_days', 0) or 0
-                team_summary['total_hld_hours'] += emp_efficiency.get('hld_hours', 0) or 0
-                team_summary['total_guard_hours'] += emp_efficiency.get('guard_hours', 0) or 0
-                team_summary['total_training_hours'] += emp_efficiency.get('training_hours', 0) or 0
-                team_summary['total_other_days'] += emp_efficiency.get('other_days', 0) or 0
+                allocation_percent = membership.allocation_percent or 100.0
+                weight = max(0.0, min(allocation_percent / 100.0, 1.0))
                 
-                team_summary['employees'].append(emp_efficiency)
+                team_summary['total_theoretical_hours'] += (emp_efficiency.get('theoretical_hours', 0) or 0) * weight
+                team_summary['total_actual_hours'] += (emp_efficiency.get('actual_hours', 0) or 0) * weight
+                team_summary['total_vacation_days'] += (emp_efficiency.get('vacation_days', 0) or 0) * weight
+                team_summary['total_absence_days'] += (emp_efficiency.get('absence_days', 0) or 0) * weight
+                team_summary['total_hld_hours'] += (emp_efficiency.get('hld_hours', 0) or 0) * weight
+                team_summary['total_guard_hours'] += (emp_efficiency.get('guard_hours', 0) or 0) * weight
+                team_summary['total_training_hours'] += (emp_efficiency.get('training_hours', 0) or 0) * weight
+                team_summary['total_other_days'] += (emp_efficiency.get('other_days', 0) or 0) * weight
+                
+                emp_entry = dict(emp_efficiency)
+                emp_entry.update({
+                    'allocation_percent': allocation_percent,
+                    'team_id': membership.team_id,
+                    'team_membership_id': getattr(membership, 'id', None)
+                })
+                team_summary['employees'].append(emp_entry)
+                active_employees.append(employee)
             except Exception as e:
                 logger.error(f"Error calculando eficiencia del empleado {employee.id} en equipo {team.id}: {e}")
                 # Continuar con el siguiente empleado aunque falle uno
@@ -197,7 +205,7 @@ class HoursCalculator:
             )
             team_summary['average_efficiency'] = team_summary['efficiency']  # Alias para compatibilidad
         
-        team_summary['employee_count'] = len(active_employees)
+        team_summary['employee_count'] = len(memberships)
         
         return team_summary
     
