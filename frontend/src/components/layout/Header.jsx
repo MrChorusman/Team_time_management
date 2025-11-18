@@ -79,7 +79,7 @@ const Header = ({ onMenuClick }) => {
           </Button>
 
           {/* Saludo y título */}
-          <div className="hidden md:block">
+          <div className="hidden lg:block">
             <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
               {getGreeting()}, {getUserDisplayName().split(' ')[0]}
             </h1>
