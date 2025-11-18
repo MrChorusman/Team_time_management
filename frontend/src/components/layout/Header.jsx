@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { 
   Menu, 
@@ -25,6 +25,13 @@ import {
 } from '../ui/dropdown-menu'
 import { Badge } from '../ui/badge'
 import { cn } from '@/lib/utils.js'
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle
+} from '../ui/dialog'
 
 const Header = ({ onMenuClick }) => {
   const navigate = useNavigate()
@@ -32,7 +39,14 @@ const Header = ({ onMenuClick }) => {
   const { unreadCount, summary, notifications } = useNotifications()
   const { theme, toggleTheme } = useTheme()
   const [searchQuery, setSearchQuery] = useState('')
-  const [showMobileSearch, setShowMobileSearch] = useState(false)
+  const [showSearchDialog, setShowSearchDialog] = useState(false)
+  const searchDialogInputRef = useRef(null)
+
+  useEffect(() => {
+    if (showSearchDialog && searchDialogInputRef.current) {
+      searchDialogInputRef.current.focus()
+    }
+  }, [showSearchDialog])
 
   const handleLogout = async () => {
     await logout()
@@ -43,6 +57,7 @@ const Header = ({ onMenuClick }) => {
     if (searchQuery.trim()) {
       // Navegar a página de búsqueda o filtrar en la página actual
       navigate(`/employees?search=${encodeURIComponent(searchQuery.trim())}`)
+      setShowSearchDialog(false)
     }
   }
 
@@ -110,32 +125,15 @@ const Header = ({ onMenuClick }) => {
 
         {/* Lado derecho */}
         <div className="flex items-center space-x-3">
-          {/* Botón de búsqueda móvil */}
+          {/* Botón de búsqueda */}
           <Button
             variant="ghost"
             size="sm"
-            className="lg:hidden"
-            onClick={() => setShowMobileSearch(!showMobileSearch)}
+            onClick={() => setShowSearchDialog(true)}
+            aria-label="Abrir búsqueda"
           >
             <Search className="w-5 h-5" />
           </Button>
-          
-          {/* Barra de búsqueda móvil */}
-          {showMobileSearch && (
-            <div className="lg:hidden absolute top-full left-0 right-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 p-4">
-              <form onSubmit={handleSearchSubmit} className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text"
-                  placeholder="Buscar empleados, equipos..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  autoFocus
-                />
-              </form>
-            </div>
-          )}
 
           {/* Toggle de tema */}
           <Button
@@ -271,6 +269,39 @@ const Header = ({ onMenuClick }) => {
           </DropdownMenu>
         </div>
       </div>
+
+      {/* Cuadro flotante de búsqueda */}
+      <Dialog open={showSearchDialog} onOpenChange={setShowSearchDialog}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Buscar en el sistema</DialogTitle>
+            <DialogDescription>
+              Ingresa un nombre de empleado, equipo o término clave.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSearchSubmit} className="space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                ref={searchDialogInputRef}
+                type="text"
+                placeholder="Buscar empleados, equipos..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button type="button" variant="ghost" onClick={() => setShowSearchDialog(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit">
+                Buscar
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Información de estado del empleado */}
       {employee && !employee.approved && (
