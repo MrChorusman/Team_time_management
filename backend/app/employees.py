@@ -445,13 +445,6 @@ def list_employees():
                 'success': False,
                 'message': 'Acceso denegado'
             }), 403
-        else:
-            # Viewer no puede ver empleados
-            return jsonify({
-                'success': False,
-                'message': 'Acceso denegado'
-            }), 403
-        
         # Aplicar filtros adicionales
         if team_id:
             query = query.outerjoin(
