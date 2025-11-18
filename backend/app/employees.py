@@ -489,7 +489,13 @@ def list_employees():
                 'has_prev': pagination.has_prev
             }
         })
-        
+    except Exception as e:
+        logger.error(f"Error listando empleados: {e}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'message': 'Error obteniendo empleados'
+        }), 500
+
 
 @employees_bp.route('/<int:employee_id>/memberships', methods=['GET'])
 @auth_required()
