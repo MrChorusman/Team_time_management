@@ -676,12 +676,7 @@ def remove_employee_membership(employee_id, membership_id):
     db.session.commit()
 
     return jsonify({'success': True, 'message': 'Membresía eliminada'})
-    except Exception as e:
-        logger.error(f"Error listando empleados: {e}")
-        return jsonify({
-            'success': False,
-            'message': 'Error obteniendo empleados'
-        }), 500
+
 
 @employees_bp.route('/<int:employee_id>', methods=['GET'])
 @auth_required()
