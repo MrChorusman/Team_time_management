@@ -30,6 +30,7 @@ import { Label } from '../components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import { Textarea } from '../components/ui/textarea'
 import { Alert, AlertDescription } from '../components/ui/alert'
+import { Checkbox } from '../components/ui/checkbox'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import { toast } from 'sonner'
 
@@ -44,10 +45,20 @@ const TeamsPage = () => {
   const [showEditTeamDialog, setShowEditTeamDialog] = useState(false)
   const [teamDetailLoading, setTeamDetailLoading] = useState(false)
   const [employees, setEmployees] = useState([])
+  const [showAddMemberDialog, setShowAddMemberDialog] = useState(false)
+  const [newMemberForm, setNewMemberForm] = useState({
+    employeeId: '',
+    allocationPercent: '',
+    role: '',
+    isPrimary: false
+  })
+  const [isAddingMember, setIsAddingMember] = useState(false)
+
+  const canManageMembers = isAdmin() || isManager()
 
   useEffect(() => {
     loadTeams()
-    if (isAdmin()) {
+    if (canManageMembers) {
       loadEmployees()
     }
   }, [])
@@ -56,6 +67,9 @@ const TeamsPage = () => {
   useEffect(() => {
     if (selectedTeam && showTeamDetail) {
       loadTeamDetails(selectedTeam.id)
+      if (canManageMembers && employees.length === 0) {
+        loadEmployees()
+      }
     }
   }, [selectedTeam?.id, showTeamDetail])
 
@@ -97,6 +111,72 @@ const TeamsPage = () => {
       console.error('Error cargando empleados:', error)
     }
   }
+  const handleAddTeamMember = async () => {
+    if (!selectedTeam || !newMemberForm.employeeId) {
+      toast.error('Selecciona un empleado para añadir')
+      return
+    }
+
+    setIsAddingMember(true)
+    const payload = {
+      team_id: selectedTeam.id,
+      role: newMemberForm.role || undefined,
+      allocation_percent: newMemberForm.allocationPercent !== ''
+        ? parseFloat(newMemberForm.allocationPercent)
+        : null,
+      is_primary: newMemberForm.isPrimary
+    }
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/employees/${newMemberForm.employeeId}/memberships`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(payload)
+        }
+      )
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || 'No se pudo añadir el miembro')
+      }
+
+      toast.success('Miembro añadido al equipo')
+      setShowAddMemberDialog(false)
+      setNewMemberForm({
+        employeeId: '',
+        allocationPercent: '',
+        role: '',
+        isPrimary: false
+      })
+      await loadTeamDetails(selectedTeam.id)
+      await loadTeams()
+    } catch (error) {
+      console.error('Error añadiendo miembro:', error)
+      toast.error('Error al añadir miembro', {
+        description: error.message || 'Intenta nuevamente'
+      })
+    } finally {
+      setIsAddingMember(false)
+    }
+  }
+
+  const handleOpenAddMemberDialog = () => {
+    if (!selectedTeam) return
+    if (canManageMembers && employees.length === 0) {
+      loadEmployees()
+    }
+    setNewMemberForm({
+      employeeId: '',
+      allocationPercent: '',
+      role: '',
+      isPrimary: !(selectedTeam.members && selectedTeam.members.length > 0)
+    })
+    setShowAddMemberDialog(true)
+  }
+
 
   const handleAssignManager = async (teamId, employeeId) => {
     try {
@@ -343,6 +423,11 @@ const TeamsPage = () => {
     team.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     team.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (team.manager?.name?.toLowerCase().includes(searchTerm.toLowerCase()) || false)
+  )
+
+  const memberIds = new Set(selectedTeam?.members?.map(member => member.id) || [])
+  const availableEmployees = employees.filter(
+    emp => emp.active && emp.approved && !memberIds.has(emp.id)
   )
 
   const getTeamStats = () => {
@@ -710,7 +795,7 @@ const TeamsPage = () => {
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold">Miembros del Equipo</h3>
                   {(isAdmin() || isManager()) && (
-                    <Button size="sm">
+                    <Button size="sm" onClick={handleOpenAddMemberDialog}>
                       <UserPlus className="w-4 h-4 mr-2" />
                       Añadir Miembro
                     </Button>
@@ -754,7 +839,7 @@ const TeamsPage = () => {
                       Añade empleados a este equipo para empezar a gestionar su tiempo
                     </p>
                     {(isAdmin() || isManager()) && (
-                      <Button>
+                      <Button onClick={handleOpenAddMemberDialog}>
                         <UserPlus className="w-4 h-4 mr-2" />
                         Añadir Miembro
                       </Button>
@@ -852,6 +937,115 @@ const TeamsPage = () => {
           </DialogContent>
         </Dialog>
       )}
+
+      <Dialog
+        open={showAddMemberDialog}
+        onOpenChange={(open) => {
+          setShowAddMemberDialog(open)
+          if (!open) {
+            setNewMemberForm({
+              employeeId: '',
+              allocationPercent: '',
+              role: '',
+              isPrimary: false
+            })
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Añadir miembro a {selectedTeam?.name}</DialogTitle>
+            <DialogDescription>
+              Selecciona un empleado aprobado y define su rol dentro del equipo.
+            </DialogDescription>
+          </DialogHeader>
+
+          {availableEmployees.length === 0 ? (
+            <Alert>
+              <AlertDescription>
+                No hay empleados disponibles para asignar a este equipo.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label>Empleado</Label>
+                <Select
+                  value={newMemberForm.employeeId}
+                  onValueChange={(value) =>
+                    setNewMemberForm((prev) => ({ ...prev, employeeId: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona un empleado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableEmployees.map((emp) => (
+                      <SelectItem key={emp.id} value={emp.id.toString()}>
+                        {emp.full_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Rol dentro del equipo</Label>
+                <Input
+                  placeholder="Ej. Técnico, Backup, Responsable"
+                  value={newMemberForm.role}
+                  onChange={(e) =>
+                    setNewMemberForm((prev) => ({ ...prev, role: e.target.value }))
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>% de dedicación (opcional)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  max="100"
+                  placeholder="100"
+                  value={newMemberForm.allocationPercent}
+                  onChange={(e) =>
+                    setNewMemberForm((prev) => ({
+                      ...prev,
+                      allocationPercent: e.target.value
+                    }))
+                  }
+                />
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="isPrimary"
+                  checked={newMemberForm.isPrimary}
+                  onCheckedChange={(checked) =>
+                    setNewMemberForm((prev) => ({
+                      ...prev,
+                      isPrimary: Boolean(checked)
+                    }))
+                  }
+                />
+                <Label htmlFor="isPrimary">Marcar como equipo principal</Label>
+              </div>
+
+              <Button
+                className="w-full"
+                onClick={handleAddTeamMember}
+                disabled={
+                  isAddingMember ||
+                  !newMemberForm.employeeId ||
+                  availableEmployees.length === 0
+                }
+              >
+                {isAddingMember ? 'Añadiendo...' : 'Añadir miembro'}
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
     </div>
   )
