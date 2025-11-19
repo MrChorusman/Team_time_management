@@ -10,6 +10,7 @@ from models.holiday import Holiday
 from models.calendar_activity import CalendarActivity
 from models.notification import Notification
 from models.company import Company
+from models.email_verification_token import EmailVerificationToken
 from services.notification_service import NotificationService
 from services.holiday_service import HolidayService
 from services.email_service import EmailService
@@ -359,6 +360,12 @@ def delete_user(user_id):
         
         email = user.email
         
+        # Eliminar explícitamente los tokens de verificación de email asociados
+        # Esto evita problemas con la restricción NOT NULL en user_id
+        email_tokens = EmailVerificationToken.query.filter_by(user_id=user_id).all()
+        for token in email_tokens:
+            db.session.delete(token)
+        
         # Eliminar usuario (las relaciones CASCADE eliminarán empleado, notificaciones, etc.)
         db.session.delete(user)
         db.session.commit()
@@ -372,10 +379,10 @@ def delete_user(user_id):
         
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Error eliminando usuario {user_id}: {e}")
+        logger.error(f"Error eliminando usuario {user_id}: {e}", exc_info=True)
         return jsonify({
             'success': False,
-            'message': 'Error eliminando usuario'
+            'message': f'Error eliminando usuario: {str(e)}'
         }), 500
 
 @admin_bp.route('/system/maintenance', methods=['POST'])
