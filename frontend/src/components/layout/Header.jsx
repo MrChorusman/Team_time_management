@@ -35,7 +35,7 @@ import {
 
 const Header = ({ onMenuClick }) => {
   const navigate = useNavigate()
-  const { user, employee, logout } = useAuth()
+  const { user, employee, logout, isManager, isAdmin } = useAuth()
   const { unreadCount, summary, notifications } = useNotifications()
   const { theme, toggleTheme } = useTheme()
   const [searchQuery, setSearchQuery] = useState('')
@@ -304,7 +304,7 @@ const Header = ({ onMenuClick }) => {
       </Dialog>
 
       {/* Información de estado del empleado */}
-      {employee && !employee.approved && (
+      {employee && !employee.approved && !(isManager() || isAdmin()) && (
         <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
           <div className="flex items-center">
             <div className="flex-shrink-0">

@@ -102,8 +102,10 @@ const EmployeesPage = () => {
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
-  const loadEmployees = async () => {
-    setLoading(true)
+  const loadEmployees = async ({ silent = false } = {}) => {
+    if (!silent) {
+      setLoading(true)
+    }
     try {
       // Los administradores y managers deben ver todos los empleados (aprobados y pendientes)
       // para que los managers se vean a sí mismos
@@ -125,7 +127,9 @@ const EmployeesPage = () => {
       // En caso de error, mostrar lista vacía
       setEmployees([])
     } finally {
-      setLoading(false)
+      if (!silent) {
+        setLoading(false)
+      }
     }
   }
 
@@ -1304,9 +1308,13 @@ const EmployeesPage = () => {
         isOpen={showInviteModal}
         onClose={() => setShowInviteModal(false)}
         onInviteSuccess={(invitation) => {
-          console.log('Invitación enviada:', invitation)
-          // Opcional: mostrar toast de éxito
-          loadEmployees() // Recargar lista si es necesario
+          setShowInviteModal(false)
+          toast.success('Invitación enviada', {
+            description: invitation?.email
+              ? `Hemos enviado la invitación a ${invitation.email}`
+              : 'El usuario recibirá un correo con las instrucciones.'
+          })
+          loadEmployees({ silent: true }) // Recargar sin bloquear la UI
         }}
       />
     </div>
