@@ -73,7 +73,11 @@ apiClient.interceptors.response.use(
             window.dispatchEvent(new CustomEvent('session-expired'))
             
             // Redirigir a login
-            if (!window.location.pathname.includes('/login')) {
+            const publicPaths = ['/login', '/register', '/verify-email', '/forgot-password']
+            const currentPath = window.location.pathname
+            const isPublicRoute = publicPaths.some((path) => currentPath.startsWith(path))
+            
+            if (!isPublicRoute) {
               window.location.href = '/login?reason=session_expired'
             }
           }

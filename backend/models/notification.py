@@ -6,6 +6,19 @@ class NotificationType(Enum):
     """Tipos de notificación"""
     EMPLOYEE_REGISTRATION = 'employee_registration'
     EMPLOYEE_APPROVED = 'employee_approved'
+    EMPLOYEE_CREATED = 'employee_created'
+    EMPLOYEE_UPDATED = 'employee_updated'
+    EMPLOYEE_DELETED = 'employee_deleted'
+    USER_DELETED = 'user_deleted'
+    PROJECT_CREATED = 'project_created'
+    PROJECT_UPDATED = 'project_updated'
+    PROJECT_DELETED = 'project_deleted'
+    COMPANY_CREATED = 'company_created'
+    COMPANY_UPDATED = 'company_updated'
+    COMPANY_DELETED = 'company_deleted'
+    INVITATION_SENT = 'invitation_sent'
+    PROJECT_ASSIGNMENT = 'project_assignment'
+    TEAM_ASSIGNMENT = 'team_assignment'
     VACATION_CONFLICT = 'vacation_conflict'
     CALENDAR_CHANGE = 'calendar_change'
     WEEKLY_REPORT = 'weekly_report'
@@ -179,6 +192,198 @@ class Notification(db.Model):
         return notification
     
     @classmethod
+    def create_user_deleted_notification(cls, admin_user, deleted_user_email, deleted_by_user):
+        """Crea notificación para eliminación de usuario"""
+        notification = cls(
+            user_id=admin_user.id,
+            title="Usuario eliminado",
+            message=f"El usuario {deleted_user_email} ha sido eliminado del sistema por {deleted_by_user.email}.",
+            notification_type=NotificationType.USER_DELETED,
+            priority=NotificationPriority.MEDIUM,
+            send_email=False,
+            created_by=deleted_by_user.id,
+            data={
+                'deleted_user_email': deleted_user_email,
+                'deleted_by': deleted_by_user.email,
+                'action_url': '/admin/users'
+            }
+        )
+        db.session.add(notification)
+        return notification
+    
+    @classmethod
+    def create_project_notification(cls, user, project, action, created_by_user):
+        """Crea notificación para creación/actualización/eliminación de proyecto"""
+        action_messages = {
+            'created': f"Se ha creado el proyecto {project.name} ({project.code}).",
+            'updated': f"Se ha actualizado el proyecto {project.name} ({project.code}).",
+            'deleted': f"Se ha eliminado el proyecto {project.name} ({project.code})."
+        }
+        action_types = {
+            'created': NotificationType.PROJECT_CREATED,
+            'updated': NotificationType.PROJECT_UPDATED,
+            'deleted': NotificationType.PROJECT_DELETED
+        }
+        priorities = {
+            'created': NotificationPriority.MEDIUM,
+            'updated': NotificationPriority.LOW,
+            'deleted': NotificationPriority.HIGH
+        }
+        
+        notification = cls(
+            user_id=user.id,
+            title=f"Proyecto {action}",
+            message=action_messages.get(action, f"Proyecto {project.name} {action}."),
+            notification_type=action_types.get(action, NotificationType.PROJECT_CREATED),
+            priority=priorities.get(action, NotificationPriority.MEDIUM),
+            send_email=action == 'deleted',
+            created_by=created_by_user.id if created_by_user else None,
+            data={
+                'project_id': project.id,
+                'project_code': project.code,
+                'project_name': project.name,
+                'action': action,
+                'action_url': f'/projects/{project.id}' if action != 'deleted' else '/projects'
+            }
+        )
+        db.session.add(notification)
+        return notification
+    
+    @classmethod
+    def create_company_notification(cls, user, company, action, created_by_user):
+        """Crea notificación para creación/actualización/eliminación de empresa"""
+        action_messages = {
+            'created': f"Se ha creado la empresa {company.name}.",
+            'updated': f"Se ha actualizado la empresa {company.name}.",
+            'deleted': f"Se ha eliminado la empresa {company.name}."
+        }
+        action_types = {
+            'created': NotificationType.COMPANY_CREATED,
+            'updated': NotificationType.COMPANY_UPDATED,
+            'deleted': NotificationType.COMPANY_DELETED
+        }
+        priorities = {
+            'created': NotificationPriority.MEDIUM,
+            'updated': NotificationPriority.LOW,
+            'deleted': NotificationPriority.HIGH
+        }
+        
+        notification = cls(
+            user_id=user.id,
+            title=f"Empresa {action}",
+            message=action_messages.get(action, f"Empresa {company.name} {action}."),
+            notification_type=action_types.get(action, NotificationType.COMPANY_CREATED),
+            priority=priorities.get(action, NotificationPriority.MEDIUM),
+            send_email=action == 'deleted',
+            created_by=created_by_user.id if created_by_user else None,
+            data={
+                'company_id': company.id,
+                'company_name': company.name,
+                'action': action,
+                'action_url': '/admin/companies'
+            }
+        )
+        db.session.add(notification)
+        return notification
+    
+    @classmethod
+    def create_employee_notification(cls, user, employee, action, created_by_user):
+        """Crea notificación para creación/actualización/eliminación de empleado"""
+        action_messages = {
+            'created': f"Se ha creado el empleado {employee.full_name}.",
+            'updated': f"Se ha actualizado el empleado {employee.full_name}.",
+            'deleted': f"Se ha eliminado el empleado {employee.full_name}."
+        }
+        action_types = {
+            'created': NotificationType.EMPLOYEE_CREATED,
+            'updated': NotificationType.EMPLOYEE_UPDATED,
+            'deleted': NotificationType.EMPLOYEE_DELETED
+        }
+        priorities = {
+            'created': NotificationPriority.MEDIUM,
+            'updated': NotificationPriority.LOW,
+            'deleted': NotificationPriority.HIGH
+        }
+        
+        notification = cls(
+            user_id=user.id,
+            title=f"Empleado {action}",
+            message=action_messages.get(action, f"Empleado {employee.full_name} {action}."),
+            notification_type=action_types.get(action, NotificationType.EMPLOYEE_CREATED),
+            priority=priorities.get(action, NotificationPriority.MEDIUM),
+            send_email=action == 'deleted',
+            created_by=created_by_user.id if created_by_user else None,
+            data={
+                'employee_id': employee.id,
+                'employee_name': employee.full_name,
+                'action': action,
+                'action_url': f'/employees/{employee.id}' if action != 'deleted' else '/employees'
+            }
+        )
+        db.session.add(notification)
+        return notification
+    
+    @classmethod
+    def create_invitation_sent_notification(cls, admin_user, invitee_email, created_by_user):
+        """Crea notificación para envío de invitación"""
+        notification = cls(
+            user_id=admin_user.id,
+            title="Invitación enviada",
+            message=f"Se ha enviado una invitación a {invitee_email} para unirse al sistema.",
+            notification_type=NotificationType.INVITATION_SENT,
+            priority=NotificationPriority.LOW,
+            send_email=False,
+            created_by=created_by_user.id if created_by_user else None,
+            data={
+                'invitee_email': invitee_email,
+                'action_url': '/admin/users'
+            }
+        )
+        db.session.add(notification)
+        return notification
+    
+    @classmethod
+    def create_project_assignment_notification(cls, employee_user, project, created_by_user):
+        """Crea notificación para asignación de empleado a proyecto"""
+        notification = cls(
+            user_id=employee_user.id,
+            title="Asignado a proyecto",
+            message=f"Has sido asignado al proyecto {project.name} ({project.code}).",
+            notification_type=NotificationType.PROJECT_ASSIGNMENT,
+            priority=NotificationPriority.MEDIUM,
+            send_email=True,
+            created_by=created_by_user.id if created_by_user else None,
+            data={
+                'project_id': project.id,
+                'project_code': project.code,
+                'project_name': project.name,
+                'action_url': f'/projects/{project.id}'
+            }
+        )
+        db.session.add(notification)
+        return notification
+    
+    @classmethod
+    def create_team_assignment_notification(cls, employee_user, team, created_by_user):
+        """Crea notificación para asignación de empleado a equipo"""
+        notification = cls(
+            user_id=employee_user.id,
+            title="Asignado a equipo",
+            message=f"Has sido asignado al equipo {team.name}.",
+            notification_type=NotificationType.TEAM_ASSIGNMENT,
+            priority=NotificationPriority.MEDIUM,
+            send_email=True,
+            created_by=created_by_user.id if created_by_user else None,
+            data={
+                'team_id': team.id,
+                'team_name': team.name,
+                'action_url': f'/teams/{team.id}'
+            }
+        )
+        db.session.add(notification)
+        return notification
+    
+    @classmethod
     def get_unread_for_user(cls, user_id, limit=50):
         """Obtiene notificaciones no leídas para un usuario"""
         return cls.query.filter(
@@ -260,6 +465,19 @@ class Notification(db.Model):
         icons = {
             NotificationType.EMPLOYEE_REGISTRATION: 'user-plus',
             NotificationType.EMPLOYEE_APPROVED: 'check-circle',
+            NotificationType.EMPLOYEE_CREATED: 'user-plus',
+            NotificationType.EMPLOYEE_UPDATED: 'user-edit',
+            NotificationType.EMPLOYEE_DELETED: 'user-minus',
+            NotificationType.USER_DELETED: 'user-x',
+            NotificationType.PROJECT_CREATED: 'folder-plus',
+            NotificationType.PROJECT_UPDATED: 'folder-edit',
+            NotificationType.PROJECT_DELETED: 'folder-minus',
+            NotificationType.COMPANY_CREATED: 'building-plus',
+            NotificationType.COMPANY_UPDATED: 'building-edit',
+            NotificationType.COMPANY_DELETED: 'building-minus',
+            NotificationType.INVITATION_SENT: 'mail',
+            NotificationType.PROJECT_ASSIGNMENT: 'briefcase',
+            NotificationType.TEAM_ASSIGNMENT: 'users',
             NotificationType.VACATION_CONFLICT: 'alert-triangle',
             NotificationType.CALENDAR_CHANGE: 'calendar',
             NotificationType.WEEKLY_REPORT: 'file-text',

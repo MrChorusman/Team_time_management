@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { CheckCircle2, XCircle, Clock, Mail, AlertCircle } from 'lucide-react'
 import { Button } from '../../components/ui/button'
@@ -13,9 +13,12 @@ const VerifyEmailPage = () => {
   const [message, setMessage] = useState('')
   const [email, setEmail] = useState('')
   const [expired, setExpired] = useState(false)
+  const [autoVerifyEnabled, setAutoVerifyEnabled] = useState(false)
+  const autoVerificationRef = useRef(false)
 
   useEffect(() => {
     const tokenParam = searchParams.get('token')
+    const autoParam = searchParams.get('auto')
     
     if (!tokenParam) {
       setStatus('error')
@@ -24,12 +27,14 @@ const VerifyEmailPage = () => {
     }
     
     setToken(tokenParam)
+    setAutoVerifyEnabled(autoParam === '1' || autoParam === 'true')
     // Solo verificar el estado del token (GET), NO verificarlo automáticamente
     checkTokenStatus(tokenParam)
   }, [searchParams])
 
   const checkTokenStatus = async (token) => {
     try {
+      autoVerificationRef.current = true
       const response = await fetch(
         `${import.meta.env.VITE_API_BASE_URL}/auth/verify-email/${token}`,
         {
@@ -54,6 +59,11 @@ const VerifyEmailPage = () => {
           // Token válido pero requiere confirmación del usuario
           setStatus('pending') // Nuevo estado: pendiente de confirmación
           setMessage(data.message || 'Token válido. Haz clic en el botón para verificar tu email.')
+          
+          if (autoVerifyEnabled && !autoVerificationRef.current) {
+            autoVerificationRef.current = true
+            verifyEmail(token)
+          }
         }
       } else {
         setStatus('error')

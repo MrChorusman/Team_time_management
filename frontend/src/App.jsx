@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { NotificationProvider } from './contexts/NotificationContext'
 import { ThemeProvider } from './contexts/ThemeContext'
@@ -86,6 +86,19 @@ function AppLayout({ children }) {
 }
 
 // Componente principal de la aplicación
+function RegisterRouteElement() {
+  const location = useLocation()
+  const { user } = useAuth()
+  const urlParams = new URLSearchParams(location.search)
+  const hasInvitationToken = urlParams.has('token')
+  
+  if (hasInvitationToken) {
+    return <RegisterPage />
+  }
+  
+  return user ? <Navigate to="/dashboard" replace /> : <RegisterPage />
+}
+
 function AppContent() {
   const { user, loading } = useAuth()
   
@@ -106,7 +119,7 @@ function AppContent() {
       />
       <Route 
         path="/register" 
-        element={user ? <Navigate to="/dashboard" replace /> : <RegisterPage />} 
+        element={<RegisterRouteElement />} 
       />
       
       {/* Verificación de email (público) */}

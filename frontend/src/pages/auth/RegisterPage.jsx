@@ -13,7 +13,7 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner'
 const RegisterPage = () => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { register: registerUser, loading, error, clearError } = useAuth()
+  const { user, register: registerUser, loading, error, clearError } = useAuth()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [registrationSuccess, setRegistrationSuccess] = useState(() => {
@@ -21,6 +21,10 @@ const RegisterPage = () => {
     return localStorage.getItem('registrationSuccess') === 'true'
   })
   const [invitationToken, setInvitationToken] = useState(null)
+  const [registrationDetails, setRegistrationDetails] = useState({
+    hasInvitation: false,
+    requiresVerification: null
+  })
   const registrationSuccessRef = useRef(false)
   
   const {
@@ -40,6 +44,10 @@ const RegisterPage = () => {
     const token = searchParams.get('token')
     if (token) {
       setInvitationToken(token)
+      setRegistrationDetails((prev) => ({
+        ...prev,
+        hasInvitation: true
+      }))
     }
   }, [searchParams])
 
@@ -90,11 +98,26 @@ const RegisterPage = () => {
         setRegistrationSuccess(true)
         console.log('Estado registrationSuccess establecido a true')
         
+        const backendHasInvitation = Boolean(result?.has_invitation)
+        const backendRequiresVerification = result?.requires_verification ?? null
+        const backendInvitationToken = result?.invitation_token || null
+        const effectiveInvitationToken = invitationToken || backendInvitationToken || null
+        const finalHasInvitation = backendHasInvitation || Boolean(effectiveInvitationToken)
+        
+        if (!invitationToken && backendInvitationToken) {
+          setInvitationToken(backendInvitationToken)
+        }
+        
+        setRegistrationDetails({
+          hasInvitation: finalHasInvitation,
+          requiresVerification: backendRequiresVerification
+        })
+        
         // Si hay invitación, redirigir a completar perfil de empleado después de mostrar mensaje
         // Si NO hay invitación, NO redirigir automáticamente - dejar que el usuario vea el mensaje
-        if (invitationToken) {
+        if (finalHasInvitation && effectiveInvitationToken) {
           setTimeout(() => {
-            navigate(`/employee/register?token=${invitationToken}`)
+            navigate(`/employee/register?token=${effectiveInvitationToken}`)
           }, 3000)
         }
         // Si no hay invitación, el usuario debe ver el mensaje y hacer clic en "Ir a Login"
@@ -124,17 +147,18 @@ const RegisterPage = () => {
                   ¡Registro Exitoso!
                 </h2>
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  {invitationToken 
-                    ? 'Tu cuenta ha sido creada exitosamente. Tu email ha sido confirmado automáticamente. Ahora completa tu perfil de empleado.'
-                    : (
-                      <>
-                        Tu cuenta ha sido creada exitosamente.{' '}
-                        <strong>Por favor, verifica tu email</strong> para activar tu cuenta antes de iniciar sesión.
-                      </>
-                    )
-                  }
+                  {registrationDetails.hasInvitation || invitationToken ? (
+                    'Tu cuenta ha sido creada exitosamente. Tu email ha sido confirmado automáticamente. Ahora completa tu perfil de empleado.'
+                  ) : registrationDetails.requiresVerification === false ? (
+                    'Tu cuenta ha sido creada exitosamente y ya está activa. Puedes iniciar sesión con tus credenciales.'
+                  ) : (
+                    <>
+                      Tu cuenta ha sido creada exitosamente.{' '}
+                      <strong>Por favor, verifica tu email</strong> para activar tu cuenta antes de iniciar sesión.
+                    </>
+                  )}
                 </p>
-                {!invitationToken && (
+                {!(registrationDetails.hasInvitation || invitationToken) && registrationDetails.requiresVerification !== false && (
                   <>
                     <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-4">
                       <p className="text-sm text-blue-800 dark:text-blue-200">
@@ -153,7 +177,18 @@ const RegisterPage = () => {
                     </Button>
                   </>
                 )}
-                {invitationToken && <LoadingSpinner size="sm" />}
+                {(registrationDetails.hasInvitation || invitationToken) && <LoadingSpinner size="sm" />}
+                {!(registrationDetails.hasInvitation || invitationToken) && registrationDetails.requiresVerification === false && (
+                  <Button 
+                    onClick={() => {
+                      localStorage.removeItem('registrationSuccess')
+                      navigate('/login')
+                    }} 
+                    className="w-full mt-4"
+                  >
+                    Ir a Iniciar Sesión
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -176,18 +211,42 @@ const RegisterPage = () => {
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
             Únete a Team Time Management
           </p>
+          {user && (
+            <div className="mt-4">
+              <Alert variant="destructive">
+                <AlertDescription>
+                  Ya has iniciado sesión como <strong>{user.email}</strong>. 
+                  Si estás aceptando una invitación para otro usuario, cierra sesión antes de continuar para evitar conflictos.
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
         </div>
 
         {/* Formulario */}
         <Card>
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-center">Registro</CardTitle>
+            <CardTitle className="text-2xl text-center">
+              {invitationToken ? 'Aceptar Invitación' : 'Registro'}
+            </CardTitle>
             <CardDescription className="text-center">
-              Completa los datos para crear tu cuenta
+              {invitationToken 
+                ? 'Has sido invitado a unirte al equipo. Completa tu registro para continuar.'
+                : 'Completa los datos para crear tu cuenta'
+              }
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              {/* Mensaje informativo si hay token de invitación */}
+              {invitationToken && (
+                <Alert className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+                  <AlertDescription className="text-blue-800 dark:text-blue-200">
+                    📧 Estás aceptando una invitación. Tu email será verificado automáticamente al completar el registro.
+                  </AlertDescription>
+                </Alert>
+              )}
+              
               {/* Error general */}
               {error && (
                 <Alert variant="destructive">

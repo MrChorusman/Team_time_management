@@ -395,3 +395,174 @@ class NotificationService:
             results['errors'].append(f"Error general: {e}")
         
         return results
+    
+    @staticmethod
+    def notify_user_deleted(deleted_user_email: str, deleted_by_user: User) -> Optional[Notification]:
+        """Notifica a todos los administradores sobre eliminación de usuario"""
+        try:
+            admins = User.query.join(User.roles).filter(
+                User.active == True
+            ).all()
+            
+            # Filtrar solo admins
+            admin_users = [u for u in admins if u.is_admin()]
+            
+            notifications = []
+            for admin in admin_users:
+                notification = Notification.create_user_deleted_notification(
+                    admin, deleted_user_email, deleted_by_user
+                )
+                notifications.append(notification)
+            
+            db.session.commit()
+            logger.info(f"Notificaciones de eliminación de usuario enviadas a {len(notifications)} administradores")
+            return notifications[0] if notifications else None
+            
+        except Exception as e:
+            logger.error(f"Error enviando notificación de eliminación de usuario: {e}")
+            db.session.rollback()
+            return None
+    
+    @staticmethod
+    def notify_project_action(project, action: str, created_by_user: User, notify_users: List[User] = None) -> List[Notification]:
+        """Notifica sobre acciones de proyecto (crear/actualizar/eliminar)"""
+        try:
+            notifications = []
+            
+            # Si no se especifican usuarios, notificar a todos los admins y managers
+            if not notify_users:
+                from models.team import Team
+                users = User.query.filter(User.active == True).all()
+                notify_users = [u for u in users if u.is_admin() or u.is_manager()]
+            
+            for user in notify_users:
+                notification = Notification.create_project_notification(
+                    user, project, action, created_by_user
+                )
+                notifications.append(notification)
+            
+            db.session.commit()
+            logger.info(f"Notificaciones de proyecto {action} enviadas a {len(notifications)} usuarios")
+            return notifications
+            
+        except Exception as e:
+            logger.error(f"Error enviando notificaciones de proyecto: {e}")
+            db.session.rollback()
+            return []
+    
+    @staticmethod
+    def notify_company_action(company, action: str, created_by_user: User) -> List[Notification]:
+        """Notifica sobre acciones de empresa (crear/actualizar/eliminar)"""
+        try:
+            # Notificar a todos los admins
+            admins = User.query.filter(User.active == True).all()
+            admin_users = [u for u in admins if u.is_admin()]
+            
+            notifications = []
+            for admin in admin_users:
+                notification = Notification.create_company_notification(
+                    admin, company, action, created_by_user
+                )
+                notifications.append(notification)
+            
+            db.session.commit()
+            logger.info(f"Notificaciones de empresa {action} enviadas a {len(notifications)} administradores")
+            return notifications
+            
+        except Exception as e:
+            logger.error(f"Error enviando notificaciones de empresa: {e}")
+            db.session.rollback()
+            return []
+    
+    @staticmethod
+    def notify_employee_action(employee: Employee, action: str, created_by_user: User) -> Optional[Notification]:
+        """Notifica sobre acciones de empleado (crear/actualizar/eliminar)"""
+        try:
+            # Notificar al manager del equipo si existe
+            team = employee.team
+            if team and team.manager and team.manager.user:
+                notification = Notification.create_employee_notification(
+                    team.manager.user, employee, action, created_by_user
+                )
+                db.session.commit()
+                logger.info(f"Notificación de empleado {action} enviada al manager")
+                return notification
+            
+            # Si no hay manager, notificar a admins
+            admins = User.query.filter(User.active == True).all()
+            admin_users = [u for u in admins if u.is_admin()]
+            
+            if admin_users:
+                notification = Notification.create_employee_notification(
+                    admin_users[0], employee, action, created_by_user
+                )
+                db.session.commit()
+                logger.info(f"Notificación de empleado {action} enviada a admin")
+                return notification
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"Error enviando notificación de empleado: {e}")
+            db.session.rollback()
+            return None
+    
+    @staticmethod
+    def notify_invitation_sent(invitee_email: str, created_by_user: User) -> Optional[Notification]:
+        """Notifica sobre envío de invitación"""
+        try:
+            # Notificar al usuario que envió la invitación (si es admin)
+            if created_by_user.is_admin():
+                notification = Notification.create_invitation_sent_notification(
+                    created_by_user, invitee_email, created_by_user
+                )
+                db.session.commit()
+                logger.info(f"Notificación de invitación enviada registrada")
+                return notification
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"Error enviando notificación de invitación: {e}")
+            db.session.rollback()
+            return None
+    
+    @staticmethod
+    def notify_project_assignment(employee: Employee, project, created_by_user: User) -> Optional[Notification]:
+        """Notifica a un empleado sobre su asignación a un proyecto"""
+        try:
+            if not employee.user:
+                logger.warning(f"Empleado {employee.full_name} no tiene usuario asociado")
+                return None
+            
+            notification = Notification.create_project_assignment_notification(
+                employee.user, project, created_by_user
+            )
+            db.session.commit()
+            logger.info(f"Notificación de asignación a proyecto enviada a {employee.user.email}")
+            return notification
+            
+        except Exception as e:
+            logger.error(f"Error enviando notificación de asignación a proyecto: {e}")
+            db.session.rollback()
+            return None
+    
+    @staticmethod
+    def notify_team_assignment(employee: Employee, team: Team, created_by_user: User) -> Optional[Notification]:
+        """Notifica a un empleado sobre su asignación a un equipo"""
+        try:
+            if not employee.user:
+                logger.warning(f"Empleado {employee.full_name} no tiene usuario asociado")
+                return None
+            
+            notification = Notification.create_team_assignment_notification(
+                employee.user, team, created_by_user
+            )
+            db.session.commit()
+            logger.info(f"Notificación de asignación a equipo enviada a {employee.user.email}")
+            return notification
+            
+        except Exception as e:
+            logger.error(f"Error enviando notificación de asignación a equipo: {e}")
+            db.session.rollback()
+            return None

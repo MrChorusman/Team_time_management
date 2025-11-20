@@ -2,11 +2,15 @@ from flask import Blueprint, request, jsonify
 from flask_security import auth_required, current_user
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime
+import logging
 
 from models import db
 from models.project import Project, ProjectAssignment
 from models.team import Team
 from models.employee import Employee
+from services.notification_service import NotificationService
+
+logger = logging.getLogger(__name__)
 
 projects_bp = Blueprint('projects', __name__)
 
@@ -89,6 +93,12 @@ def create_project():
         db.session.rollback()
         return jsonify({'success': False, 'message': 'El código del proyecto ya existe'}), 409
 
+    # Notificar sobre la creación del proyecto
+    try:
+        NotificationService.notify_project_action(project, 'created', current_user)
+    except Exception as notif_error:
+        logger.error(f"Error enviando notificación de creación de proyecto: {notif_error}")
+
     return jsonify({'success': True, 'project': project.to_dict(include_assignments=True)}), 201
 
 
@@ -138,6 +148,13 @@ def update_project(project_id):
         project.teams = teams
 
     db.session.commit()
+    
+    # Notificar sobre la actualización del proyecto
+    try:
+        NotificationService.notify_project_action(project, 'updated', current_user)
+    except Exception as notif_error:
+        logger.error(f"Error enviando notificación de actualización de proyecto: {notif_error}")
+    
     return jsonify({'success': True, 'project': project.to_dict(include_assignments=True)})
 
 
@@ -154,6 +171,13 @@ def delete_project(project_id):
 
     project.active = False
     db.session.commit()
+    
+    # Notificar sobre la eliminación del proyecto
+    try:
+        NotificationService.notify_project_action(project, 'deleted', current_user)
+    except Exception as notif_error:
+        logger.error(f"Error enviando notificación de eliminación de proyecto: {notif_error}")
+    
     return jsonify({'success': True, 'message': 'Proyecto desactivado'})
 
 
@@ -204,6 +228,12 @@ def create_project_assignment(project_id):
     except IntegrityError:
         db.session.rollback()
         return jsonify({'success': False, 'message': 'El empleado ya está asignado a este proyecto'}), 409
+
+    # Notificar al empleado sobre su asignación al proyecto
+    try:
+        NotificationService.notify_project_assignment(employee, project, current_user)
+    except Exception as notif_error:
+        logger.error(f"Error enviando notificación de asignación a proyecto: {notif_error}")
 
     return jsonify({'success': True, 'assignment': assignment.to_dict(include_employee=True)}), 201
 

@@ -29,10 +29,20 @@ export const AuthProvider = ({ children }) => {
     
     hasInitialized.current = true
     
+    const publicPaths = ['/login', '/register', '/verify-email', '/forgot-password']
+    const currentPath = window.location.pathname
+    const isPublicRoute = publicPaths.some((path) => currentPath.startsWith(path))
+    const storedUser = localStorage.getItem('user')
+    
     // Solo verificar sesión si no tenemos usuario logueado y no hemos hecho login recientemente
     // Esto evita que se resetee el estado después de un login exitoso
     if (!user && !hasLoggedIn) {
-      checkSession()
+      if (isPublicRoute && !storedUser) {
+        // En rutas públicas sin usuario en memoria, no forzar verificación de sesión
+        setLoading(false)
+      } else {
+        checkSession()
+      }
     } else if (hasLoggedIn) {
       // Si hemos hecho login, no verificar sesión y marcar loading como false
       setLoading(false)
@@ -64,7 +74,10 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('employee')
       setLoading(false)
       // Redirigir a login si no estamos ya ahí
-      if (!window.location.pathname.includes('/login')) {
+      const publicPaths = ['/login', '/register', '/verify-email', '/forgot-password']
+      const currentPath = window.location.pathname
+      const isPublicRoute = publicPaths.some((path) => currentPath.startsWith(path))
+      if (!isPublicRoute) {
         window.location.href = '/login?reason=session_expired'
       }
     }
@@ -114,7 +127,11 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('employee')
         // Si es un error 401 (no autorizado), redirigir a login
         if (error.response?.status === 401 || error.message?.includes('401')) {
-          if (!window.location.pathname.includes('/login')) {
+          const publicPaths = ['/login', '/register', '/verify-email', '/forgot-password']
+          const currentPath = window.location.pathname
+          const isPublicRoute = publicPaths.some((path) => currentPath.startsWith(path))
+          
+          if (!isPublicRoute) {
             window.location.href = '/login?reason=session_expired'
           }
         }
@@ -187,7 +204,8 @@ export const AuthProvider = ({ children }) => {
       const response = await authService.register(userData)
       
       if (response.success) {
-        return { success: true, message: response.message }
+        // Propagar toda la información relevante (ej. requires_verification, has_invitation, etc.)
+        return { success: true, ...response }
       } else {
         setError(response.message)
         return { success: false, message: response.message }

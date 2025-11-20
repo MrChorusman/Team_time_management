@@ -216,7 +216,7 @@ def register():
             
             # Enviar email de verificación
             frontend_url = request.headers.get('Origin', 'https://team-time-management.vercel.app')
-            verification_link = f"{frontend_url}/verify-email?token={verification_token}"
+            verification_link = f"{frontend_url}/verify-email?token={verification_token}&auto=1"
             
             email_sent = send_verification_email(
                 to_email=email,
@@ -234,7 +234,8 @@ def register():
             'requires_verification': requires_email_verification,
             'email_sent': email_sent,
             'user_id': new_user.id,
-            'has_invitation': invitation is not None
+            'has_invitation': invitation is not None,
+            'invitation_token': invitation_token
         }), 201
         
     except Exception as e:
@@ -748,7 +749,7 @@ def resend_verification():
         
         # Enviar email
         frontend_url = request.headers.get('Origin', 'https://team-time-management.vercel.app')
-        verification_link = f"{frontend_url}/verify-email?token={verification_token}"
+        verification_link = f"{frontend_url}/verify-email?token={verification_token}&auto=1"
         
         email_sent = send_verification_email(
             to_email=email,

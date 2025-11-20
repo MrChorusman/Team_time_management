@@ -75,6 +75,7 @@ Este documento establece el plan estratégico de desarrollo para las siguientes 
 | `fix-auth-blueprint-regression` | Pruebas end-to-end flujo de notificaciones | 03/11/2025 | 03/11/2025 | ✅ Completado |
 | `Formatear-Calendario` | Reimplementación del calendario como tabla tipo spreadsheet + funcionalidad completa de marcado de actividades con click derecho, modal con 3 variantes, guardias con horario inicio/fin y cálculo automático, long press móvil, actualizaciones optimistas | 07/11/2025 | 07/11/2025 | ✅ Completado |
 | `feature/multi-team-projects` | Implementación de multi-pertenencia a equipos, gestión de proyectos y asignaciones con porcentajes para forecast | 18/11/2025 | - | 🔄 En progreso |
+| `feature/invitation-auth-fixes` | Correcciones al flujo de invitaciones, verificación automática y refresco de panel admin | 20/11/2025 | - | 🔄 En progreso |
 | `feature-forecast-system` | Sistema completo de Forecast con períodos de facturación personalizados por empresa, cálculo de horas teóricas/reales (excluyendo guardias), eficiencia, valor económico, gestión de empresas (CRUD), campo hourly_rate en empleados, página ForecastPage con vistas employee/team/global | 25/01/2025 | 25/01/2025 | ✅ Completado |
 | `hotfix/render-syntax-error` | Corrección de error de sintaxis en `employees.py` para restablecer despliegue en Render | 18/11/2025 | - | 🔄 En progreso |
 | `feature/team-detail-memberships` | Alta y gestión de miembros desde el detalle del equipo (botón “Añadir miembro”) | 19/11/2025 | - | 🔄 En progreso |

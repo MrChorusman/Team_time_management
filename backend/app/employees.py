@@ -249,59 +249,46 @@ def register_employee():
         if holidays_loaded > 0:
             logger.info(f"Cargados {holidays_loaded} festivos para {employee.country}")
         
-        # Notificar al manager del equipo
+        # Notificar al manager del equipo sobre el registro
         NotificationService.notify_employee_registration(employee, current_user)
         
-        # Crear notificación para administradores sobre nuevo empleado registrado
-        from models.notification import NotificationType, NotificationPriority
-        admin_role = Role.query.filter_by(name='admin').first()
-        if admin_role:
-            admin_users = User.query.join(User.roles).filter(Role.id == admin_role.id).all()
-            for admin_user in admin_users:
-                notification = Notification(
-                    user_id=admin_user.id,
-                    title="Nuevo empleado registrado",
-                    message=f"{employee.full_name} se ha registrado en el equipo {primary_team.name}. Estado: {'Aprobado' if employee.approved else 'Pendiente de aprobación'}",
-                    notification_type=NotificationType.EMPLOYEE_REGISTRATION,
-                    priority=NotificationPriority.HIGH if not employee.approved else NotificationPriority.MEDIUM,
-                    send_email=False,
-                    created_by=current_user.id,
-                    data={
-                        'employee_id': employee.id,
-                        'employee_name': employee.full_name,
-                        'team_id': primary_team.id,
-                        'team_name': primary_team.name,
-                        'approved': employee.approved,
-                        'created_at': datetime.utcnow().isoformat()
-                    }
-                )
-                db.session.add(notification)
-            
-            # Si hay aprobaciones pendientes, crear notificación de alta prioridad
+        # Notificar sobre la creación del empleado (usando el nuevo sistema)
+        try:
+            NotificationService.notify_employee_action(employee, 'created', current_user)
+        except Exception as notif_error:
+            logger.error(f"Error enviando notificación de creación de empleado: {notif_error}")
+        
+        # Si hay aprobaciones pendientes, crear notificación de alta prioridad para admins
+        try:
+            from models.notification import NotificationType, NotificationPriority
             pending_count = Employee.query.filter(
                 Employee.active == True,
                 Employee.approved == False
             ).count()
             
             if pending_count > 0:
-                for admin_user in admin_users:
-                    # Crear notificación de aprobación pendiente
-                    approval_notification = Notification(
-                        user_id=admin_user.id,
-                        title="Aprobación pendiente",
-                        message=f"Tienes {pending_count} empleado(s) pendiente(s) de aprobación",
-                        notification_type=NotificationType.SYSTEM_ALERT,
-                        priority=NotificationPriority.HIGH,
-                        send_email=False,
-                        created_by=current_user.id,
-                        data={
-                            'pending_count': pending_count,
-                            'action_url': '/employees?status=pending'
-                        }
-                    )
-                    db.session.add(approval_notification)
-            
-            db.session.commit()
+                admin_role = Role.query.filter_by(name='admin').first()
+                if admin_role:
+                    admin_users = User.query.join(User.roles).filter(Role.id == admin_role.id).all()
+                    for admin_user in admin_users:
+                        # Crear notificación de aprobación pendiente
+                        approval_notification = Notification(
+                            user_id=admin_user.id,
+                            title="Aprobación pendiente",
+                            message=f"Tienes {pending_count} empleado(s) pendiente(s) de aprobación",
+                            notification_type=NotificationType.SYSTEM_ALERT,
+                            priority=NotificationPriority.HIGH,
+                            send_email=False,
+                            created_by=current_user.id,
+                            data={
+                                'pending_count': pending_count,
+                                'action_url': '/employees?status=pending'
+                            }
+                        )
+                        db.session.add(approval_notification)
+                    db.session.commit()
+        except Exception as approval_notif_error:
+            logger.error(f"Error creando notificación de aprobación pendiente: {approval_notif_error}")
         
         logger.info(f"Empleado registrado: {employee.full_name} en equipo {primary_team.name}")
         
@@ -386,9 +373,15 @@ def update_my_employee_profile():
             employee.updated_at = datetime.utcnow()
             db.session.commit()
             
-            # Notificar cambios al manager
+            # Notificar cambios al manager (calendario)
             changes_summary = f"Actualizó su perfil: {', '.join(changes_made)}"
             NotificationService.notify_calendar_changes(employee, changes_summary)
+            
+            # Notificar sobre la actualización del empleado (usando el nuevo sistema)
+            try:
+                NotificationService.notify_employee_action(employee, 'updated', current_user)
+            except Exception as notif_error:
+                logger.error(f"Error enviando notificación de actualización de empleado: {notif_error}")
             
             logger.info(f"Empleado {employee.full_name} actualizó su perfil")
         
@@ -592,6 +585,12 @@ def add_employee_membership(employee_id):
         _set_primary_membership(employee, team_id)
 
     db.session.commit()
+    
+    # Notificar al empleado sobre su asignación al equipo
+    try:
+        NotificationService.notify_team_assignment(employee, team, current_user)
+    except Exception as notif_error:
+        logger.error(f"Error enviando notificación de asignación a equipo: {notif_error}")
 
     return jsonify({'success': True, 'membership': membership.to_dict()}), 201
 
@@ -844,6 +843,12 @@ def deactivate_employee(employee_id):
         
         db.session.commit()
         
+        # Notificar sobre la eliminación/desactivación del empleado
+        try:
+            NotificationService.notify_employee_action(employee, 'deleted', current_user)
+        except Exception as notif_error:
+            logger.error(f"Error enviando notificación de eliminación de empleado: {notif_error}")
+        
         logger.info(f"Empleado {employee.full_name} desactivado por {current_user.email}")
         
         return jsonify({
@@ -1094,29 +1099,11 @@ def invite_employee():
             if email_sent:
                 logger.info(f"✅ Invitación enviada exitosamente a {email}")
                 
-                # Crear notificación para administradores sobre la invitación enviada
-                from models.notification import NotificationType, NotificationPriority
-                admin_role = Role.query.filter_by(name='admin').first()
-                if admin_role:
-                    admin_users = User.query.join(User.roles).filter(Role.id == admin_role.id).all()
-                    for admin_user in admin_users:
-                        notification = Notification(
-                            user_id=admin_user.id,
-                            title="Invitación enviada",
-                            message=f"Se ha enviado una invitación a {email} para unirse al sistema.",
-                            notification_type=NotificationType.SYSTEM_ALERT,
-                            priority=NotificationPriority.LOW,
-                            send_email=False,
-                            created_by=current_user.id,
-                            data={
-                                'invitation_email': email,
-                                'invited_by': current_user.email,
-                                'expires_at': expires_at.isoformat()
-                            }
-                        )
-                        db.session.add(notification)
-                    
-                    db.session.commit()
+                # Notificar sobre el envío de invitación (usando el nuevo sistema)
+                try:
+                    NotificationService.notify_invitation_sent(email, current_user)
+                except Exception as notif_error:
+                    logger.error(f"Error enviando notificación de invitación: {notif_error}")
             else:
                 logger.warning(f"⚠️ send_invitation_email devolvió False para {email}")
             

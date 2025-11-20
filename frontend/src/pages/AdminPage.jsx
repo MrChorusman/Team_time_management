@@ -83,6 +83,7 @@ const AdminPage = () => {
     max_hld_hours: 80,
     summer_hours: 7
   })
+  const [refreshing, setRefreshing] = useState(false)
 
   useEffect(() => {
     if (!isAdmin()) {
@@ -100,8 +101,10 @@ const AdminPage = () => {
     }
   }, [usersPage, usersFilter])
 
-  const loadDashboardData = async () => {
-    setLoading(true)
+  const loadDashboardData = async (options = {}) => {
+    if (!options.silent) {
+      setLoading(true)
+    }
     try {
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/dashboard`, {
         credentials: 'include'
@@ -113,6 +116,7 @@ const AdminPage = () => {
       
       const data = await response.json()
       setDashboardData(data.dashboard)
+      return data.dashboard
     } catch (error) {
       console.error('Error cargando datos del sistema:', error)
       toast({
@@ -120,8 +124,11 @@ const AdminPage = () => {
         description: 'No se pudieron cargar los datos del sistema',
         variant: 'destructive'
       })
+      return null
     } finally {
-      setLoading(false)
+      if (!options.silent) {
+        setLoading(false)
+      }
     }
   }
 
@@ -211,6 +218,27 @@ const AdminPage = () => {
       })
     } finally {
       setCompaniesLoading(false)
+    }
+  }
+
+  const handleRefreshAll = async () => {
+    setRefreshing(true)
+    try {
+      await Promise.all([
+        loadDashboardData({ silent: true }),
+        loadUsers(),
+        loadCompanies(),
+        loadTeams()
+      ])
+    } catch (error) {
+      console.error('Error actualizando panel de administración:', error)
+      toast({
+        title: 'Error',
+        description: 'No se pudo actualizar el panel. Intenta de nuevo.',
+        variant: 'destructive'
+      })
+    } finally {
+      setRefreshing(false)
     }
   }
 
@@ -630,9 +658,9 @@ const AdminPage = () => {
             {loading ? <LoadingSpinner size="sm" /> : <Download className="w-4 h-4 mr-2" />}
             Backup Manual
           </Button>
-          <Button variant="outline" onClick={() => loadDashboardData()}>
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Actualizar
+          <Button variant="outline" onClick={handleRefreshAll} disabled={refreshing}>
+            {refreshing ? <LoadingSpinner size="sm" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+            {refreshing ? 'Actualizando...' : 'Actualizar'}
           </Button>
         </div>
       </div>

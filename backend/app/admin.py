@@ -370,6 +370,13 @@ def delete_user(user_id):
         db.session.delete(user)
         db.session.commit()
         
+        # Notificar a todos los administradores sobre la eliminación
+        try:
+            NotificationService.notify_user_deleted(email, current_user)
+        except Exception as notif_error:
+            logger.error(f"Error enviando notificación de eliminación de usuario: {notif_error}")
+            # No fallar si la notificación no se puede enviar
+        
         logger.info(f"Usuario {email} eliminado por {current_user.email}")
         
         return jsonify({
@@ -1079,27 +1086,12 @@ def create_company():
         db.session.add(company)
         db.session.commit()
         
-        # Crear notificación para administradores sobre la nueva empresa
+        # Notificar a todos los administradores sobre la creación
         try:
-            from models.notification import NotificationType, NotificationPriority
-            # Buscar usuarios con rol admin usando la relación roles_users
-            admin_role = Role.query.filter_by(name='admin').first()
-            if admin_role:
-                admin_users = User.query.join(User.roles).filter(Role.id == admin_role.id).all()
-                for admin_user in admin_users:
-                    notification = Notification(
-                        user_id=admin_user.id,
-                        title='Nueva Empresa Creada',
-                        message=f'Se ha creado la empresa "{company.name}" con período de facturación del día {company.billing_period_start_day} al {company.billing_period_end_day}.',
-                        notification_type=NotificationType.SYSTEM_ALERT,
-                        priority=NotificationPriority.MEDIUM,
-                        created_by=current_user.id
-                    )
-                    db.session.add(notification)
-                db.session.commit()
-        except Exception as e:
-            logger.error(f"Error creando notificación de empresa: {e}")
-            # No fallar si la notificación no se puede crear
+            NotificationService.notify_company_action(company, 'created', current_user)
+        except Exception as notif_error:
+            logger.error(f"Error enviando notificación de creación de empresa: {notif_error}")
+            # No fallar si la notificación no se puede enviar
         
         return jsonify({
             'success': True,
@@ -1169,6 +1161,13 @@ def update_company(company_id):
         
         db.session.commit()
         
+        # Notificar a todos los administradores sobre la actualización
+        try:
+            NotificationService.notify_company_action(company, 'updated', current_user)
+        except Exception as notif_error:
+            logger.error(f"Error enviando notificación de actualización de empresa: {notif_error}")
+            # No fallar si la notificación no se puede enviar
+        
         return jsonify({
             'success': True,
             'company': company.to_dict(),
@@ -1202,6 +1201,13 @@ def delete_company(company_id):
         company.updated_at = datetime.utcnow()
         
         db.session.commit()
+        
+        # Notificar a todos los administradores sobre la eliminación
+        try:
+            NotificationService.notify_company_action(company, 'deleted', current_user)
+        except Exception as notif_error:
+            logger.error(f"Error enviando notificación de eliminación de empresa: {notif_error}")
+            # No fallar si la notificación no se puede enviar
         
         return jsonify({
             'success': True,
