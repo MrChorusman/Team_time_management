@@ -61,7 +61,8 @@ const InviteEmployeeModal = ({ isOpen, onClose, onInviteSuccess }) => {
         onInviteSuccess(data)
       }
 
-      // NO auto-cerrar - el usuario debe hacer clic en "Aceptar"
+      // Cerrar automáticamente tras enviar
+      handleClose()
 
     } catch (err) {
       console.error('Error invitando empleado:', err)

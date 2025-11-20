@@ -26,6 +26,9 @@ const Sidebar = ({ isOpen, onToggle }) => {
   const { user, employee, logout, isAdmin, isManager, canManageEmployees } = useAuth()
   const { unreadCount } = useNotifications()
 
+  const hasElevatedRole = isAdmin() || isManager()
+  const hasEmployeeAccess = employee?.approved || hasElevatedRole
+
   // Configuración de elementos del menú
   const menuItems = [
     {
@@ -38,13 +41,13 @@ const Sidebar = ({ isOpen, onToggle }) => {
       title: 'Calendario',
       icon: Calendar,
       path: '/calendar',
-      show: employee?.approved
+      show: hasEmployeeAccess
     },
     {
       title: 'Forecast',
       icon: TrendingUp,
       path: '/forecast',
-      show: isAdmin() || employee?.approved
+      show: isAdmin() || isManager() || employee?.approved
     },
     {
       title: 'Proyectos',
@@ -68,7 +71,7 @@ const Sidebar = ({ isOpen, onToggle }) => {
       title: 'Reportes',
       icon: FileText,
       path: '/reports',
-      show: employee?.approved
+      show: isAdmin() || isManager() || employee?.approved
     },
     {
       title: 'Notificaciones',
@@ -168,11 +171,13 @@ const Sidebar = ({ isOpen, onToggle }) => {
             <div className="mt-2">
               <span className={cn(
                 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium',
-                employee.approved 
+                hasEmployeeAccess
                   ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
                   : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
               )}>
-                {employee.approved ? 'Aprobado' : 'Pendiente de aprobación'}
+                {hasEmployeeAccess
+                  ? (employee.approved ? 'Aprobado' : (isManager() ? 'Manager activo' : 'Acceso administrativo'))
+                  : 'Pendiente de aprobación'}
               </span>
             </div>
           )}
