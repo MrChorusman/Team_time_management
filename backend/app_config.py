@@ -58,6 +58,7 @@ class Config:
     
     # Configuración de Flask-Security-Too
     SECURITY_PASSWORD_SALT = os.environ.get('SECURITY_PASSWORD_SALT') or 'super-secret-salt'
+    SECURITY_PASSWORD_HASH = 'pbkdf2_sha512'  # Usar pbkdf2 en lugar de argon2 (no disponible en Render)
     SECURITY_REGISTERABLE = True
     SECURITY_CONFIRMABLE = True
     SECURITY_RECOVERABLE = True
