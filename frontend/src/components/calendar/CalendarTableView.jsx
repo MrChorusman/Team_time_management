@@ -267,8 +267,12 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
   const handleDeleteActivity = async () => {
     if (!contextMenu.activity) return
 
+    // Obtener el tipo de actividad (puede ser activity_type o type)
+    const activityType = contextMenu.activity.activity_type || contextMenu.activity.type || 'actividad'
+    const activityCode = calendarHelpers.getActivityCodeHelper(contextMenu.activity) || activityType.toUpperCase()
+
     // Confirmación
-    if (!window.confirm(`¿Eliminar ${contextMenu.activity.type.toUpperCase()} del ${new Date(contextMenu.date).toLocaleDateString('es-ES')}?`)) {
+    if (!window.confirm(`¿Eliminar ${activityCode} del ${new Date(contextMenu.date).toLocaleDateString('es-ES')}?`)) {
       return
     }
 
