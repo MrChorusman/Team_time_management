@@ -34,7 +34,23 @@ def login():
         # Buscar usuario
         user = User.query.filter_by(email=email).first()
         
-        if not user or not verify_password(password, user.password):
+        if not user:
+            logger.warning(f"Intento de login con usuario no encontrado: {email}")
+            return jsonify({
+                'success': False,
+                'message': 'Credenciales inválidas'
+            }), 401
+        
+        # Verificar contraseña con logging detallado
+        logger.info(f"Verificando contraseña para usuario: {email}")
+        logger.debug(f"Hash del usuario: {user.password[:50]}...")
+        logger.debug(f"SECURITY_PASSWORD_HASH config: {current_app.config.get('SECURITY_PASSWORD_HASH', 'NO CONFIGURADO')}")
+        
+        password_verified = verify_password(password, user.password)
+        logger.info(f"Resultado verificación contraseña: {password_verified}")
+        
+        if not password_verified:
+            logger.warning(f"Contraseña incorrecta para usuario: {email}")
             return jsonify({
                 'success': False,
                 'message': 'Credenciales inválidas'
@@ -75,10 +91,10 @@ def login():
         })
         
     except Exception as e:
-        logger.error(f"Error en login: {e}")
+        logger.error(f"Error en login: {e}", exc_info=True)
         return jsonify({
             'success': False,
-            'message': 'Error interno del servidor'
+            'message': f'Error interno del servidor: {str(e)}'
         }), 500
 
 @auth_bp.route('/register', methods=['POST'])
