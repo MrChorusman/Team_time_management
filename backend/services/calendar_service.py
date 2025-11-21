@@ -129,7 +129,7 @@ class CalendarService:
     @staticmethod
     def _get_holidays_for_month(employees: List[Employee], year: int, month: int) -> List[Dict]:
         """Obtiene festivos aplicables para los empleados en el mes"""
-        from utils.country_mapper import normalize_country_name, get_country_variants
+        from utils.country_mapper import normalize_country_name, get_country_variants, COUNTRY_MAPPING
         
         start_date = date(year, month, 1)
         _, last_day = monthrange(year, month)
@@ -155,7 +155,8 @@ class CalendarService:
                 countries_to_search.add(country_input)
         
         # Buscar festivos para todos los países posibles
-        holidays = []
+        holidays_dict = {}  # Usar dict para deduplicar: key = (date, country_normalized)
+        
         for country in countries_to_search:
             country_holidays = Holiday.query.filter(
                 Holiday.country == country,
@@ -165,7 +166,46 @@ class CalendarService:
             ).all()
             
             for holiday in country_holidays:
-                holidays.append(holiday.to_dict())
+                # Normalizar el país del festivo para la clave de deduplicación
+                holiday_variants = get_country_variants(holiday.country)
+                if holiday_variants:
+                    normalized_country = holiday_variants['en']  # Usar inglés como estándar
+                else:
+                    normalized_country = holiday.country
+                
+                # Crear clave única: (fecha, país_normalizado, región, ciudad)
+                key = (str(holiday.date), normalized_country, holiday.region or '', holiday.city or '')
+                
+                # Si ya existe un festivo para esta fecha y ubicación, priorizar español
+                if key in holidays_dict:
+                    existing_holiday = holidays_dict[key]
+                    existing_country = existing_holiday.get('country', '')
+                    holiday_country = holiday.country
+                    
+                    # Priorizar festivos con nombre en español o país en español
+                    existing_is_spanish = existing_country in [v['es'] for v in COUNTRY_MAPPING.values() if v]
+                    holiday_is_spanish = holiday_country in [v['es'] for v in COUNTRY_MAPPING.values() if v]
+                    
+                    # Si el nuevo festivo es en español y el existente no, reemplazar
+                    if holiday_is_spanish and not existing_is_spanish:
+                        holidays_dict[key] = holiday.to_dict()
+                    # Si ambos son en español o ambos en inglés, mantener el que tiene nombre en español
+                    elif holiday_is_spanish == existing_is_spanish:
+                        # Verificar si el nombre del festivo está en español
+                        existing_name = existing_holiday.get('name', '')
+                        holiday_name = holiday.name
+                        
+                        # Priorizar nombres que parecen estar en español (heurística simple)
+                        # Si el nuevo tiene nombre en español y el existente no, reemplazar
+                        if any(word in holiday_name.lower() for word in ['día', 'santos', 'virgen', 'inmaculada', 'navidad', 'año nuevo']) and \
+                           not any(word in existing_name.lower() for word in ['day', 'saint', 'virgin', 'immaculate', 'christmas', 'new year']):
+                            holidays_dict[key] = holiday.to_dict()
+                else:
+                    # Primer festivo para esta fecha/ubicación
+                    holidays_dict[key] = holiday.to_dict()
+        
+        # Convertir dict a lista
+        holidays = list(holidays_dict.values())
         
         return holidays
     
