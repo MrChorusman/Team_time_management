@@ -475,7 +475,7 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
                               employeeNormalizedCountries.add(variants.en.toLowerCase())
                               employeeNormalizedCountries.add(variants.es.toLowerCase())
                             }
-                            // Agregar el país original normalizado
+                            // Agregar el país original
                             employeeNormalizedCountries.add(String(emp.country).toLowerCase())
                           }
                         })
@@ -487,26 +487,16 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
                           // Si no hay empleados, no mostrar festivos
                           if (employeeNormalizedCountries.size === 0) return false
                           
-                          // Normalizar el país del festivo
-                          const holidayNormalized = calendarHelpers.normalizeCountryName(holiday.country)
-                          if (!holidayNormalized) return false
-                          
-                          // Obtener variantes del país del festivo
-                          const holidayVariants = calendarHelpers.getCountryVariants(holiday.country)
-                          const holidayCountries = holidayVariants
-                            ? [holidayVariants.en.toLowerCase(), holidayVariants.es.toLowerCase(), holidayNormalized.toLowerCase()]
-                            : [holidayNormalized.toLowerCase()]
-                          
-                          // Agregar el país original del festivo normalizado
-                          holidayCountries.push(String(holiday.country).toLowerCase())
-                          
                           // Verificar si el país del festivo coincide con algún país de empleado
-                          return holidayCountries.some(hCountry => 
-                            employeeNormalizedCountries.has(hCountry) ||
-                            Array.from(employeeNormalizedCountries).some(empCountry =>
-                              calendarHelpers.normalizeCountryName(empCountry) === calendarHelpers.normalizeCountryName(hCountry)
-                            )
-                          )
+                          // Usar la función countriesMatch para comparación correcta
+                          return Array.from(employeeNormalizedCountries).some(empCountry => {
+                            // Comparar usando countriesMatch que maneja correctamente las variantes
+                            return calendarHelpers.countriesMatch(empCountry, holiday.country)
+                          }) || employees.some(emp => {
+                            // También comparar directamente con los países de los empleados
+                            if (!emp?.country) return false
+                            return calendarHelpers.countriesMatch(emp.country, holiday.country)
+                          })
                         })
                         
                         // Deduplicar festivos por fecha y nombre (evitar duplicados)
