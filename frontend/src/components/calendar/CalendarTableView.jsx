@@ -455,18 +455,71 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
                   <div className="px-4 py-3 bg-gray-50 border-t border-gray-300">
                     <h4 className="text-xs font-semibold text-gray-700 uppercase mb-2">Festivos del mes</h4>
                     <div className="flex flex-wrap gap-2">
-                      {calendarHelpers.getMonthHolidaysHelper(month.date, holidays).length > 0 ? (
-                        calendarHelpers.getMonthHolidaysHelper(month.date, holidays).map((holiday) => {
-                          const day = new Date(holiday.date).getDate()
-                          return (
-                            <Badge key={holiday.id} variant="outline" className="bg-red-50 text-red-700 border-red-300">
-                              Día {day}: {holiday.name} ({holiday.holiday_type === 'national' ? 'Nacional' : holiday.holiday_type === 'regional' ? 'Regional' : 'Local'})
-                            </Badge>
+                      {(() => {
+                        // Obtener festivos del mes
+                        const monthHolidays = calendarHelpers.getMonthHolidaysHelper(month.date, holidays)
+                        
+                        // Filtrar festivos por países de los empleados mostrados en este mes
+                        // Esto evita mostrar festivos de países que no corresponden a ningún empleado
+                        const employeeCountries = new Set()
+                        employees.forEach(emp => {
+                          if (emp?.country) {
+                            const variants = calendarHelpers.getCountryVariants(emp.country)
+                            if (variants) {
+                              employeeCountries.add(variants.en)
+                              employeeCountries.add(variants.es)
+                            }
+                            employeeCountries.add(emp.country)
+                          }
+                        })
+                        
+                        // Filtrar festivos que coinciden con países de empleados
+                        const relevantHolidays = monthHolidays.filter(holiday => {
+                          if (!holiday || !holiday.country) return false
+                          
+                          // Si no hay empleados, no mostrar festivos
+                          if (employeeCountries.size === 0) return false
+                          
+                          // Obtener variantes del país del festivo
+                          const holidayVariants = calendarHelpers.getCountryVariants(holiday.country)
+                          const holidayCountries = holidayVariants
+                            ? [holidayVariants.en, holidayVariants.es, holiday.country]
+                            : [holiday.country]
+                          
+                          // Verificar si el país del festivo coincide con algún país de empleado
+                          return holidayCountries.some(hCountry => 
+                            employeeCountries.has(hCountry) ||
+                            Array.from(employeeCountries).some(empCountry =>
+                              calendarHelpers.normalizeCountryName(empCountry) === calendarHelpers.normalizeCountryName(hCountry)
+                            )
                           )
                         })
-                      ) : (
-                        <span className="text-xs text-gray-500">No hay festivos este mes</span>
-                      )}
+                        
+                        // Deduplicar festivos por fecha y nombre (evitar duplicados)
+                        const uniqueHolidays = []
+                        const seenHolidays = new Set()
+                        
+                        relevantHolidays.forEach(holiday => {
+                          const key = `${holiday.date}-${holiday.name}`
+                          if (!seenHolidays.has(key)) {
+                            seenHolidays.add(key)
+                            uniqueHolidays.push(holiday)
+                          }
+                        })
+                        
+                        return uniqueHolidays.length > 0 ? (
+                          uniqueHolidays.map((holiday) => {
+                            const day = new Date(holiday.date).getDate()
+                            return (
+                              <Badge key={`${holiday.id}-${holiday.date}`} variant="outline" className="bg-red-50 text-red-700 border-red-300">
+                                Día {day}: {holiday.name} ({holiday.holiday_type === 'national' ? 'Nacional' : holiday.holiday_type === 'regional' ? 'Regional' : 'Local'})
+                              </Badge>
+                            )
+                          })
+                        ) : (
+                          <span className="text-xs text-gray-500">No hay festivos este mes</span>
+                        )
+                      })()}
                     </div>
                   </div>
                 </div>
