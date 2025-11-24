@@ -171,17 +171,39 @@ const CalendarPage = () => {
             }
           }
           
-          // Deduplicar festivos agregados priorizando país normalizado
-          const seenHolidayKeys = new Set()
+          // Deduplicar festivos agregados priorizando nombre en español (si existe)
+          const dedupedHolidays = new Map()
+          const isSpanishVariant = (holiday) => {
+            if (!holiday) return false
+            const variants = calendarHelpers.getCountryVariants(holiday.country)
+            if (variants?.es && holiday.country) {
+              return holiday.country.toLowerCase() === variants.es.toLowerCase()
+            }
+            // Heurística: presencia de caracteres acentuados típicos del español
+            return /[áéíóúñ]/i.test(holiday.name || '')
+          }
+          
           aggregatedHolidays.forEach(holiday => {
             if (!holiday || !holiday.date) return
             const normalizedCountry = calendarHelpers.normalizeCountryName(holiday.country) || holiday.country || 'desconocido'
-            const key = `${holiday.date}-${normalizedCountry}-${holiday.name}`
-            if (!seenHolidayKeys.has(key)) {
-              seenHolidayKeys.add(key)
-              relevantHolidays.push(holiday)
+            const key = `${holiday.date}-${normalizedCountry}`
+            const existing = dedupedHolidays.get(key)
+            
+            if (!existing) {
+              dedupedHolidays.set(key, holiday)
+              return
+            }
+            
+            const existingIsSpanish = isSpanishVariant(existing)
+            const currentIsSpanish = isSpanishVariant(holiday)
+            
+            // Reemplazar cuando el festivo actual está en español y el previo no
+            if (!existingIsSpanish && currentIsSpanish) {
+              dedupedHolidays.set(key, holiday)
             }
           })
+          
+          relevantHolidays = Array.from(dedupedHolidays.values())
           
           // Filtrar festivos por país del empleado si existe
           if (employee?.country && relevantHolidays.length > 0) {
