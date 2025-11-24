@@ -141,44 +141,72 @@ const CalendarPage = () => {
         console.log('📅 Cargando vista anual para año:', year)
         let relevantHolidays = []
         
-        // Intentar cargar festivos (pero no bloquear si falla)
+        // Intentar cargar todos los festivos del año paginando (el endpoint limita per_page=100)
         try {
-          const holidaysResponse = await fetch(
-            `${import.meta.env.VITE_API_BASE_URL}/holidays?year=${year}`,
-            { credentials: 'include' }
-          )
-          if (holidaysResponse.ok) {
-            const holidaysData = await holidaysResponse.json()
-            if (holidaysData.success && holidaysData.holidays) {
-              // Filtrar festivos por país del empleado si existe
-              relevantHolidays = holidaysData.holidays
-              if (employee?.country) {
-                // Usar función helper para normalizar países
-                const employeeVariants = calendarHelpers.getCountryVariants(employee.country)
-                const employeeCountries = employeeVariants
-                  ? [employeeVariants.en, employeeVariants.es, employee.country].filter(Boolean)
-                  : [employee.country].filter(Boolean)
-                
-                relevantHolidays = holidaysData.holidays.filter(h => {
-                  const holidayVariants = calendarHelpers.getCountryVariants(h.country)
-                  const holidayCountries = holidayVariants
-                    ? [holidayVariants.en, holidayVariants.es, h.country].filter(Boolean)
-                    : [h.country].filter(Boolean)
-                  
-                  // Verificar si coinciden en cualquier variante
-                  return employeeCountries.some(empCountry =>
-                    holidayCountries.some(holCountry =>
-                      calendarHelpers.normalizeCountryName(empCountry) === calendarHelpers.normalizeCountryName(holCountry) ||
-                      empCountry === holCountry
-                    )
-                  )
-                })
-              }
-              console.log('✅ Festivos cargados:', relevantHolidays.length)
+          const aggregatedHolidays = []
+          let page = 1
+          const perPage = 100
+          let hasNext = true
+          const MAX_PAGES = 12 // Salvaguarda
+          
+          while (hasNext && page <= MAX_PAGES) {
+            const holidaysResponse = await fetch(
+              `${import.meta.env.VITE_API_BASE_URL}/holidays?year=${year}&page=${page}&per_page=${perPage}`,
+              { credentials: 'include' }
+            )
+            
+            if (!holidaysResponse.ok) {
+              console.warn('⚠️ Error en respuesta de festivos:', holidaysResponse.status)
+              break
             }
-          } else {
-            console.warn('⚠️ Error en respuesta de festivos:', holidaysResponse.status)
+            
+            const holidaysData = await holidaysResponse.json()
+            if (holidaysData.success && Array.isArray(holidaysData.holidays)) {
+              aggregatedHolidays.push(...holidaysData.holidays)
+              hasNext = Boolean(holidaysData.pagination?.has_next)
+              page += 1
+            } else {
+              console.warn('⚠️ Respuesta de festivos inválida', holidaysData)
+              break
+            }
           }
+          
+          // Deduplicar festivos agregados priorizando país normalizado
+          const seenHolidayKeys = new Set()
+          aggregatedHolidays.forEach(holiday => {
+            if (!holiday || !holiday.date) return
+            const normalizedCountry = calendarHelpers.normalizeCountryName(holiday.country) || holiday.country || 'desconocido'
+            const key = `${holiday.date}-${normalizedCountry}-${holiday.name}`
+            if (!seenHolidayKeys.has(key)) {
+              seenHolidayKeys.add(key)
+              relevantHolidays.push(holiday)
+            }
+          })
+          
+          // Filtrar festivos por país del empleado si existe
+          if (employee?.country && relevantHolidays.length > 0) {
+            const employeeVariants = calendarHelpers.getCountryVariants(employee.country)
+            const employeeCountries = employeeVariants
+              ? [employeeVariants.en, employeeVariants.es, employee.country].filter(Boolean)
+              : [employee.country].filter(Boolean)
+            
+            relevantHolidays = relevantHolidays.filter(h => {
+              const holidayVariants = calendarHelpers.getCountryVariants(h.country)
+              const holidayCountries = holidayVariants
+                ? [holidayVariants.en, holidayVariants.es, h.country].filter(Boolean)
+                : [h.country].filter(Boolean)
+              
+              // Verificar si coinciden en cualquier variante
+              return employeeCountries.some(empCountry =>
+                holidayCountries.some(holCountry =>
+                  calendarHelpers.normalizeCountryName(empCountry) === calendarHelpers.normalizeCountryName(holCountry) ||
+                  empCountry === holCountry
+                )
+              )
+            })
+          }
+          
+          console.log('✅ Festivos cargados (todas las páginas):', relevantHolidays.length)
         } catch (error) {
           console.error('❌ Error cargando festivos del año:', error)
           // Continuar sin festivos si hay error
