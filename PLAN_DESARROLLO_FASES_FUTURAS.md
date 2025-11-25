@@ -80,6 +80,7 @@ Este documento establece el plan estratégico de desarrollo para las siguientes 
 | `hotfix/render-syntax-error` | Corrección de error de sintaxis en `employees.py` para restablecer despliegue en Render | 18/11/2025 | - | 🔄 En progreso |
 | `feature/team-detail-memberships` | Alta y gestión de miembros desde el detalle del equipo (botón “Añadir miembro”) | 19/11/2025 | - | 🔄 En progreso |
 | `feature/invite-modal-ux` | Mejora UX envío de invitaciones desde EmployeesPage (modal y feedback) | 20/11/2025 | 25/01/2025 | ✅ Completado |
+| `feature/carga-anual-incremental` | Optimización vista anual: carga incremental, progreso y caché | 25/11/2025 | - | 🔄 En progreso |
 
 ---
 
