@@ -459,45 +459,25 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
                         // Obtener festivos del mes
                         const monthHolidays = calendarHelpers.getMonthHolidaysHelper(month.date, holidays)
                         
-                        // Filtrar festivos por países de los empleados mostrados en este mes
-                        // Esto evita mostrar festivos de países que no corresponden a ningún empleado
-                        const employeeNormalizedCountries = new Set()
-                        employees.forEach(emp => {
-                          if (emp?.country) {
-                            // Normalizar el país del empleado
-                            const normalized = calendarHelpers.normalizeCountryName(emp.country)
-                            if (normalized) {
-                              employeeNormalizedCountries.add(normalized.toLowerCase())
-                            }
-                            // También agregar variantes
-                            const variants = calendarHelpers.getCountryVariants(emp.country)
-                            if (variants) {
-                              employeeNormalizedCountries.add(variants.en.toLowerCase())
-                              employeeNormalizedCountries.add(variants.es.toLowerCase())
-                            }
-                            // Agregar el país original
-                            employeeNormalizedCountries.add(String(emp.country).toLowerCase())
-                          }
-                        })
+                        // Construir ubicaciones de los empleados visibles (país, región, ciudad)
+                        const employeeLocations = (employees || [])
+                          .map(emp => ({
+                            country: emp?.country || emp?.location?.country,
+                            region: emp?.region || emp?.location?.region,
+                            city: emp?.city || emp?.location?.city,
+                            location: emp?.location
+                          }))
+                          .filter(location => !!location.country)
                         
-                        // Filtrar festivos que coinciden con países de empleados
-                        const relevantHolidays = monthHolidays.filter(holiday => {
-                          if (!holiday || !holiday.country) return false
-                          
-                          // Si no hay empleados, no mostrar festivos
-                          if (employeeNormalizedCountries.size === 0) return false
-                          
-                          // Verificar si el país del festivo coincide con algún país de empleado
-                          // Usar la función countriesMatch para comparación correcta
-                          return Array.from(employeeNormalizedCountries).some(empCountry => {
-                            // Comparar usando countriesMatch que maneja correctamente las variantes
-                            return calendarHelpers.countriesMatch(empCountry, holiday.country)
-                          }) || employees.some(emp => {
-                            // También comparar directamente con los países de los empleados
-                            if (!emp?.country) return false
-                            return calendarHelpers.countriesMatch(emp.country, holiday.country)
-                          })
-                        })
+                        // Filtrar festivos relevantes solo para las ubicaciones mostradas
+                        let relevantHolidays = []
+                        if (employeeLocations.length > 0) {
+                          relevantHolidays = monthHolidays.filter(holiday =>
+                            employeeLocations.some(location =>
+                              calendarHelpers.doesHolidayApplyToLocation(holiday, location)
+                            )
+                          )
+                        }
                         
                         // Deduplicar festivos por fecha y nombre (evitar duplicados)
                         const uniqueHolidays = []

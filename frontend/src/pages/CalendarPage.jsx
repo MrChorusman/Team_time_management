@@ -234,43 +234,6 @@ const CalendarPage = () => {
           // Continuar sin festivos si hay error
         }
         
-        // Helper para determinar si un festivo aplica a un empleado concreto
-        const holidayAppliesToEmployee = (holiday, employeeLocation) => {
-          if (!holiday || !employeeLocation?.country) return false
-
-          const employeeVariants = calendarHelpers.getCountryVariants(employeeLocation.country)
-          const holidayVariants = calendarHelpers.getCountryVariants(holiday.country)
-
-          const employeeCountries = employeeVariants
-            ? [employeeVariants.en, employeeVariants.es, employeeLocation.country].filter(Boolean)
-            : [employeeLocation.country].filter(Boolean)
-          const holidayCountries = holidayVariants
-            ? [holidayVariants.en, holidayVariants.es, holiday.country].filter(Boolean)
-            : [holiday.country].filter(Boolean)
-
-          const countriesMatch = employeeCountries.some(empCountry =>
-            holidayCountries.some(holCountry =>
-              calendarHelpers.normalizeCountryName(empCountry) === calendarHelpers.normalizeCountryName(holCountry) ||
-              empCountry === holCountry
-            )
-          )
-          if (!countriesMatch) return false
-
-          const holidayType = holiday.holiday_type || holiday.type || holiday.hierarchy_level || ''
-          if (holidayType === 'national' || !holiday.region) {
-            return true
-          }
-          if (holidayType === 'regional') {
-            return holiday.region === (employeeLocation.region || employeeLocation.location?.region)
-          }
-          if (holidayType === 'local') {
-            const matchesRegion = holiday.region === (employeeLocation.region || employeeLocation.location?.region)
-            const matchesCity = holiday.city === (employeeLocation.city || employeeLocation.location?.city)
-            return matchesRegion && matchesCity
-          }
-          return true
-        }
-
         // Cargar actividades de todos los meses y empleados
         const allActivities = []
         let allEmployees = []
@@ -373,7 +336,7 @@ const CalendarPage = () => {
           }))
 
           relevantHolidays = relevantHolidays.filter(holiday =>
-            employeeLocations.some(location => holidayAppliesToEmployee(holiday, location))
+            employeeLocations.some(location => calendarHelpers.doesHolidayApplyToLocation(holiday, location))
           )
         }
 

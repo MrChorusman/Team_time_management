@@ -113,6 +113,49 @@ function getCountryVariants(countryInput) {
   return { en: normalized, es: normalized, code: null }
 }
 
+// Verificar si un festivo aplica a la ubicación de un empleado
+function doesHolidayApplyToLocation(holiday, employeeLocation) {
+  if (!holiday || !employeeLocation?.country) return false
+
+  const employeeVariants = getCountryVariants(employeeLocation.country)
+  const holidayVariants = getCountryVariants(holiday.country)
+
+  const employeeCountries = employeeVariants
+    ? [employeeVariants.en, employeeVariants.es, employeeLocation.country].filter(Boolean)
+    : [employeeLocation.country].filter(Boolean)
+  const holidayCountries = holidayVariants
+    ? [holidayVariants.en, holidayVariants.es, holiday.country].filter(Boolean)
+    : [holiday.country].filter(Boolean)
+
+  const countriesMatch = employeeCountries.some(empCountry =>
+    holidayCountries.some(holCountry =>
+      normalizeCountryName(empCountry) === normalizeCountryName(holCountry) ||
+      empCountry === holCountry
+    )
+  )
+  if (!countriesMatch) return false
+
+  const holidayType = holiday.holiday_type || holiday.type || holiday.hierarchy_level || ''
+  const holidayRegion = holiday.region
+  const holidayCity = holiday.city
+  const employeeRegion = employeeLocation.region || employeeLocation.location?.region
+  const employeeCity = employeeLocation.city || employeeLocation.location?.city
+
+  if (holidayType === 'national' || !holidayRegion) {
+    return true
+  }
+
+  if (holidayType === 'regional') {
+    return holidayRegion === employeeRegion
+  }
+
+  if (holidayType === 'local') {
+    return holidayRegion === employeeRegion && holidayCity === employeeCity
+  }
+
+  return true
+}
+
 // Función para verificar si dos países coinciden
 function countriesMatch(country1, country2) {
   if (!country1 || !country2) return false
@@ -455,6 +498,7 @@ export default {
   COUNTRY_MAPPING,
   normalizeCountryName,
   getCountryVariants,
+  doesHolidayApplyToLocation,
   countriesMatch,
   getDaysInMonth,
   getMonthsInYear,
