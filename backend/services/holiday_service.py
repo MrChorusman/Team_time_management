@@ -44,6 +44,29 @@ class HolidayService:
         'VI': 'U.S. Virgin Islands', 'ZA': 'South Africa', 'ZW': 'Zimbabwe'
     }
     
+    # Equivalencias de nombres de países en español (prioridad para países hispanohablantes)
+    COUNTRY_NAME_ES = {
+        'ES': 'España',
+        'MX': 'México',
+        'AR': 'Argentina',
+        'CO': 'Colombia',
+        'CL': 'Chile',
+        'PE': 'Perú',
+        'UY': 'Uruguay',
+        'PY': 'Paraguay',
+        'BO': 'Bolivia',
+        'VE': 'Venezuela',
+        'CR': 'Costa Rica',
+        'DO': 'República Dominicana',
+        'EC': 'Ecuador',
+        'GT': 'Guatemala',
+        'HN': 'Honduras',
+        'NI': 'Nicaragua',
+        'PA': 'Panamá',
+        'PR': 'Puerto Rico',
+        'SV': 'El Salvador'
+    }
+    
     def __init__(self):
         self.api_base_url = current_app.config.get('NAGER_DATE_API_URL', 'https://date.nager.at/api/v3')
         self.session = requests.Session()
@@ -108,14 +131,15 @@ class HolidayService:
                         holiday_type = 'regional'
                         region = holiday_data['counties'][0] if holiday_data['counties'] else None
                     
+                    localized_country = self.COUNTRY_NAME_ES.get(country_code, self.SUPPORTED_COUNTRIES.get(country_code, country_code))
                     holiday_dict = {
-                        'name': holiday_data['name'],
+                        'name': holiday_data.get('localName') or holiday_data['name'],
                         'date': holiday_date,
-                        'country': self.SUPPORTED_COUNTRIES.get(country_code, country_code),
+                        'country': localized_country,
                         'region': region,
                         'city': city,
                         'holiday_type': holiday_type,
-                        'description': holiday_data.get('localName', ''),
+                        'description': holiday_data.get('name', ''),
                         'is_fixed': holiday_data.get('fixed', True),
                         'source': 'nager.date',
                         'source_id': f"{country_code}_{year}_{holiday_data['date']}"
