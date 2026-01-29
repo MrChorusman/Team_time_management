@@ -28,18 +28,22 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import CalendarTableView from '../components/calendar/CalendarTableView'
 import CalendarSummary from '../components/calendar/CalendarSummary'
-// Importar calendarHelpers de forma segura
-import calendarHelpersModule from '../components/calendar/calendarHelpers'
+// Importar calendarHelpers de forma segura usando la función getter
+import getCalendarHelpersModule from '../components/calendar/calendarHelpers'
 
 // Función helper para obtener calendarHelpers de forma segura
 const getCalendarHelpers = () => {
-  if (!calendarHelpersModule || typeof calendarHelpersModule.getMonthsInYear !== 'function') {
+  try {
+    const helpers = getCalendarHelpersModule()
+    if (!helpers || typeof helpers.getMonthsInYear !== 'function') {
+      return null
+    }
+    return helpers
+  } catch (error) {
+    console.warn('Error obteniendo calendarHelpers:', error)
     return null
   }
-  return calendarHelpersModule
 }
-
-const calendarHelpers = getCalendarHelpers() || {}
 
 const CalendarPage = () => {
   const { user, employee, isAdmin, isManager, isEmployee } = useAuth()

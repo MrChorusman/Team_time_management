@@ -7,17 +7,20 @@ import { useToast } from '@/components/ui/use-toast'
 import ContextMenu from './ContextMenu'
 import ActivityModal from './ActivityModal'
 // Importar usando una función que asegure la inicialización
-import calendarHelpersModule from './calendarHelpers'
+// Importar la función getter en lugar del objeto directamente
+import getCalendarHelpersModule from './calendarHelpers'
 
 // Función helper para obtener calendarHelpers de forma segura
 // Esta función se ejecuta cada vez que se necesita para evitar problemas de inicialización
 const getCalendarHelpers = () => {
   try {
+    // Llamar a la función getter para obtener el objeto
+    const helpers = getCalendarHelpersModule()
     // Si el módulo no está disponible o no tiene las funciones necesarias, retornar null
-    if (!calendarHelpersModule || typeof calendarHelpersModule.getMonthsInYear !== 'function') {
+    if (!helpers || typeof helpers.getMonthsInYear !== 'function') {
       return null
     }
-    return calendarHelpersModule
+    return helpers
   } catch (error) {
     console.warn('Error obteniendo calendarHelpers:', error)
     return null

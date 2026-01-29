@@ -491,30 +491,51 @@ function getMonthHolidaysHelper(monthDate, holidays) {
   })
 }
 
-// Export único como objeto al final - todas las funciones están definidas antes de exportarse
-// Esto evita problemas de hoisting durante la minificación
-// Usar una función getter para asegurar que el objeto se crea después de que todas las funciones estén definidas
-function getCalendarHelpers() {
-  return {
-    ISO_TO_COUNTRY_NAME,
-    COUNTRY_MAPPING,
-    normalizeCountryName,
-    getCountryVariants,
-    doesHolidayApplyToLocation,
-    countriesMatch,
-    getDaysInMonth,
-    getMonthsInYear,
-    isHolidayHelper,
-    getActivityForDayHelper,
-    getActivityCodeHelper,
-    getCellBackgroundColorHelper,
-    getCellTextColorHelper,
-    getMonthSummaryHelper,
-    getMonthHolidaysHelper
-  }
+// Exportaciones nombradas individuales para evitar problemas de inicialización circular
+// Esto permite que cada función se importe independientemente sin problemas de hoisting
+export {
+  ISO_TO_COUNTRY_NAME,
+  COUNTRY_MAPPING,
+  normalizeCountryName,
+  getCountryVariants,
+  doesHolidayApplyToLocation,
+  countriesMatch,
+  getDaysInMonth,
+  getMonthsInYear,
+  isHolidayHelper,
+  getActivityForDayHelper,
+  getActivityCodeHelper,
+  getCellBackgroundColorHelper,
+  getCellTextColorHelper,
+  getMonthSummaryHelper,
+  getMonthHolidaysHelper
 }
 
-// Crear el objeto una sola vez y exportarlo
-const calendarHelpers = getCalendarHelpers()
+// También exportar como objeto default para compatibilidad con código existente
+// Pero crear el objeto de forma lazy para evitar problemas de inicialización
+let calendarHelpersInstance = null
 
-export default calendarHelpers
+function getCalendarHelpersInstance() {
+  if (!calendarHelpersInstance) {
+    calendarHelpersInstance = {
+      ISO_TO_COUNTRY_NAME,
+      COUNTRY_MAPPING,
+      normalizeCountryName,
+      getCountryVariants,
+      doesHolidayApplyToLocation,
+      countriesMatch,
+      getDaysInMonth,
+      getMonthsInYear,
+      isHolidayHelper,
+      getActivityForDayHelper,
+      getActivityCodeHelper,
+      getCellBackgroundColorHelper,
+      getCellTextColorHelper,
+      getMonthSummaryHelper,
+      getMonthHolidaysHelper
+    }
+  }
+  return calendarHelpersInstance
+}
+
+export default getCalendarHelpersInstance
