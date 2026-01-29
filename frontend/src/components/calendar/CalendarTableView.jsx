@@ -152,10 +152,10 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
       isHoliday: isHolidayDay,
       isWeekend: isWeekendDay || false // Asegurar que siempre sea boolean
     })
-  }
+  }, [employees, activities, holidays])
 
-  // Manejo de long press para móvil
-  const handleTouchStart = (e, employeeId, employeeName, dateString, dayInfo) => {
+  // Manejo de long press para móvil - memoizado
+  const handleTouchStart = useCallback((e, employeeId, employeeName, dateString, dayInfo) => {
     longPressTimer.current = setTimeout(() => {
       // Simular click derecho después de 500ms
       const touch = e.touches[0]
@@ -218,10 +218,10 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
       employeeId: contextMenu.employeeId,
       employeeName: contextMenu.employeeName
     })
-  }
+  }, [contextMenu, toast, handleDeleteActivity])
 
-  // Guardar actividad desde el modal
-  const handleSaveActivity = async (activityData) => {
+  // Guardar actividad desde el modal - memoizado
+  const handleSaveActivity = useCallback(async (activityData) => {
     try {
       // Mapear tipos del modal a códigos del backend
       const typeToCodeMap = {
