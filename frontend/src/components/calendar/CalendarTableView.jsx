@@ -8,6 +8,23 @@ import ContextMenu from './ContextMenu'
 import ActivityModal from './ActivityModal'
 // Importar usando importación dinámica para evitar problemas de inicialización durante el bundling
 // Esto asegura que el módulo se carga solo cuando se necesita, no durante la evaluación del módulo
+
+// #region agent log
+// Función de logging que funciona en desarrollo y producción
+const logDebug = (location, message, data, hypothesisId) => {
+  const logData = {location,message,data,timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId};
+  // Usar console.log con prefijo para fácil identificación
+  console.log('[DEBUG]', JSON.stringify(logData));
+  // Almacenar en window para acceso desde consola del navegador
+  if (typeof window !== 'undefined') {
+    if (!window._debugLogs) window._debugLogs = [];
+    window._debugLogs.push(logData);
+    // Mantener solo los últimos 100 logs para evitar problemas de memoria
+    if (window._debugLogs.length > 100) window._debugLogs.shift();
+  }
+};
+// #endregion
+
 let calendarHelpersModule = null
 let calendarHelpersPromise = null
 
@@ -26,14 +43,23 @@ const getCalendarHelpers = async () => {
     
     // Cargar el módulo de forma dinámica
     calendarHelpersPromise = import('./calendarHelpers').then(module => {
+      // #region agent log
+      logDebug('CalendarTableView.jsx:45','Dynamic import completed',{hasDefault:!!module.default,defaultType:typeof module.default},'D');
+      // #endregion
       // El módulo ahora exporta una función getter que retorna el objeto
       const getHelpers = module.default
       if (!getHelpers || typeof getHelpers !== 'function') {
         console.warn('calendarHelpers no exporta una función getter válida')
         return null
       }
+      // #region agent log
+      logDebug('CalendarTableView.jsx:53','About to invoke getHelpers()',{},'D');
+      // #endregion
       // Invocar la función getter para obtener el objeto
       const helpers = getHelpers()
+      // #region agent log
+      logDebug('CalendarTableView.jsx:56','getHelpers() returned',{hasHelpers:!!helpers,hasGetMonthsInYear:helpers&&typeof helpers.getMonthsInYear==='function'},'D');
+      // #endregion
       if (!helpers || typeof helpers.getMonthsInYear !== 'function') {
         console.warn('calendarHelpers no tiene las funciones necesarias')
         return null
@@ -41,6 +67,9 @@ const getCalendarHelpers = async () => {
       calendarHelpersModule = helpers
       return helpers
     }).catch(error => {
+      // #region agent log
+      logDebug('CalendarTableView.jsx:65','Error loading calendarHelpers',{error:error?.message,stack:error?.stack},'D');
+      // #endregion
       console.warn('Error cargando calendarHelpers:', error)
       return null
     })
@@ -148,8 +177,14 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
   // Validar que calendarHelpers esté completamente inicializado antes de usarlo
   const calculatedMonths = useMemo(() => {
     try {
+      // #region agent log
+      logDebug('CalendarTableView.jsx:149','calculatedMonths useMemo executing',{hasLoadedHelpers:!!loadedHelpers,hasSyncHelpers:!!getCalendarHelpersSync()},'D');
+      // #endregion
       // Obtener calendarHelpers de forma segura (versión síncrona)
       const helpers = loadedHelpers || getCalendarHelpersSync()
+      // #region agent log
+      logDebug('CalendarTableView.jsx:153','Got helpers in useMemo',{hasHelpers:!!helpers,hasGetMonthsInYear:helpers&&typeof helpers.getMonthsInYear==='function',hasGetDaysInMonth:helpers&&typeof helpers.getDaysInMonth==='function'},'D');
+      // #endregion
       
       // Validar que calendarHelpers y sus funciones estén disponibles
       if (!helpers || typeof helpers.getMonthsInYear !== 'function' || typeof helpers.getDaysInMonth !== 'function') {
@@ -160,13 +195,29 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
       }
       
       if (viewMode === 'annual') {
-        return helpers.getMonthsInYear(currentMonth) || []
+        // #region agent log
+        logDebug('CalendarTableView.jsx:162','About to call getMonthsInYear',{viewMode,currentMonth:currentMonth?.toString()},'C');
+        // #endregion
+        const result = helpers.getMonthsInYear(currentMonth) || []
+        // #region agent log
+        logDebug('CalendarTableView.jsx:165','getMonthsInYear returned',{resultCount:result?.length},'C');
+        // #endregion
+        return result
       } else {
+        // #region agent log
+        logDebug('CalendarTableView.jsx:169','About to call getDaysInMonth',{viewMode,currentMonth:currentMonth?.toString()},'C');
+        // #endregion
         const monthDays = helpers.getDaysInMonth(currentMonth)
+        // #region agent log
+        logDebug('CalendarTableView.jsx:171','getDaysInMonth returned',{monthDaysCount:monthDays?.length},'C');
+        // #endregion
         const monthName = currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
         return [{ date: currentMonth, name: monthName, days: monthDays }]
       }
     } catch (error) {
+      // #region agent log
+      logDebug('CalendarTableView.jsx:177','Error in calculatedMonths',{error:error?.message,stack:error?.stack},'C');
+      // #endregion
       console.error('Error calculando meses:', error)
       // Retornar estructura básica en caso de error
       const monthName = currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })

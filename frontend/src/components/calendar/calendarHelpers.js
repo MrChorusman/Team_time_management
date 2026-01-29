@@ -2,11 +2,34 @@
 // Separadas en archivo independiente para evitar problemas de inicialización durante minificación
 // Export único como objeto al final para asegurar que todas las funciones estén definidas antes de exportarse
 
+// #region agent log
+// Función de logging que funciona en desarrollo y producción
+const logDebug = (location, message, data, hypothesisId) => {
+  const logData = {location,message,data,timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId};
+  // Usar console.log con prefijo para fácil identificación
+  console.log('[DEBUG]', JSON.stringify(logData));
+  // Almacenar en window para acceso desde consola del navegador
+  if (typeof window !== 'undefined') {
+    if (!window._debugLogs) window._debugLogs = [];
+    window._debugLogs.push(logData);
+    // Mantener solo los últimos 100 logs para evitar problemas de memoria
+    if (window._debugLogs.length > 100) window._debugLogs.shift();
+  }
+};
+logDebug('calendarHelpers.js:5','Module evaluation started',{timestamp:Date.now()},'A');
+// #endregion
+
 // Mapeo completo bidireccional de países (inglés/español/códigos ISO)
 // Usar función getter para evitar problemas de hoisting durante la minificación
 let _COUNTRY_MAPPING = null
 function getCountryMapping() {
+  // #region agent log
+  logDebug('calendarHelpers.js:11','getCountryMapping called',{_COUNTRY_MAPPING:_COUNTRY_MAPPING===null?'null':'initialized'},'E');
+  // #endregion
   if (!_COUNTRY_MAPPING) {
+    // #region agent log
+    logDebug('calendarHelpers.js:14','Initializing _COUNTRY_MAPPING',{},'E');
+    // #endregion
     _COUNTRY_MAPPING = {
       'ES': { en: 'Spain', es: 'España' },
       'ESP': { en: 'Spain', es: 'España' },
@@ -57,9 +80,15 @@ function getCountryMapping() {
 
 // Función para normalizar nombre de país
 function normalizeCountryName(countryInput) {
+  // #region agent log
+  logDebug('calendarHelpers.js:62','normalizeCountryName called',{countryInput},'C');
+  // #endregion
   if (!countryInput) return null
   
   const COUNTRY_MAPPING = getCountryMapping()
+  // #region agent log
+  logDebug('calendarHelpers.js:66','getCountryMapping returned',{hasMapping:!!COUNTRY_MAPPING},'C');
+  // #endregion
   const input = String(countryInput).trim()
   
   // Si es código ISO (2 o 3 letras), buscar directamente
@@ -213,6 +242,9 @@ function formatDateLocal(year, month, day) {
 
 // Obtener días del mes
 function getDaysInMonth(date) {
+  // #region agent log
+  logDebug('calendarHelpers.js:219','getDaysInMonth called',{date:date?.toString()},'C');
+  // #endregion
   const year = date.getFullYear()
   const month = date.getMonth()
   const daysInMonth = new Date(year, month + 1, 0).getDate()
@@ -221,7 +253,13 @@ function getDaysInMonth(date) {
   for (let day = 1; day <= daysInMonth; day++) {
     const currentDate = new Date(year, month, day)
     // Usar formato local en lugar de toISOString() para evitar problemas de zona horaria
+    // #region agent log
+    logDebug('calendarHelpers.js:228','About to call formatDateLocal',{year,month,day},'C');
+    // #endregion
     const dateString = formatDateLocal(year, month, day)
+    // #region agent log
+    logDebug('calendarHelpers.js:230','formatDateLocal returned',{dateString},'C');
+    // #endregion
     days.push({
       day,
       date: currentDate,
@@ -236,15 +274,25 @@ function getDaysInMonth(date) {
 
 // Obtener meses del año
 function getMonthsInYear(date) {
+  // #region agent log
+  logDebug('calendarHelpers.js:242','getMonthsInYear called',{date:date?.toString()},'C');
+  // #endregion
   const year = date.getFullYear()
   const months = []
   
   for (let month = 0; month < 12; month++) {
     const monthDate = new Date(year, month, 1)
+    // #region agent log
+    logDebug('calendarHelpers.js:248','About to call getDaysInMonth from getMonthsInYear',{monthDate:monthDate?.toString()},'C');
+    // #endregion
+    const days = getDaysInMonth(monthDate)
+    // #region agent log
+    logDebug('calendarHelpers.js:250','getDaysInMonth returned from getMonthsInYear',{daysCount:days?.length},'C');
+    // #endregion
     months.push({
       date: monthDate,
       name: monthDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }),
-      days: getDaysInMonth(monthDate)
+      days: days
     })
   }
   
@@ -530,16 +578,29 @@ export {
 // Usar una función que retorna el objeto solo cuando se invoca
 // Esto evita completamente problemas de hoisting durante la minificación
 // Usar una función que se ejecuta inmediatamente para crear el objeto de forma segura
+// #region agent log
+logDebug('calendarHelpers.js:537','About to execute IIFE',{functionsDefined:typeof getIsoToCountryName==='function'&&typeof getCountryMapping==='function'&&typeof normalizeCountryName==='function'&&typeof getDaysInMonth==='function'&&typeof getMonthsInYear==='function'},'A');
+// #endregion
 const calendarHelpersModule = (function() {
   'use strict'
+  
+  // #region agent log
+  logDebug('calendarHelpers.js:541','IIFE executing',{},'A');
+  // #endregion
   
   // Crear el objeto con todas las funciones ya definidas
   const helpersObj = {
     // Exponer las funciones getter directamente para inicialización lazy
     get ISO_TO_COUNTRY_NAME() {
+      // #region agent log
+      logDebug('calendarHelpers.js:547','ISO_TO_COUNTRY_NAME getter accessed',{getIsoToCountryNameDefined:typeof getIsoToCountryName==='function'},'B');
+      // #endregion
       return getIsoToCountryName()
     },
     get COUNTRY_MAPPING() {
+      // #region agent log
+      logDebug('calendarHelpers.js:551','COUNTRY_MAPPING getter accessed',{getCountryMappingDefined:typeof getCountryMapping==='function'},'B');
+      // #endregion
       return getCountryMapping()
     },
     normalizeCountryName: normalizeCountryName,
@@ -557,12 +618,22 @@ const calendarHelpersModule = (function() {
     getMonthHolidaysHelper: getMonthHolidaysHelper
   }
   
+  // #region agent log
+  logDebug('calendarHelpers.js:565','IIFE completed, returning helpersObj',{hasAllFunctions:typeof helpersObj.getDaysInMonth==='function'&&typeof helpersObj.getMonthsInYear==='function'},'A');
+  // #endregion
   return helpersObj
 })()
+
+// #region agent log
+logDebug('calendarHelpers.js:570','calendarHelpersModule created',{hasModule:!!calendarHelpersModule},'A');
+// #endregion
 
 // Crear una función getter singleton que retorna el objeto
 let _calendarHelpersInstance = null
 function getCalendarHelpersSingleton() {
+  // #region agent log
+  logDebug('calendarHelpers.js:576','getCalendarHelpersSingleton called',{_calendarHelpersInstance:_calendarHelpersInstance===null?'null':'initialized'},'D');
+  // #endregion
   if (!_calendarHelpersInstance) {
     _calendarHelpersInstance = calendarHelpersModule
   }
@@ -570,4 +641,7 @@ function getCalendarHelpersSingleton() {
 }
 
 // Exportar la función getter en lugar del objeto directamente
+// #region agent log
+logDebug('calendarHelpers.js:584','Module export completed',{exportType:typeof getCalendarHelpersSingleton},'A');
+// #endregion
 export default getCalendarHelpersSingleton
