@@ -162,6 +162,8 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
 
     const employeeLocation = employee?.location || { country: employee?.country, region: employee?.region, city: employee?.city }
     const helpers = getCalendarHelpers()
+    
+    // Verificar si es festivo
     let isHolidayDay = false
     if (helpers && typeof helpers.isHolidayHelper === 'function') {
       isHolidayDay = helpers.isHolidayHelper(dateString, employeeLocation, holidays)
