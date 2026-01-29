@@ -26,8 +26,14 @@ const getCalendarHelpers = async () => {
     
     // Cargar el módulo de forma dinámica
     calendarHelpersPromise = import('./calendarHelpers').then(module => {
-      // El módulo ahora exporta el objeto directamente, no una función
-      const helpers = module.default
+      // El módulo ahora exporta una función getter que retorna el objeto
+      const getHelpers = module.default
+      if (!getHelpers || typeof getHelpers !== 'function') {
+        console.warn('calendarHelpers no exporta una función getter válida')
+        return null
+      }
+      // Invocar la función getter para obtener el objeto
+      const helpers = getHelpers()
       if (!helpers || typeof helpers.getMonthsInYear !== 'function') {
         console.warn('calendarHelpers no tiene las funciones necesarias')
         return null

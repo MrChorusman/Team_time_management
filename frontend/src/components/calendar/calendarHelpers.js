@@ -527,29 +527,42 @@ export {
 }
 
 // También exportar como objeto default para compatibilidad con código existente
-// Crear el objeto directamente sin llamar a las funciones getter durante la inicialización
-// Las constantes se inicializarán lazy cuando se acceda a ellas por primera vez
-const calendarHelpersObj = {
-  // Exponer las funciones getter directamente para inicialización lazy
-  get ISO_TO_COUNTRY_NAME() {
-    return getIsoToCountryName()
-  },
-  get COUNTRY_MAPPING() {
-    return getCountryMapping()
-  },
-  normalizeCountryName: normalizeCountryName,
-  getCountryVariants: getCountryVariants,
-  doesHolidayApplyToLocation: doesHolidayApplyToLocation,
-  countriesMatch: countriesMatch,
-  getDaysInMonth: getDaysInMonth,
-  getMonthsInYear: getMonthsInYear,
-  isHolidayHelper: isHolidayHelper,
-  getActivityForDayHelper: getActivityForDayHelper,
-  getActivityCodeHelper: getActivityCodeHelper,
-  getCellBackgroundColorHelper: getCellBackgroundColorHelper,
-  getCellTextColorHelper: getCellTextColorHelper,
-  getMonthSummaryHelper: getMonthSummaryHelper,
-  getMonthHolidaysHelper: getMonthHolidaysHelper
+// Usar una función que retorna el objeto solo cuando se invoca
+// Esto evita completamente problemas de hoisting durante la minificación
+function getCalendarHelpersInstance() {
+  // Crear el objeto solo cuando se invoca la función
+  return {
+    // Exponer las funciones getter directamente para inicialización lazy
+    get ISO_TO_COUNTRY_NAME() {
+      return getIsoToCountryName()
+    },
+    get COUNTRY_MAPPING() {
+      return getCountryMapping()
+    },
+    normalizeCountryName: normalizeCountryName,
+    getCountryVariants: getCountryVariants,
+    doesHolidayApplyToLocation: doesHolidayApplyToLocation,
+    countriesMatch: countriesMatch,
+    getDaysInMonth: getDaysInMonth,
+    getMonthsInYear: getMonthsInYear,
+    isHolidayHelper: isHolidayHelper,
+    getActivityForDayHelper: getActivityForDayHelper,
+    getActivityCodeHelper: getActivityCodeHelper,
+    getCellBackgroundColorHelper: getCellBackgroundColorHelper,
+    getCellTextColorHelper: getCellTextColorHelper,
+    getMonthSummaryHelper: getMonthSummaryHelper,
+    getMonthHolidaysHelper: getMonthHolidaysHelper
+  }
 }
 
-export default calendarHelpersObj
+// Crear una instancia singleton lazy
+let _calendarHelpersInstance = null
+function getCalendarHelpersSingleton() {
+  if (!_calendarHelpersInstance) {
+    _calendarHelpersInstance = getCalendarHelpersInstance()
+  }
+  return _calendarHelpersInstance
+}
+
+// Exportar la función getter en lugar del objeto directamente
+export default getCalendarHelpersSingleton
