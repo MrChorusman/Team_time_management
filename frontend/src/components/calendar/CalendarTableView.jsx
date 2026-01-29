@@ -6,25 +6,48 @@ import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/components/ui/use-toast'
 import ContextMenu from './ContextMenu'
 import ActivityModal from './ActivityModal'
-// Importar usando una función que asegure la inicialización
-// Importar la función getter en lugar del objeto directamente
-import getCalendarHelpersModule from './calendarHelpers'
+// Importar usando importación dinámica para evitar problemas de inicialización durante el bundling
+// Esto asegura que el módulo se carga solo cuando se necesita, no durante la evaluación del módulo
+let calendarHelpersModule = null
+let calendarHelpersPromise = null
 
-// Función helper para obtener calendarHelpers de forma segura
-// Esta función se ejecuta cada vez que se necesita para evitar problemas de inicialización
-const getCalendarHelpers = () => {
+// Función helper para obtener calendarHelpers de forma segura usando importación dinámica
+const getCalendarHelpers = async () => {
   try {
-    // Llamar a la función getter para obtener el objeto
-    const helpers = getCalendarHelpersModule()
-    // Si el módulo no está disponible o no tiene las funciones necesarias, retornar null
-    if (!helpers || typeof helpers.getMonthsInYear !== 'function') {
-      return null
+    // Si ya tenemos el módulo cargado, retornarlo directamente
+    if (calendarHelpersModule) {
+      return calendarHelpersModule
     }
-    return helpers
+    
+    // Si hay una promesa de carga en curso, esperarla
+    if (calendarHelpersPromise) {
+      return await calendarHelpersPromise
+    }
+    
+    // Cargar el módulo de forma dinámica
+    calendarHelpersPromise = import('./calendarHelpers').then(module => {
+      const helpers = module.default()
+      if (!helpers || typeof helpers.getMonthsInYear !== 'function') {
+        console.warn('calendarHelpers no tiene las funciones necesarias')
+        return null
+      }
+      calendarHelpersModule = helpers
+      return helpers
+    }).catch(error => {
+      console.warn('Error cargando calendarHelpers:', error)
+      return null
+    })
+    
+    return await calendarHelpersPromise
   } catch (error) {
     console.warn('Error obteniendo calendarHelpers:', error)
     return null
   }
+}
+
+// Versión síncrona para uso inmediato (retorna null si no está cargado)
+const getCalendarHelpersSync = () => {
+  return calendarHelpersModule
 }
 
 // NO destructurar al inicio - usar directamente desde el objeto para evitar problemas de inicialización
@@ -66,16 +89,28 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
   const [hoveredDay, setHoveredDay] = useState(null)
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, employeeId: null, date: null, activity: null })
   const [activityModal, setActivityModal] = useState({ visible: false, type: null, date: null, employeeId: null, employeeName: null })
+  const [loadedHelpers, setLoadedHelpers] = useState(null)
   const longPressTimer = useRef(null)
   const { toast } = useToast()
+
+  // Cargar calendarHelpers cuando el componente se monta
+  useEffect(() => {
+    getCalendarHelpers().then(helpers => {
+      if (helpers) {
+        setLoadedHelpers(helpers)
+      }
+    }).catch(error => {
+      console.error('Error cargando calendarHelpers:', error)
+    })
+  }, [])
 
   // Calcular meses usando useMemo en lugar de IIFE para mejor compatibilidad con minificación
   // Usar funciones directamente desde calendarHelpers sin destructurar
   // Validar que calendarHelpers esté completamente inicializado antes de usarlo
   const calculatedMonths = useMemo(() => {
     try {
-      // Obtener calendarHelpers de forma segura
-      const helpers = getCalendarHelpers()
+      // Obtener calendarHelpers de forma segura (versión síncrona)
+      const helpers = loadedHelpers || getCalendarHelpersSync()
       
       // Validar que calendarHelpers y sus funciones estén disponibles
       if (!helpers || typeof helpers.getMonthsInYear !== 'function' || typeof helpers.getDaysInMonth !== 'function') {
@@ -110,7 +145,7 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
       console.error('Error calculando meses:', error)
       return []
     }
-  }, [viewMode, currentMonth])
+  }, [viewMode, currentMonth, loadedHelpers])
 
   // Renderizar encabezado de la tabla
   const renderTableHeader = (daysInMonth) => {
@@ -164,7 +199,7 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
     }
 
     const employeeLocation = employee?.location || { country: employee?.country, region: employee?.region, city: employee?.city }
-    const helpers = getCalendarHelpers()
+    const helpers = loadedHelpers || getCalendarHelpersSync()
     
     // Verificar si es festivo
     let isHolidayDay = false
@@ -325,7 +360,7 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
     // Obtener el tipo de actividad (puede ser activity_type o type)
     const activityType = contextMenu.activity.activity_type || contextMenu.activity.type || 'actividad'
     let activityCode = activityType.toUpperCase()
-    const helpers = getCalendarHelpers()
+    const helpers = loadedHelpers || getCalendarHelpersSync()
     if (helpers && typeof helpers.getActivityCodeHelper === 'function') {
       activityCode = helpers.getActivityCodeHelper(contextMenu.activity) || activityCode
     }
@@ -450,7 +485,7 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
                           if (!employee || !month.date) return null
                           
                           // Validar calendarHelpers antes de usarlo
-                          const helpers = getCalendarHelpers()
+                          const helpers = loadedHelpers || getCalendarHelpersSync()
                           let summary = { vacation: 0, absence: 0 }
                           let monthDays = month.days || []
                           
@@ -486,7 +521,7 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
                               {/* Días del mes (1-31) */}
                               {monthDays.map((dayInfo) => {
                                 // Validar calendarHelpers antes de usarlo
-                                const helpers = getCalendarHelpers()
+                                const helpers = loadedHelpers || getCalendarHelpersSync()
                                 let activity = null
                                 let isHolidayDay = false
                                 let bgColor = 'bg-white border-gray-200'
@@ -549,7 +584,7 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
                     <div className="flex flex-wrap gap-2">
                       {(() => {
                         // Obtener festivos del mes - validar calendarHelpers
-                        const helpers = getCalendarHelpers()
+                        const helpers = loadedHelpers || getCalendarHelpersSync()
                         let monthHolidays = []
                         if (helpers && typeof helpers.getMonthHolidaysHelper === 'function') {
                           monthHolidays = helpers.getMonthHolidaysHelper(month.date, holidays)
