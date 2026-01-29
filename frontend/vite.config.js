@@ -50,8 +50,9 @@ export default defineConfig({
       // TEMPORALMENTE desactivado: minifySyntax causaba errores de inicialización
       // minifySyntax: true,
       minifySyntax: false,
-      // Minificar solo espacios en blanco (reducir tamaño sin cambiar lógica)
-      minifyWhitespace: true,
+      // TEMPORALMENTE desactivado: minifyWhitespace también puede causar problemas de orden
+      // minifyWhitespace: true,
+      minifyWhitespace: false,
       // Preservar nombres de funciones para debugging
       keepNames: true,
       // Mantener comentarios legales para debugging
