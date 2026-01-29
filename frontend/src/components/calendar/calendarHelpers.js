@@ -2,23 +2,6 @@
 // Separadas en archivo independiente para evitar problemas de inicialización durante minificación
 // Export único como objeto al final para asegurar que todas las funciones estén definidas antes de exportarse
 
-// #region agent log
-// Función de logging que funciona en desarrollo y producción
-const logDebug = (location, message, data, hypothesisId) => {
-  const logData = {location,message,data,timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId};
-  // Usar console.log con prefijo para fácil identificación
-  console.log('[DEBUG]', JSON.stringify(logData));
-  // Almacenar en window para acceso desde consola del navegador
-  if (typeof window !== 'undefined') {
-    if (!window._debugLogs) window._debugLogs = [];
-    window._debugLogs.push(logData);
-    // Mantener solo los últimos 100 logs para evitar problemas de memoria
-    if (window._debugLogs.length > 100) window._debugLogs.shift();
-  }
-};
-logDebug('calendarHelpers.js:5','Module evaluation started',{timestamp:Date.now()},'A');
-// #endregion
-
 // Mapeo completo bidireccional de países (inglés/español/códigos ISO)
 // Usar función getter para evitar problemas de hoisting durante la minificación
 let _COUNTRY_MAPPING = null
@@ -80,15 +63,9 @@ function getCountryMapping() {
 
 // Función para normalizar nombre de país
 function normalizeCountryName(countryInput) {
-  // #region agent log
-  logDebug('calendarHelpers.js:62','normalizeCountryName called',{countryInput},'C');
-  // #endregion
   if (!countryInput) return null
   
   const COUNTRY_MAPPING = getCountryMapping()
-  // #region agent log
-  logDebug('calendarHelpers.js:66','getCountryMapping returned',{hasMapping:!!COUNTRY_MAPPING},'C');
-  // #endregion
   const input = String(countryInput).trim()
   
   // Si es código ISO (2 o 3 letras), buscar directamente
@@ -275,21 +252,12 @@ function getDaysInMonth(date) {
 
 // Obtener meses del año
 function getMonthsInYear(date) {
-  // #region agent log
-  logDebug('calendarHelpers.js:242','getMonthsInYear called',{date:date?.toString()},'C');
-  // #endregion
   const year = date.getFullYear()
   const months = []
   
   for (let month = 0; month < 12; month++) {
     const monthDate = new Date(year, month, 1)
-    // #region agent log
-    logDebug('calendarHelpers.js:248','About to call getDaysInMonth from getMonthsInYear',{monthDate:monthDate?.toString()},'C');
-    // #endregion
     const days = getDaysInMonth(monthDate)
-    // #region agent log
-    logDebug('calendarHelpers.js:250','getDaysInMonth returned from getMonthsInYear',{daysCount:days?.length},'C');
-    // #endregion
     months.push({
       date: monthDate,
       name: monthDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }),
@@ -576,68 +544,37 @@ export {
 }
 
 // También exportar como objeto default para compatibilidad con código existente
-// NO crear el objeto durante la evaluación del módulo - crear solo cuando se invoca la función
-// Esto evita completamente problemas de hoisting durante la minificación
-// #region agent log
-logDebug('calendarHelpers.js:537','Module evaluation completed, all functions defined',{functionsDefined:typeof getIsoToCountryName==='function'&&typeof getCountryMapping==='function'&&typeof normalizeCountryName==='function'&&typeof getDaysInMonth==='function'&&typeof getMonthsInYear==='function'},'A');
-// #endregion
-
-// Función que crea el objeto solo cuando se invoca (lazy initialization)
-function createCalendarHelpersObject() {
-  // #region agent log
-  logDebug('calendarHelpers.js:543','createCalendarHelpersObject called',{},'A');
-  // #endregion
-  
-  // Crear el objeto con todas las funciones ya definidas
-  const helpersObj = {
-    // Exponer las funciones getter directamente para inicialización lazy
-    get ISO_TO_COUNTRY_NAME() {
-      // #region agent log
-      logDebug('calendarHelpers.js:549','ISO_TO_COUNTRY_NAME getter accessed',{getIsoToCountryNameDefined:typeof getIsoToCountryName==='function'},'B');
-      // #endregion
-      return getIsoToCountryName()
-    },
-    get COUNTRY_MAPPING() {
-      // #region agent log
-      logDebug('calendarHelpers.js:555','COUNTRY_MAPPING getter accessed',{getCountryMappingDefined:typeof getCountryMapping==='function'},'B');
-      // #endregion
-      return getCountryMapping()
-    },
-    normalizeCountryName: normalizeCountryName,
-    getCountryVariants: getCountryVariants,
-    doesHolidayApplyToLocation: doesHolidayApplyToLocation,
-    countriesMatch: countriesMatch,
-    getDaysInMonth: getDaysInMonth,
-    getMonthsInYear: getMonthsInYear,
-    isHolidayHelper: isHolidayHelper,
-    getActivityForDayHelper: getActivityForDayHelper,
-    getActivityCodeHelper: getActivityCodeHelper,
-    getCellBackgroundColorHelper: getCellBackgroundColorHelper,
-    getCellTextColorHelper: getCellTextColorHelper,
-    getMonthSummaryHelper: getMonthSummaryHelper,
-    getMonthHolidaysHelper: getMonthHolidaysHelper
-  }
-  
-  // #region agent log
-  logDebug('calendarHelpers.js:575','createCalendarHelpersObject completed',{hasAllFunctions:typeof helpersObj.getDaysInMonth==='function'&&typeof helpersObj.getMonthsInYear==='function'},'A');
-  // #endregion
-  return helpersObj
-}
-
-// Crear una función getter singleton que crea el objeto solo cuando se invoca
-let _calendarHelpersInstance = null
+// Crear el objeto solo cuando se invoca la función getter (lazy initialization)
+// Esto evita completamente problemas de hoisting durante el bundling
 function getCalendarHelpersSingleton() {
-  // #region agent log
-  logDebug('calendarHelpers.js:583','getCalendarHelpersSingleton called',{_calendarHelpersInstance:_calendarHelpersInstance===null?'null':'initialized'},'D');
-  // #endregion
-  if (!_calendarHelpersInstance) {
-    _calendarHelpersInstance = createCalendarHelpersObject()
+  // Crear el objeto solo cuando se invoca por primera vez
+  if (!getCalendarHelpersSingleton._instance) {
+    getCalendarHelpersSingleton._instance = {
+      get ISO_TO_COUNTRY_NAME() {
+        return getIsoToCountryName()
+      },
+      get COUNTRY_MAPPING() {
+        return getCountryMapping()
+      },
+      normalizeCountryName: normalizeCountryName,
+      getCountryVariants: getCountryVariants,
+      doesHolidayApplyToLocation: doesHolidayApplyToLocation,
+      countriesMatch: countriesMatch,
+      getDaysInMonth: getDaysInMonth,
+      getMonthsInYear: getMonthsInYear,
+      isHolidayHelper: isHolidayHelper,
+      getActivityForDayHelper: getActivityForDayHelper,
+      getActivityCodeHelper: getActivityCodeHelper,
+      getCellBackgroundColorHelper: getCellBackgroundColorHelper,
+      getCellTextColorHelper: getCellTextColorHelper,
+      getMonthSummaryHelper: getMonthSummaryHelper,
+      getMonthHolidaysHelper: getMonthHolidaysHelper
+    }
   }
-  return _calendarHelpersInstance
+  return getCalendarHelpersSingleton._instance
 }
 
-// Exportar la función getter en lugar del objeto directamente
-// #region agent log
-logDebug('calendarHelpers.js:591','Module export completed',{exportType:typeof getCalendarHelpersSingleton},'A');
-// #endregion
+// Inicializar la propiedad _instance como null
+getCalendarHelpersSingleton._instance = null
+
 export default getCalendarHelpersSingleton
