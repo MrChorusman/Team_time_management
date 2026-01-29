@@ -46,19 +46,19 @@ const getCalendarHelpers = async () => {
       // #region agent log
       logDebug('CalendarTableView.jsx:45','Dynamic import completed',{hasDefault:!!module.default,defaultType:typeof module.default},'D');
       // #endregion
-      // El módulo ahora exporta una función getter que retorna el objeto
-      const getHelpers = module.default
-      if (!getHelpers || typeof getHelpers !== 'function') {
-        console.warn('calendarHelpers no exporta una función getter válida')
+      // El módulo ahora exporta una función factory que crea el objeto
+      const createHelpers = module.default
+      if (!createHelpers || typeof createHelpers !== 'function') {
+        console.warn('calendarHelpers no exporta una función factory válida')
         return null
       }
       // #region agent log
-      logDebug('CalendarTableView.jsx:53','About to invoke getHelpers()',{},'D');
+      logDebug('CalendarTableView.jsx:53','About to invoke createHelpers()',{},'D');
       // #endregion
-      // Invocar la función getter para obtener el objeto
-      const helpers = getHelpers()
+      // Invocar la función factory para crear el objeto
+      const helpers = createHelpers()
       // #region agent log
-      logDebug('CalendarTableView.jsx:56','getHelpers() returned',{hasHelpers:!!helpers,hasGetMonthsInYear:helpers&&typeof helpers.getMonthsInYear==='function'},'D');
+      logDebug('CalendarTableView.jsx:56','createHelpers() returned',{hasHelpers:!!helpers,hasGetMonthsInYear:helpers&&typeof helpers.getMonthsInYear==='function'},'D');
       // #endregion
       if (!helpers || typeof helpers.getMonthsInYear !== 'function') {
         console.warn('calendarHelpers no tiene las funciones necesarias')

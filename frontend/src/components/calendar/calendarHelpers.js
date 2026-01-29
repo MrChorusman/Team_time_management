@@ -543,39 +543,31 @@ export {
   getMonthHolidaysHelper
 }
 
-// También exportar como objeto default para compatibilidad con código existente
-// Crear el objeto solo cuando se invoca la función getter (lazy initialization)
-// Esto evita completamente problemas de hoisting durante el bundling
-// NO usar getters - usar funciones normales para evitar problemas durante el bundling
-function getCalendarHelpersSingleton() {
-  // Crear el objeto solo cuando se invoca por primera vez
-  if (!getCalendarHelpersSingleton._instance) {
-    // Llamar a las funciones getter una vez para inicializar las constantes
-    const isoToCountryName = getIsoToCountryName()
-    const countryMapping = getCountryMapping()
-    
-    getCalendarHelpersSingleton._instance = {
-      ISO_TO_COUNTRY_NAME: isoToCountryName,
-      COUNTRY_MAPPING: countryMapping,
-      normalizeCountryName: normalizeCountryName,
-      getCountryVariants: getCountryVariants,
-      doesHolidayApplyToLocation: doesHolidayApplyToLocation,
-      countriesMatch: countriesMatch,
-      getDaysInMonth: getDaysInMonth,
-      getMonthsInYear: getMonthsInYear,
-      isHolidayHelper: isHolidayHelper,
-      getActivityForDayHelper: getActivityForDayHelper,
-      getActivityCodeHelper: getActivityCodeHelper,
-      getCellBackgroundColorHelper: getCellBackgroundColorHelper,
-      getCellTextColorHelper: getCellTextColorHelper,
-      getMonthSummaryHelper: getMonthSummaryHelper,
-      getMonthHolidaysHelper: getMonthHolidaysHelper
-    }
+// Exportar función helper para crear el objeto (se crea en el componente que lo importa)
+// Esto evita completamente cualquier inicialización durante la evaluación del módulo
+function createCalendarHelpers() {
+  // Llamar a las funciones getter una vez para inicializar las constantes
+  const isoToCountryName = getIsoToCountryName()
+  const countryMapping = getCountryMapping()
+  
+  return {
+    ISO_TO_COUNTRY_NAME: isoToCountryName,
+    COUNTRY_MAPPING: countryMapping,
+    normalizeCountryName: normalizeCountryName,
+    getCountryVariants: getCountryVariants,
+    doesHolidayApplyToLocation: doesHolidayApplyToLocation,
+    countriesMatch: countriesMatch,
+    getDaysInMonth: getDaysInMonth,
+    getMonthsInYear: getMonthsInYear,
+    isHolidayHelper: isHolidayHelper,
+    getActivityForDayHelper: getActivityForDayHelper,
+    getActivityCodeHelper: getActivityCodeHelper,
+    getCellBackgroundColorHelper: getCellBackgroundColorHelper,
+    getCellTextColorHelper: getCellTextColorHelper,
+    getMonthSummaryHelper: getMonthSummaryHelper,
+    getMonthHolidaysHelper: getMonthHolidaysHelper
   }
-  return getCalendarHelpersSingleton._instance
 }
 
-// Inicializar la propiedad _instance como null
-getCalendarHelpersSingleton._instance = null
-
-export default getCalendarHelpersSingleton
+// Exportar función factory como default para compatibilidad
+export default createCalendarHelpers
