@@ -602,6 +602,37 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
     }
   }, [])
 
+  // Eliminar actividad - memoizado (MOVIDO ANTES de handleMenuSelect para evitar referencia antes de inicialización)
+  const handleDeleteActivity = useCallback(async () => {
+    if (!contextMenu.activity) return
+
+    // Obtener el código de actividad
+    const activityCode = getActivityCodeHelper(contextMenu.activity) || 'ACT'
+
+    // Confirmación
+    if (!window.confirm(`¿Eliminar ${activityCode} del ${new Date(contextMenu.date).toLocaleDateString('es-ES')}?`)) {
+      return
+    }
+
+    try {
+      // Callback al componente padre para eliminar en backend
+      if (onActivityDelete) {
+        await onActivityDelete(contextMenu.activity.id)
+      }
+
+      toast({
+        title: "🗑️ Actividad eliminada",
+        description: "La actividad ha sido eliminada correctamente",
+      })
+    } catch (error) {
+      toast({
+        title: "❌ Error",
+        description: error.message || "No se pudo eliminar la actividad",
+        variant: "destructive"
+      })
+    }
+  }, [contextMenu, toast, onActivityDelete])
+
   // Manejo de selección en menú contextual - memoizado
   const handleMenuSelect = useCallback((option) => {
     if (option === 'delete') {
@@ -684,37 +715,6 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
       })
     }
   }, [activityModal, toast, onActivityCreate])
-
-  // Eliminar actividad - memoizado
-  const handleDeleteActivity = useCallback(async () => {
-    if (!contextMenu.activity) return
-
-    // Obtener el código de actividad
-    const activityCode = getActivityCodeHelper(contextMenu.activity) || 'ACT'
-
-    // Confirmación
-    if (!window.confirm(`¿Eliminar ${activityCode} del ${new Date(contextMenu.date).toLocaleDateString('es-ES')}?`)) {
-      return
-    }
-
-    try {
-      // Callback al componente padre para eliminar en backend
-      if (onActivityDelete) {
-        await onActivityDelete(contextMenu.activity.id)
-      }
-
-      toast({
-        title: "🗑️ Actividad eliminada",
-        description: "La actividad ha sido eliminada correctamente",
-      })
-    } catch (error) {
-      toast({
-        title: "❌ Error",
-        description: error.message || "No se pudo eliminar la actividad",
-        variant: "destructive"
-      })
-    }
-  }, [contextMenu, toast, onActivityDelete])
 
   return (
     <div className="space-y-4">
