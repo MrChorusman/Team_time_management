@@ -157,7 +157,7 @@ function countriesMatch(country1, country2) {
   return String(country1).toLowerCase() === String(country2).toLowerCase()
 }
 
-let _ISO_TO_COUNTRY_NAME = null
+var _ISO_TO_COUNTRY_NAME = null
 function getIsoToCountryName() {
   if (!_ISO_TO_COUNTRY_NAME) {
     _ISO_TO_COUNTRY_NAME = {
