@@ -512,30 +512,27 @@ export {
 }
 
 // También exportar como objeto default para compatibilidad con código existente
-// Pero crear el objeto de forma lazy para evitar problemas de inicialización
-let calendarHelpersInstance = null
-
-function getCalendarHelpersInstance() {
-  if (!calendarHelpersInstance) {
-    calendarHelpersInstance = {
-      ISO_TO_COUNTRY_NAME,
-      COUNTRY_MAPPING,
-      normalizeCountryName,
-      getCountryVariants,
-      doesHolidayApplyToLocation,
-      countriesMatch,
-      getDaysInMonth,
-      getMonthsInYear,
-      isHolidayHelper,
-      getActivityForDayHelper,
-      getActivityCodeHelper,
-      getCellBackgroundColorHelper,
-      getCellTextColorHelper,
-      getMonthSummaryHelper,
-      getMonthHolidaysHelper
-    }
+// Crear el objeto directamente usando una función que se ejecuta inmediatamente (IIFE)
+// Esto asegura que todas las funciones están definidas antes de crear el objeto
+const calendarHelpers = (function() {
+  'use strict'
+  return {
+    ISO_TO_COUNTRY_NAME,
+    COUNTRY_MAPPING,
+    normalizeCountryName,
+    getCountryVariants,
+    doesHolidayApplyToLocation,
+    countriesMatch,
+    getDaysInMonth,
+    getMonthsInYear,
+    isHolidayHelper,
+    getActivityForDayHelper,
+    getActivityCodeHelper,
+    getCellBackgroundColorHelper,
+    getCellTextColorHelper,
+    getMonthSummaryHelper,
+    getMonthHolidaysHelper
   }
-  return calendarHelpersInstance
-}
+})()
 
-export default getCalendarHelpersInstance
+export default calendarHelpers
