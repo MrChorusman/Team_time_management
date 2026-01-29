@@ -3,55 +3,63 @@
 // Export único como objeto al final para asegurar que todas las funciones estén definidas antes de exportarse
 
 // Mapeo completo bidireccional de países (inglés/español/códigos ISO)
-const COUNTRY_MAPPING = {
-  'ES': { en: 'Spain', es: 'España' },
-  'ESP': { en: 'Spain', es: 'España' },
-  'US': { en: 'United States', es: 'Estados Unidos' },
-  'USA': { en: 'United States', es: 'Estados Unidos' },
-  'GB': { en: 'United Kingdom', es: 'Reino Unido' },
-  'GBR': { en: 'United Kingdom', es: 'Reino Unido' },
-  'FR': { en: 'France', es: 'Francia' },
-  'FRA': { en: 'France', es: 'Francia' },
-  'DE': { en: 'Germany', es: 'Alemania' },
-  'DEU': { en: 'Germany', es: 'Alemania' },
-  'IT': { en: 'Italy', es: 'Italia' },
-  'ITA': { en: 'Italy', es: 'Italia' },
-  'PT': { en: 'Portugal', es: 'Portugal' },
-  'PRT': { en: 'Portugal', es: 'Portugal' },
-  'MX': { en: 'Mexico', es: 'México' },
-  'AR': { en: 'Argentina', es: 'Argentina' },
-  'CO': { en: 'Colombia', es: 'Colombia' },
-  'CL': { en: 'Chile', es: 'Chile' },
-  'PE': { en: 'Peru', es: 'Perú' },
-  'VE': { en: 'Venezuela', es: 'Venezuela' },
-  'EC': { en: 'Ecuador', es: 'Ecuador' },
-  'BO': { en: 'Bolivia', es: 'Bolivia' },
-  'PY': { en: 'Paraguay', es: 'Paraguay' },
-  'UY': { en: 'Uruguay', es: 'Uruguay' },
-  'CR': { en: 'Costa Rica', es: 'Costa Rica' },
-  'PA': { en: 'Panama', es: 'Panamá' },
-  'DO': { en: 'Dominican Republic', es: 'República Dominicana' },
-  'CA': { en: 'Canada', es: 'Canadá' },
-  'BR': { en: 'Brazil', es: 'Brasil' },
-  'AU': { en: 'Australia', es: 'Australia' },
-  'NZ': { en: 'New Zealand', es: 'Nueva Zelanda' },
-  'NL': { en: 'Netherlands', es: 'Países Bajos' },
-  'BE': { en: 'Belgium', es: 'Bélgica' },
-  'CH': { en: 'Switzerland', es: 'Suiza' },
-  'AT': { en: 'Austria', es: 'Austria' },
-  'SE': { en: 'Sweden', es: 'Suecia' },
-  'NO': { en: 'Norway', es: 'Noruega' },
-  'DK': { en: 'Denmark', es: 'Dinamarca' },
-  'FI': { en: 'Finland', es: 'Finlandia' },
-  'PL': { en: 'Poland', es: 'Polonia' },
-  'GR': { en: 'Greece', es: 'Grecia' },
-  'IE': { en: 'Ireland', es: 'Irlanda' }
+// Usar función getter para evitar problemas de hoisting durante la minificación
+let _COUNTRY_MAPPING = null
+function getCountryMapping() {
+  if (!_COUNTRY_MAPPING) {
+    _COUNTRY_MAPPING = {
+      'ES': { en: 'Spain', es: 'España' },
+      'ESP': { en: 'Spain', es: 'España' },
+      'US': { en: 'United States', es: 'Estados Unidos' },
+      'USA': { en: 'United States', es: 'Estados Unidos' },
+      'GB': { en: 'United Kingdom', es: 'Reino Unido' },
+      'GBR': { en: 'United Kingdom', es: 'Reino Unido' },
+      'FR': { en: 'France', es: 'Francia' },
+      'FRA': { en: 'France', es: 'Francia' },
+      'DE': { en: 'Germany', es: 'Alemania' },
+      'DEU': { en: 'Germany', es: 'Alemania' },
+      'IT': { en: 'Italy', es: 'Italia' },
+      'ITA': { en: 'Italy', es: 'Italia' },
+      'PT': { en: 'Portugal', es: 'Portugal' },
+      'PRT': { en: 'Portugal', es: 'Portugal' },
+      'MX': { en: 'Mexico', es: 'México' },
+      'AR': { en: 'Argentina', es: 'Argentina' },
+      'CO': { en: 'Colombia', es: 'Colombia' },
+      'CL': { en: 'Chile', es: 'Chile' },
+      'PE': { en: 'Peru', es: 'Perú' },
+      'VE': { en: 'Venezuela', es: 'Venezuela' },
+      'EC': { en: 'Ecuador', es: 'Ecuador' },
+      'BO': { en: 'Bolivia', es: 'Bolivia' },
+      'PY': { en: 'Paraguay', es: 'Paraguay' },
+      'UY': { en: 'Uruguay', es: 'Uruguay' },
+      'CR': { en: 'Costa Rica', es: 'Costa Rica' },
+      'PA': { en: 'Panama', es: 'Panamá' },
+      'DO': { en: 'Dominican Republic', es: 'República Dominicana' },
+      'CA': { en: 'Canada', es: 'Canadá' },
+      'BR': { en: 'Brazil', es: 'Brasil' },
+      'AU': { en: 'Australia', es: 'Australia' },
+      'NZ': { en: 'New Zealand', es: 'Nueva Zelanda' },
+      'NL': { en: 'Netherlands', es: 'Países Bajos' },
+      'BE': { en: 'Belgium', es: 'Bélgica' },
+      'CH': { en: 'Switzerland', es: 'Suiza' },
+      'AT': { en: 'Austria', es: 'Austria' },
+      'SE': { en: 'Sweden', es: 'Suecia' },
+      'NO': { en: 'Norway', es: 'Noruega' },
+      'DK': { en: 'Denmark', es: 'Dinamarca' },
+      'FI': { en: 'Finland', es: 'Finlandia' },
+      'PL': { en: 'Poland', es: 'Polonia' },
+      'GR': { en: 'Greece', es: 'Grecia' },
+      'IE': { en: 'Ireland', es: 'Irlanda' }
+    }
+  }
+  return _COUNTRY_MAPPING
 }
 
 // Función para normalizar nombre de país
 function normalizeCountryName(countryInput) {
   if (!countryInput) return null
   
+  const COUNTRY_MAPPING = getCountryMapping()
   const input = String(countryInput).trim()
   
   // Si es código ISO (2 o 3 letras), buscar directamente
@@ -171,21 +179,28 @@ function countriesMatch(country1, country2) {
 }
 
 // Mantener compatibilidad con código existente
-const ISO_TO_COUNTRY_NAME = {
-  'ESP': 'España',
-  'ES': 'España',
-  'USA': 'United States',
-  'US': 'United States',
-  'GBR': 'United Kingdom',
-  'GB': 'United Kingdom',
-  'FRA': 'France',
-  'FR': 'France',
-  'DEU': 'Germany',
-  'DE': 'Germany',
-  'ITA': 'Italy',
-  'IT': 'Italy',
-  'PRT': 'Portugal',
-  'PT': 'Portugal'
+// Usar función getter para evitar problemas de hoisting durante la minificación
+let _ISO_TO_COUNTRY_NAME = null
+function getIsoToCountryName() {
+  if (!_ISO_TO_COUNTRY_NAME) {
+    _ISO_TO_COUNTRY_NAME = {
+      'ESP': 'España',
+      'ES': 'España',
+      'USA': 'United States',
+      'US': 'United States',
+      'GBR': 'United Kingdom',
+      'GB': 'United Kingdom',
+      'FRA': 'France',
+      'FR': 'France',
+      'DEU': 'Germany',
+      'DE': 'Germany',
+      'ITA': 'Italy',
+      'IT': 'Italy',
+      'PRT': 'Portugal',
+      'PT': 'Portugal'
+    }
+  }
+  return _ISO_TO_COUNTRY_NAME
 }
 
 // Función helper para formatear fecha como YYYY-MM-DD sin problemas de zona horaria
@@ -494,8 +509,8 @@ function getMonthHolidaysHelper(monthDate, holidays) {
 // Exportaciones nombradas individuales para evitar problemas de inicialización circular
 // Esto permite que cada función se importe independientemente sin problemas de hoisting
 export {
-  ISO_TO_COUNTRY_NAME,
-  COUNTRY_MAPPING,
+  getIsoToCountryName,
+  getCountryMapping,
   normalizeCountryName,
   getCountryVariants,
   doesHolidayApplyToLocation,
@@ -516,8 +531,8 @@ export {
 // Esto evita problemas de hoisting durante la minificación de Vite
 function createCalendarHelpers() {
   return {
-    ISO_TO_COUNTRY_NAME: ISO_TO_COUNTRY_NAME,
-    COUNTRY_MAPPING: COUNTRY_MAPPING,
+    ISO_TO_COUNTRY_NAME: getIsoToCountryName(),
+    COUNTRY_MAPPING: getCountryMapping(),
     normalizeCountryName: normalizeCountryName,
     getCountryVariants: getCountryVariants,
     doesHolidayApplyToLocation: doesHolidayApplyToLocation,
