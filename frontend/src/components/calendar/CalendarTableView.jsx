@@ -413,7 +413,7 @@ function getMonthHolidaysHelper(monthDate, holidays) {
  * - Columnas: Equipo | Empleado | Vac | Aus | 1 | 2 | 3 | ... | 31
  * - Vista mensual o anual
  */
-// Las funciones helper están ahora en calendarHelpers.js para evitar problemas de inicialización
+// Las funciones helper están inlineadas directamente en este archivo para evitar problemas de bundling
 const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMonthChange, onActivityCreate, onActivityDelete, onViewModeChange, viewMode: externalViewMode }) => {
   // Usar viewMode externo si se proporciona, sino usar estado local
   const [internalViewMode, setInternalViewMode] = useState('monthly')
@@ -533,13 +533,9 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
     }
 
     const employeeLocation = employee?.location || { country: employee?.country, region: employee?.region, city: employee?.city }
-    const helpers = loadedHelpers || getCalendarHelpersSync()
     
     // Verificar si es festivo
-    let isHolidayDay = false
-    if (helpers && typeof helpers.isHolidayHelper === 'function') {
-      isHolidayDay = helpers.isHolidayHelper(dateString, employeeLocation, holidays)
-    }
+    const isHolidayDay = isHolidayHelper(dateString, employeeLocation, holidays)
     
     // Asegurar que isWeekend se calcula correctamente desde dayInfo
     // Si dayInfo no tiene isWeekend, calcularlo desde la fecha
@@ -688,13 +684,8 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
   const handleDeleteActivity = useCallback(async () => {
     if (!contextMenu.activity) return
 
-    // Obtener el tipo de actividad (puede ser activity_type o type)
-    const activityType = contextMenu.activity.activity_type || contextMenu.activity.type || 'actividad'
-    let activityCode = activityType.toUpperCase()
-    const helpers = loadedHelpers || getCalendarHelpersSync()
-    if (helpers && typeof helpers.getActivityCodeHelper === 'function') {
-      activityCode = helpers.getActivityCodeHelper(contextMenu.activity) || activityCode
-    }
+    // Obtener el código de actividad
+    const activityCode = getActivityCodeHelper(contextMenu.activity) || 'ACT'
 
     // Confirmación
     if (!window.confirm(`¿Eliminar ${activityCode} del ${new Date(contextMenu.date).toLocaleDateString('es-ES')}?`)) {
