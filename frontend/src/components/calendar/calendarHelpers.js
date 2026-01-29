@@ -137,6 +137,7 @@ function getCountryVariants(countryInput) {
   if (!normalized) return null
   
   // Buscar el código ISO correspondiente
+  const COUNTRY_MAPPING = getCountryMapping()
   for (const code in COUNTRY_MAPPING) {
     if (COUNTRY_MAPPING[code].en === normalized || COUNTRY_MAPPING[code].es === normalized) {
       return {
@@ -575,17 +576,16 @@ export {
 }
 
 // También exportar como objeto default para compatibilidad con código existente
-// Usar una función que retorna el objeto solo cuando se invoca
+// NO crear el objeto durante la evaluación del módulo - crear solo cuando se invoca la función
 // Esto evita completamente problemas de hoisting durante la minificación
-// Usar una función que se ejecuta inmediatamente para crear el objeto de forma segura
 // #region agent log
-logDebug('calendarHelpers.js:537','About to execute IIFE',{functionsDefined:typeof getIsoToCountryName==='function'&&typeof getCountryMapping==='function'&&typeof normalizeCountryName==='function'&&typeof getDaysInMonth==='function'&&typeof getMonthsInYear==='function'},'A');
+logDebug('calendarHelpers.js:537','Module evaluation completed, all functions defined',{functionsDefined:typeof getIsoToCountryName==='function'&&typeof getCountryMapping==='function'&&typeof normalizeCountryName==='function'&&typeof getDaysInMonth==='function'&&typeof getMonthsInYear==='function'},'A');
 // #endregion
-const calendarHelpersModule = (function() {
-  'use strict'
-  
+
+// Función que crea el objeto solo cuando se invoca (lazy initialization)
+function createCalendarHelpersObject() {
   // #region agent log
-  logDebug('calendarHelpers.js:541','IIFE executing',{},'A');
+  logDebug('calendarHelpers.js:543','createCalendarHelpersObject called',{},'A');
   // #endregion
   
   // Crear el objeto con todas las funciones ya definidas
@@ -593,13 +593,13 @@ const calendarHelpersModule = (function() {
     // Exponer las funciones getter directamente para inicialización lazy
     get ISO_TO_COUNTRY_NAME() {
       // #region agent log
-      logDebug('calendarHelpers.js:547','ISO_TO_COUNTRY_NAME getter accessed',{getIsoToCountryNameDefined:typeof getIsoToCountryName==='function'},'B');
+      logDebug('calendarHelpers.js:549','ISO_TO_COUNTRY_NAME getter accessed',{getIsoToCountryNameDefined:typeof getIsoToCountryName==='function'},'B');
       // #endregion
       return getIsoToCountryName()
     },
     get COUNTRY_MAPPING() {
       // #region agent log
-      logDebug('calendarHelpers.js:551','COUNTRY_MAPPING getter accessed',{getCountryMappingDefined:typeof getCountryMapping==='function'},'B');
+      logDebug('calendarHelpers.js:555','COUNTRY_MAPPING getter accessed',{getCountryMappingDefined:typeof getCountryMapping==='function'},'B');
       // #endregion
       return getCountryMapping()
     },
@@ -619,29 +619,25 @@ const calendarHelpersModule = (function() {
   }
   
   // #region agent log
-  logDebug('calendarHelpers.js:565','IIFE completed, returning helpersObj',{hasAllFunctions:typeof helpersObj.getDaysInMonth==='function'&&typeof helpersObj.getMonthsInYear==='function'},'A');
+  logDebug('calendarHelpers.js:575','createCalendarHelpersObject completed',{hasAllFunctions:typeof helpersObj.getDaysInMonth==='function'&&typeof helpersObj.getMonthsInYear==='function'},'A');
   // #endregion
   return helpersObj
-})()
+}
 
-// #region agent log
-logDebug('calendarHelpers.js:570','calendarHelpersModule created',{hasModule:!!calendarHelpersModule},'A');
-// #endregion
-
-// Crear una función getter singleton que retorna el objeto
+// Crear una función getter singleton que crea el objeto solo cuando se invoca
 let _calendarHelpersInstance = null
 function getCalendarHelpersSingleton() {
   // #region agent log
-  logDebug('calendarHelpers.js:576','getCalendarHelpersSingleton called',{_calendarHelpersInstance:_calendarHelpersInstance===null?'null':'initialized'},'D');
+  logDebug('calendarHelpers.js:583','getCalendarHelpersSingleton called',{_calendarHelpersInstance:_calendarHelpersInstance===null?'null':'initialized'},'D');
   // #endregion
   if (!_calendarHelpersInstance) {
-    _calendarHelpersInstance = calendarHelpersModule
+    _calendarHelpersInstance = createCalendarHelpersObject()
   }
   return _calendarHelpersInstance
 }
 
 // Exportar la función getter en lugar del objeto directamente
 // #region agent log
-logDebug('calendarHelpers.js:584','Module export completed',{exportType:typeof getCalendarHelpersSingleton},'A');
+logDebug('calendarHelpers.js:591','Module export completed',{exportType:typeof getCalendarHelpersSingleton},'A');
 // #endregion
 export default getCalendarHelpersSingleton
