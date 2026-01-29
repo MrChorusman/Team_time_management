@@ -80,13 +80,16 @@ function normalizeCountryName(countryInput) {
     }
   }
   const inputLower = input.toLowerCase()
-  for (const code in COUNTRY_MAPPING) {
+  const countryCodes = Object.keys(COUNTRY_MAPPING)
+  for (let i = 0; i < countryCodes.length; i++) {
+    const code = countryCodes[i]
     const names = COUNTRY_MAPPING[code]
     if (names.en.toLowerCase() === inputLower || names.es.toLowerCase() === inputLower) {
       return names.en
     }
   }
-  for (const code in COUNTRY_MAPPING) {
+  for (let i = 0; i < countryCodes.length; i++) {
+    const code = countryCodes[i]
     const names = COUNTRY_MAPPING[code]
     if (inputLower.includes(names.en.toLowerCase()) || names.en.toLowerCase().includes(inputLower) ||
         inputLower.includes(names.es.toLowerCase()) || names.es.toLowerCase().includes(inputLower)) {
@@ -101,7 +104,9 @@ function getCountryVariants(countryInput) {
   const normalized = normalizeCountryName(countryInput)
   if (!normalized) return null
   const COUNTRY_MAPPING = getCountryMapping()
-  for (const code in COUNTRY_MAPPING) {
+  const countryCodes = Object.keys(COUNTRY_MAPPING)
+  for (let i = 0; i < countryCodes.length; i++) {
+    const code = countryCodes[i]
     if (COUNTRY_MAPPING[code].en === normalized || COUNTRY_MAPPING[code].es === normalized) {
       return {
         en: COUNTRY_MAPPING[code].en,
