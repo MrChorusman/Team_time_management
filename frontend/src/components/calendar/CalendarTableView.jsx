@@ -91,19 +91,51 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, employeeId: null, date: null, activity: null })
   const [activityModal, setActivityModal] = useState({ visible: false, type: null, date: null, employeeId: null, employeeName: null })
   const [loadedHelpers, setLoadedHelpers] = useState(null)
+  const [isLoadingHelpers, setIsLoadingHelpers] = useState(true)
   const longPressTimer = useRef(null)
   const { toast } = useToast()
 
   // Cargar calendarHelpers cuando el componente se monta
   useEffect(() => {
+    let isMounted = true
+    
     getCalendarHelpers().then(helpers => {
-      if (helpers) {
-        setLoadedHelpers(helpers)
+      if (isMounted) {
+        if (helpers) {
+          setLoadedHelpers(helpers)
+        }
+        setIsLoadingHelpers(false)
       }
     }).catch(error => {
       console.error('Error cargando calendarHelpers:', error)
+      if (isMounted) {
+        setIsLoadingHelpers(false)
+      }
     })
+    
+    return () => {
+      isMounted = false
+    }
   }, [])
+
+  // Función helper para calcular días del mes (fallback cuando calendarHelpers no está disponible)
+  const calculateDaysInMonthFallback = (date) => {
+    const year = date.getFullYear()
+    const month = date.getMonth()
+    const daysInMonth = new Date(year, month + 1, 0).getDate()
+    const days = []
+    for (let day = 1; day <= daysInMonth; day++) {
+      const currentDate = new Date(year, month, day)
+      days.push({
+        day,
+        date: currentDate,
+        dayOfWeek: currentDate.getDay(),
+        isWeekend: currentDate.getDay() === 0 || currentDate.getDay() === 6,
+        dateString: `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+      })
+    }
+    return days
+  }
 
   // Calcular meses usando useMemo en lugar de IIFE para mejor compatibilidad con minificación
   // Usar funciones directamente desde calendarHelpers sin destructurar
@@ -115,23 +147,9 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
       
       // Validar que calendarHelpers y sus funciones estén disponibles
       if (!helpers || typeof helpers.getMonthsInYear !== 'function' || typeof helpers.getDaysInMonth !== 'function') {
-        console.warn('calendarHelpers no está completamente inicializado, usando valores por defecto')
         // Retornar estructura básica para evitar errores
         const monthName = currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
-        const year = currentMonth.getFullYear()
-        const month = currentMonth.getMonth()
-        const daysInMonth = new Date(year, month + 1, 0).getDate()
-        const days = []
-        for (let day = 1; day <= daysInMonth; day++) {
-          const currentDate = new Date(year, month, day)
-          days.push({
-            day,
-            date: currentDate,
-            dayOfWeek: currentDate.getDay(),
-            isWeekend: currentDate.getDay() === 0 || currentDate.getDay() === 6,
-            dateString: `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-          })
-        }
+        const days = calculateDaysInMonthFallback(currentMonth)
         return viewMode === 'annual' ? [] : [{ date: currentMonth, name: monthName, days }]
       }
       
@@ -144,7 +162,10 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
       }
     } catch (error) {
       console.error('Error calculando meses:', error)
-      return []
+      // Retornar estructura básica en caso de error
+      const monthName = currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
+      const days = calculateDaysInMonthFallback(currentMonth)
+      return viewMode === 'annual' ? [] : [{ date: currentMonth, name: monthName, days }]
     }
   }, [viewMode, currentMonth, loadedHelpers])
 
@@ -389,6 +410,18 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
       })
     }
   }, [contextMenu, toast, onActivityDelete])
+
+  // Mostrar loading mientras se cargan los helpers
+  if (isLoadingHelpers && !loadedHelpers) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p className="text-sm text-gray-600">Cargando calendario...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-4">
