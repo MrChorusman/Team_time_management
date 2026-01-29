@@ -199,7 +199,8 @@ class TestingConfig(Config):
 
 class ProductionConfig(Config):
     """Configuración para producción"""
-    DEBUG = False
+    # Permitir override de DEBUG vía variable de entorno para modo debug temporal
+    DEBUG = os.environ.get('FLASK_DEBUG', 'false').lower() in ['true', 'on', '1']
     TESTING = False
     
     # Usar Supabase en producción con Transaction Pooler (recomendado para serverless)
