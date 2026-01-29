@@ -546,16 +546,17 @@ export {
 // También exportar como objeto default para compatibilidad con código existente
 // Crear el objeto solo cuando se invoca la función getter (lazy initialization)
 // Esto evita completamente problemas de hoisting durante el bundling
+// NO usar getters - usar funciones normales para evitar problemas durante el bundling
 function getCalendarHelpersSingleton() {
   // Crear el objeto solo cuando se invoca por primera vez
   if (!getCalendarHelpersSingleton._instance) {
+    // Llamar a las funciones getter una vez para inicializar las constantes
+    const isoToCountryName = getIsoToCountryName()
+    const countryMapping = getCountryMapping()
+    
     getCalendarHelpersSingleton._instance = {
-      get ISO_TO_COUNTRY_NAME() {
-        return getIsoToCountryName()
-      },
-      get COUNTRY_MAPPING() {
-        return getCountryMapping()
-      },
+      ISO_TO_COUNTRY_NAME: isoToCountryName,
+      COUNTRY_MAPPING: countryMapping,
       normalizeCountryName: normalizeCountryName,
       getCountryVariants: getCountryVariants,
       doesHolidayApplyToLocation: doesHolidayApplyToLocation,
