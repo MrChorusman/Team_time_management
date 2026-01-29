@@ -82,7 +82,14 @@ def login_user(session: requests.Session, email: str, password: str) -> Tuple[bo
                     'response_time': response_time
                 }
         
-        return False, {'error': f"Login fallido: {response.status_code}", 'response': response.text}
+        # Obtener mensaje de error si está disponible
+        try:
+            error_data = response.json()
+            error_msg = error_data.get('message', f"Status {response.status_code}")
+        except:
+            error_msg = f"Status {response.status_code}: {response.text[:200]}"
+        
+        return False, {'error': f"Login fallido: {error_msg}", 'status_code': response.status_code}
     except Exception as e:
         return False, {'error': str(e)}
 
