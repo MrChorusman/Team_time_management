@@ -11,7 +11,7 @@ import ActivityModal from './ActivityModal'
 // Movidas directamente al componente para evitar problemas de evaluación durante el bundling
 
 // Mapeo completo bidireccional de países (inglés/español/códigos ISO)
-let _COUNTRY_MAPPING = null
+var _COUNTRY_MAPPING = null
 function getCountryMapping() {
   if (!_COUNTRY_MAPPING) {
     _COUNTRY_MAPPING = {
