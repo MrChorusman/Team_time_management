@@ -40,27 +40,9 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
-    // PASO 1: Reactivar minificación con configuración ULTRA-CONSERVADORA
-    // Solo minificar sintaxis y espacios, NO renombrar identificadores
-    // Esto reduce el tamaño sin tocar nombres de variables/funciones
-    minify: 'esbuild',
-    esbuild: {
-      // CRÍTICO: NO renombrar identificadores - esto causaba el error original
-      minifyIdentifiers: false,
-      // TEMPORALMENTE desactivado: minifySyntax causaba errores de inicialización
-      // minifySyntax: true,
-      minifySyntax: false,
-      // TEMPORALMENTE desactivado: minifyWhitespace también puede causar problemas de orden
-      // minifyWhitespace: true,
-      minifyWhitespace: false,
-      // Preservar nombres de funciones para debugging
-      keepNames: true,
-      // Mantener comentarios legales para debugging
-      legalComments: 'inline'
-    },
-    // DESACTIVADO: manualChunks causó problemas de inicialización
-    // Mantener solo minificación conservadora que funcionaba correctamente
-    // Dejar que Vite maneje automáticamente la separación de chunks
+    // DESACTIVAR COMPLETAMENTE la minificación para aislar el problema
+    // Si el error persiste sin minificación, el problema está en el bundling, no en la minificación
+    minify: false,
     // rollupOptions: {
     //   output: {
     //     manualChunks(id) {
