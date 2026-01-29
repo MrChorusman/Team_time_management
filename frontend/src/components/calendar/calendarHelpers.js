@@ -527,30 +527,29 @@ export {
 }
 
 // También exportar como objeto default para compatibilidad con código existente
-// Función factory que retorna el objeto solo cuando se invoca
-// Esto evita problemas de hoisting durante la minificación de Vite
-function createCalendarHelpers() {
-  return {
-    ISO_TO_COUNTRY_NAME: getIsoToCountryName(),
-    COUNTRY_MAPPING: getCountryMapping(),
-    normalizeCountryName: normalizeCountryName,
-    getCountryVariants: getCountryVariants,
-    doesHolidayApplyToLocation: doesHolidayApplyToLocation,
-    countriesMatch: countriesMatch,
-    getDaysInMonth: getDaysInMonth,
-    getMonthsInYear: getMonthsInYear,
-    isHolidayHelper: isHolidayHelper,
-    getActivityForDayHelper: getActivityForDayHelper,
-    getActivityCodeHelper: getActivityCodeHelper,
-    getCellBackgroundColorHelper: getCellBackgroundColorHelper,
-    getCellTextColorHelper: getCellTextColorHelper,
-    getMonthSummaryHelper: getMonthSummaryHelper,
-    getMonthHolidaysHelper: getMonthHolidaysHelper
-  }
+// Crear el objeto directamente sin llamar a las funciones getter durante la inicialización
+// Las constantes se inicializarán lazy cuando se acceda a ellas por primera vez
+const calendarHelpersObj = {
+  // Exponer las funciones getter directamente para inicialización lazy
+  get ISO_TO_COUNTRY_NAME() {
+    return getIsoToCountryName()
+  },
+  get COUNTRY_MAPPING() {
+    return getCountryMapping()
+  },
+  normalizeCountryName: normalizeCountryName,
+  getCountryVariants: getCountryVariants,
+  doesHolidayApplyToLocation: doesHolidayApplyToLocation,
+  countriesMatch: countriesMatch,
+  getDaysInMonth: getDaysInMonth,
+  getMonthsInYear: getMonthsInYear,
+  isHolidayHelper: isHolidayHelper,
+  getActivityForDayHelper: getActivityForDayHelper,
+  getActivityCodeHelper: getActivityCodeHelper,
+  getCellBackgroundColorHelper: getCellBackgroundColorHelper,
+  getCellTextColorHelper: getCellTextColorHelper,
+  getMonthSummaryHelper: getMonthSummaryHelper,
+  getMonthHolidaysHelper: getMonthHolidaysHelper
 }
-
-// Crear el objeto una sola vez usando la factory
-// Esto asegura que todas las funciones están definidas antes de crear el objeto
-const calendarHelpersObj = createCalendarHelpers()
 
 export default calendarHelpersObj
