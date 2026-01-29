@@ -2,6 +2,7 @@ from datetime import datetime, date, timedelta
 from calendar import monthrange
 from typing import List, Dict, Optional, Tuple
 import logging
+from sqlalchemy.orm import joinedload
 
 from models.employee import Employee
 from models.team import Team
@@ -18,46 +19,128 @@ class CalendarService:
     @staticmethod
     def get_calendar_data(employee_id: int = None, team_id: int = None, 
                          year: int = None, month: int = None) -> Dict:
-        """Obtiene datos completos del calendario"""
+        """Obtiene datos completos del calendario con optimización de queries"""
         if not year:
             year = datetime.now().year
         if not month:
             month = datetime.now().month
         
         try:
-            # Determinar empleados a incluir
+            # Calcular rango de fechas del mes
+            start_date = date(year, month, 1)
+            _, last_day = monthrange(year, month)
+            end_date = date(year, month, last_day)
+            
+            # Determinar empleados a incluir con EAGER LOADING
             if employee_id:
-                employees = [Employee.query.get(employee_id)]
-                if not employees[0]:
+                employees = Employee.query.options(
+                    joinedload(Employee.team)
+                ).filter(Employee.id == employee_id).all()
+                if not employees:
                     return {'error': 'Empleado no encontrado'}
             elif team_id:
                 team = Team.query.get(team_id)
                 if not team:
                     return {'error': 'Equipo no encontrado'}
-                employees = team.active_employees
+                active_employees = team.active_employees
+                employee_ids = [emp.id for emp in active_employees]
+                employees = Employee.query.options(
+                    joinedload(Employee.team)
+                ).filter(Employee.id.in_(employee_ids)).all() if employee_ids else []
             else:
-                employees = Employee.query.filter(Employee.active == True).all()
+                employees = Employee.query.options(
+                    joinedload(Employee.team)
+                ).filter(Employee.active == True).all()
+            
+            employee_ids = [emp.id for emp in employees]
+            
+            # OPTIMIZACIÓN CRÍTICA: Cargar TODAS las actividades del mes en UNA SOLA query
+            all_activities = []
+            if employee_ids:
+                all_activities = CalendarActivity.query.filter(
+                    CalendarActivity.employee_id.in_(employee_ids),
+                    CalendarActivity.date >= start_date,
+                    CalendarActivity.date <= end_date
+                ).all()
+            
+            # Agrupar actividades por empleado en memoria
+            activities_by_employee = {}
+            for activity in all_activities:
+                if activity.employee_id not in activities_by_employee:
+                    activities_by_employee[activity.employee_id] = []
+                activities_by_employee[activity.employee_id].append(activity)
+            
+            # OPTIMIZACIÓN: Precargar festivos para todos los empleados ONCE
+            from utils.country_mapper import get_country_variants
+            holidays_by_employee = {}
+            
+            # Obtener países únicos de los empleados
+            employee_countries = set()
+            for emp in employees:
+                if emp.country:
+                    variants = get_country_variants(emp.country)
+                    if variants:
+                        employee_countries.add(variants['en'])
+                        employee_countries.add(variants['es'])
+                    else:
+                        employee_countries.add(emp.country)
+            
+            # Cargar todos los festivos del mes para todos los países
+            all_holidays = []
+            if employee_countries:
+                all_holidays = Holiday.query.filter(
+                    Holiday.date >= start_date,
+                    Holiday.date <= end_date,
+                    Holiday.country.in_(employee_countries),
+                    Holiday.active == True
+                ).all()
+            
+            # Agrupar festivos por empleado según su país/región/ciudad
+            for employee in employees:
+                employee_holidays_set = set()
+                variants = get_country_variants(employee.country) if employee.country else None
+                countries_to_check = []
+                
+                if variants:
+                    countries_to_check = [variants['en'], variants['es']]
+                elif employee.country:
+                    countries_to_check = [employee.country]
+                
+                for holiday in all_holidays:
+                    if holiday.country in countries_to_check:
+                        if not holiday.region:
+                            employee_holidays_set.add((holiday.date, holiday.country, ''))
+                        elif holiday.region == employee.region:
+                            employee_holidays_set.add((holiday.date, holiday.country, holiday.region or ''))
+                        elif holiday.city == employee.city:
+                            employee_holidays_set.add((holiday.date, holiday.country, holiday.city or ''))
+                
+                holidays_by_employee[employee.id] = employee_holidays_set
             
             # Generar estructura del calendario
             calendar_data = CalendarService._generate_calendar_structure(year, month)
             
-            # Añadir datos de empleados
+            # Añadir datos de empleados usando precached activities y holidays
             calendar_data['employees'] = []
-            
             for employee in employees:
+                employee_activities = activities_by_employee.get(employee.id, [])
+                employee_holidays = holidays_by_employee.get(employee.id)
                 employee_data = CalendarService._get_employee_calendar_data(
-                    employee, year, month
+                    employee, year, month, 
+                    precached_activities=employee_activities,
+                    precached_holidays=employee_holidays
                 )
                 calendar_data['employees'].append(employee_data)
             
-            # Añadir festivos del mes
+            # Añadir festivos del mes (para visualización)
             calendar_data['holidays'] = CalendarService._get_holidays_for_month(
                 employees, year, month
             )
             
-            # Añadir resumen del mes
+            # Añadir resumen del mes usando precached holidays
             calendar_data['summary'] = CalendarService._calculate_month_summary(
-                employees, year, month
+                employees, year, month, 
+                precached_holidays_by_employee=holidays_by_employee
             )
             
             return calendar_data
@@ -100,24 +183,37 @@ class CalendarService:
         }
     
     @staticmethod
-    def _get_employee_calendar_data(employee: Employee, year: int, month: int) -> Dict:
-        """Obtiene datos del calendario para un empleado específico"""
-        # Obtener actividades del mes
-        start_date = date(year, month, 1)
-        _, last_day = monthrange(year, month)
-        end_date = date(year, month, last_day)
+    def _get_employee_calendar_data(employee: Employee, year: int, month: int,
+                                    precached_activities: Optional[List[CalendarActivity]] = None,
+                                    precached_holidays: Optional[set] = None) -> Dict:
+        """Obtiene datos del calendario para un empleado específico
         
-        activities = CalendarActivity.query.filter(
-            CalendarActivity.employee_id == employee.id,
-            CalendarActivity.date >= start_date,
-            CalendarActivity.date <= end_date
-        ).all()
+        Args:
+            employee: Empleado
+            year: Año
+            month: Mes
+            precached_activities: Actividades ya cargadas (opcional, para optimización)
+            precached_holidays: Festivos ya cargados como set de tuplas (date, country, location) (opcional)
+        """
+        # Usar actividades precargadas si están disponibles, sino cargar
+        if precached_activities is not None:
+            activities = precached_activities
+        else:
+            start_date = date(year, month, 1)
+            _, last_day = monthrange(year, month)
+            end_date = date(year, month, last_day)
+            
+            activities = CalendarActivity.query.filter(
+                CalendarActivity.employee_id == employee.id,
+                CalendarActivity.date >= start_date,
+                CalendarActivity.date <= end_date
+            ).all()
         
         # Crear diccionario de actividades por fecha
         activities_dict = {activity.date.isoformat(): activity.to_dict() for activity in activities}
         
-        # Calcular resumen del empleado para el mes
-        month_summary = employee.get_hours_summary(year, month)
+        # Calcular resumen del empleado para el mes usando festivos precargados
+        month_summary = employee.get_hours_summary(year, month, precached_holidays=precached_holidays)
         
         return {
             'employee': employee.to_dict(),
@@ -210,8 +306,16 @@ class CalendarService:
         return holidays
     
     @staticmethod
-    def _calculate_month_summary(employees: List[Employee], year: int, month: int) -> Dict:
-        """Calcula resumen del mes para todos los empleados"""
+    def _calculate_month_summary(employees: List[Employee], year: int, month: int,
+                                 precached_holidays_by_employee: Optional[Dict[int, set]] = None) -> Dict:
+        """Calcula resumen del mes para todos los empleados
+        
+        Args:
+            employees: Lista de empleados
+            year: Año
+            month: Mes
+            precached_holidays_by_employee: Dict con festivos precargados por employee_id (opcional)
+        """
         summary = {
             'total_employees': len(employees),
             'total_theoretical_hours': 0.0,
@@ -229,7 +333,8 @@ class CalendarService:
         total_efficiency = 0.0
         
         for employee in employees:
-            emp_summary = employee.get_hours_summary(year, month)
+            employee_holidays = precached_holidays_by_employee.get(employee.id) if precached_holidays_by_employee else None
+            emp_summary = employee.get_hours_summary(year, month, precached_holidays=employee_holidays)
             
             summary['total_theoretical_hours'] += emp_summary['theoretical_hours']
             summary['total_actual_hours'] += emp_summary['actual_hours']
@@ -476,3 +581,177 @@ class CalendarService:
         activities = query.order_by(CalendarActivity.date).all()
         
         return [activity.to_dict() for activity in activities]
+    
+    @staticmethod
+    def get_annual_calendar_data(employee_id: int = None, team_id: int = None, 
+                                 year: int = None) -> Dict:
+        """Obtiene datos del calendario para todo el año con optimización máxima
+        
+        Este método optimiza la carga de datos anuales cargando:
+        - Todos los empleados una vez con eager loading
+        - Todas las actividades del año en una sola query
+        - Todos los festivos del año en una sola query
+        - Agrupando datos por mes en memoria
+        
+        Args:
+            employee_id: ID del empleado (opcional)
+            team_id: ID del equipo (opcional)
+            year: Año a obtener (por defecto año actual)
+            
+        Returns:
+            Dict con estructura: {
+                'view': 'annual',
+                'year': year,
+                'months': [dict por cada mes]
+            }
+        """
+        if not year:
+            year = datetime.now().year
+        
+        try:
+            # Calcular rango de fechas del año completo
+            start_date = date(year, 1, 1)
+            end_date = date(year, 12, 31)
+            
+            # Determinar empleados a incluir con EAGER LOADING
+            if employee_id:
+                employees = Employee.query.options(
+                    joinedload(Employee.team)
+                ).filter(Employee.id == employee_id).all()
+                if not employees:
+                    return {'error': 'Empleado no encontrado'}
+            elif team_id:
+                team = Team.query.get(team_id)
+                if not team:
+                    return {'error': 'Equipo no encontrado'}
+                active_employees = team.active_employees
+                employee_ids = [emp.id for emp in active_employees]
+                employees = Employee.query.options(
+                    joinedload(Employee.team)
+                ).filter(Employee.id.in_(employee_ids)).all() if employee_ids else []
+            else:
+                employees = Employee.query.options(
+                    joinedload(Employee.team)
+                ).filter(Employee.active == True).all()
+            
+            employee_ids = [emp.id for emp in employees]
+            
+            # OPTIMIZACIÓN CRÍTICA: Cargar TODAS las actividades del año en UNA SOLA query
+            all_activities = []
+            if employee_ids:
+                all_activities = CalendarActivity.query.filter(
+                    CalendarActivity.employee_id.in_(employee_ids),
+                    CalendarActivity.date >= start_date,
+                    CalendarActivity.date <= end_date
+                ).all()
+            
+            # Agrupar actividades por empleado y por mes en memoria
+            activities_by_employee_month = {}
+            for activity in all_activities:
+                emp_id = activity.employee_id
+                month = activity.date.month
+                key = (emp_id, month)
+                if key not in activities_by_employee_month:
+                    activities_by_employee_month[key] = []
+                activities_by_employee_month[key].append(activity)
+            
+            # OPTIMIZACIÓN: Precargar festivos para todo el año UNA VEZ
+            from utils.country_mapper import get_country_variants
+            holidays_by_employee = {}
+            
+            # Obtener países únicos de los empleados
+            employee_countries = set()
+            for emp in employees:
+                if emp.country:
+                    variants = get_country_variants(emp.country)
+                    if variants:
+                        employee_countries.add(variants['en'])
+                        employee_countries.add(variants['es'])
+                    else:
+                        employee_countries.add(emp.country)
+            
+            # Cargar todos los festivos del año para todos los países
+            all_holidays = []
+            if employee_countries:
+                all_holidays = Holiday.query.filter(
+                    Holiday.date >= start_date,
+                    Holiday.date <= end_date,
+                    Holiday.country.in_(employee_countries),
+                    Holiday.active == True
+                ).all()
+            
+            # Agrupar festivos por empleado según su país/región/ciudad
+            for employee in employees:
+                employee_holidays_set = set()
+                variants = get_country_variants(employee.country) if employee.country else None
+                countries_to_check = []
+                
+                if variants:
+                    countries_to_check = [variants['en'], variants['es']]
+                elif employee.country:
+                    countries_to_check = [employee.country]
+                
+                for holiday in all_holidays:
+                    if holiday.country in countries_to_check:
+                        if not holiday.region:
+                            employee_holidays_set.add((holiday.date, holiday.country, ''))
+                        elif holiday.region == employee.region:
+                            employee_holidays_set.add((holiday.date, holiday.country, holiday.region or ''))
+                        elif holiday.city == employee.city:
+                            employee_holidays_set.add((holiday.date, holiday.country, holiday.city or ''))
+                
+                holidays_by_employee[employee.id] = employee_holidays_set
+            
+            # Construir respuesta con datos agrupados por mes
+            calendar_data = {
+                'view': 'annual',
+                'year': year,
+                'months': []
+            }
+            
+            # Procesar cada mes del año
+            for month_num in range(1, 13):
+                month_start = date(year, month_num, 1)
+                _, last_day = monthrange(year, month_num)
+                month_end = date(year, month_num, last_day)
+                
+                # Generar estructura del mes
+                month_structure = CalendarService._generate_calendar_structure(year, month_num)
+                
+                # Añadir datos de empleados para este mes
+                month_structure['employees'] = []
+                
+                for employee in employees:
+                    # Obtener actividades de este empleado para este mes
+                    key = (employee.id, month_num)
+                    employee_activities = activities_by_employee_month.get(key, [])
+                    
+                    # Obtener festivos de este empleado
+                    employee_holidays = holidays_by_employee.get(employee.id)
+                    
+                    # Obtener datos del empleado para este mes
+                    employee_data = CalendarService._get_employee_calendar_data(
+                        employee, year, month_num,
+                        precached_activities=employee_activities,
+                        precached_holidays=employee_holidays
+                    )
+                    month_structure['employees'].append(employee_data)
+                
+                # Añadir festivos del mes (para visualización)
+                month_structure['holidays'] = CalendarService._get_holidays_for_month(
+                    employees, year, month_num
+                )
+                
+                # Añadir resumen del mes usando festivos precargados
+                month_structure['summary'] = CalendarService._calculate_month_summary(
+                    employees, year, month_num,
+                    precached_holidays_by_employee=holidays_by_employee
+                )
+                
+                calendar_data['months'].append(month_structure)
+            
+            return calendar_data
+            
+        except Exception as e:
+            logger.error(f"Error obteniendo datos del calendario anual: {e}")
+            return {'error': f'Error interno: {e}'}

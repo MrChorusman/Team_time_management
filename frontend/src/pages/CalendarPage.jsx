@@ -61,6 +61,7 @@ const CalendarPage = () => {
   }, [employee?.id, currentMonth.getFullYear()]) // Solo cuando cambia el empleado o el año
 
   // Función para cargar todas las actividades del año para estadísticas globales
+  // OPTIMIZADA: Usa endpoint optimizado para cargar todo el año de una vez
   const loadAllYearActivities = async () => {
     if (!employee) {
       setAllYearActivities([])
@@ -72,57 +73,49 @@ const CalendarPage = () => {
       const year = currentMonth.getFullYear()
       const allActivities = []
 
-      // Cargar actividades de todos los meses del año en paralelo
-      const monthPromises = []
-      for (let m = 1; m <= 12; m++) {
-        let url = `${import.meta.env.VITE_API_BASE_URL}/calendar?year=${year}&month=${m}`
-        
-        // Solo agregar filtros si no es admin
-        if (!isAdmin()) {
-          if (employee) {
-            url += `&employee_id=${employee.id}`
-          } else if (isManager() && employee?.team_id) {
-            url += `&team_id=${employee.team_id}`
-          }
+      // Usar endpoint optimizado para cargar todo el año de una vez
+      let url = `${import.meta.env.VITE_API_BASE_URL}/calendar/annual?year=${year}`
+      
+      // Solo agregar filtros si no es admin
+      if (!isAdmin()) {
+        if (employee) {
+          url += `&employee_id=${employee.id}`
+        } else if (isManager() && employee?.team_id) {
+          url += `&team_id=${employee.team_id}`
         }
-        
-        monthPromises.push(
-          fetch(url, { credentials: 'include' })
-            .then(response => {
-              if (response.ok) {
-                return response.json()
+      }
+      
+      const response = await fetch(url, { credentials: 'include' })
+      
+      if (!response.ok) {
+        console.error('Error cargando calendario anual para estadísticas:', response.statusText)
+        setAllYearActivities([])
+        return
+      }
+      
+      const data = await response.json()
+      
+      if (data.success && data.calendar?.months) {
+        // Procesar todos los meses y recopilar actividades
+        data.calendar.months.forEach((monthData) => {
+          if (monthData.employees) {
+            monthData.employees.forEach(emp => {
+              const empData = emp.employee || emp
+              
+              if (emp.activities) {
+                Object.values(emp.activities).forEach(activity => {
+                  allActivities.push({
+                    ...activity,
+                    employee_id: empData.id
+                  })
+                })
               }
-              return null
             })
-            .catch(error => {
-              console.error(`Error cargando mes ${m} para estadísticas:`, error)
-              return null
-            })
-        )
+          }
+        })
       }
 
-      // Esperar todas las peticiones
-      const monthResults = await Promise.all(monthPromises)
-
-      // Procesar resultados y recopilar todas las actividades
-      monthResults.forEach((data) => {
-        if (data && data.success && data.calendar?.employees) {
-          data.calendar.employees.forEach(emp => {
-            const empData = emp.employee || emp
-            
-            if (emp.activities) {
-              Object.values(emp.activities).forEach(activity => {
-                allActivities.push({
-                  ...activity,
-                  employee_id: empData.id
-                })
-              })
-            }
-          })
-        }
-      })
-
-      console.log('📊 Actividades del año cargadas para estadísticas:', allActivities.length)
+      console.log('📊 Actividades del año cargadas para estadísticas (optimizado):', allActivities.length)
       setAllYearActivities(allActivities)
     } catch (error) {
       console.error('Error cargando actividades del año:', error)
@@ -136,152 +129,58 @@ const CalendarPage = () => {
       const year = currentMonth.getFullYear()
       const month = currentMonth.getMonth() + 1
       
-      // Para vista anual, cargar festivos de todo el año
+      // Para vista anual, usar endpoint optimizado que carga todo el año de una vez
       if (calendarViewMode === 'annual') {
-        console.log('📅 Cargando vista anual para año:', year)
-        let relevantHolidays = []
+        console.log('📅 Cargando vista anual optimizada para año:', year)
         
-        // Intentar cargar todos los festivos del año paginando (el endpoint limita per_page=100)
-        try {
-          const aggregatedHolidays = []
-          let page = 1
-          const perPage = 100
-          let hasNext = true
-          const MAX_PAGES = 12 // Salvaguarda
-          
-          while (hasNext && page <= MAX_PAGES) {
-            const holidaysResponse = await fetch(
-              `${import.meta.env.VITE_API_BASE_URL}/holidays?year=${year}&page=${page}&per_page=${perPage}`,
-              { credentials: 'include' }
-            )
-            
-            if (!holidaysResponse.ok) {
-              console.warn('⚠️ Error en respuesta de festivos:', holidaysResponse.status)
-              break
-            }
-            
-            const holidaysData = await holidaysResponse.json()
-            if (holidaysData.success && Array.isArray(holidaysData.holidays)) {
-              aggregatedHolidays.push(...holidaysData.holidays)
-              hasNext = Boolean(holidaysData.pagination?.has_next)
-              page += 1
-            } else {
-              console.warn('⚠️ Respuesta de festivos inválida', holidaysData)
-              break
-            }
+        // Construir URL del endpoint optimizado
+        let url = `${import.meta.env.VITE_API_BASE_URL}/calendar/annual?year=${year}`
+        
+        // Solo agregar filtros si no es admin (admin ve todos los empleados sin filtros)
+        if (!isAdmin()) {
+          if (employee) {
+            url += `&employee_id=${employee.id}`
+          } else if (isManager() && employee?.team_id) {
+            url += `&team_id=${employee.team_id}`
           }
-          
-          // Deduplicar festivos agregados priorizando nombre en español (si existe)
-          const dedupedHolidays = new Map()
-          const isSpanishVariant = (holiday) => {
-            if (!holiday) return false
-            const variants = calendarHelpers.getCountryVariants(holiday.country)
-            if (variants?.es && holiday.country) {
-              return holiday.country.toLowerCase() === variants.es.toLowerCase()
-            }
-            // Heurística: presencia de caracteres acentuados típicos del español
-            return /[áéíóúñ]/i.test(holiday.name || '')
-          }
-          
-          aggregatedHolidays.forEach(holiday => {
-            if (!holiday || !holiday.date) return
-            const normalizedCountry = calendarHelpers.normalizeCountryName(holiday.country) || holiday.country || 'desconocido'
-            const key = `${holiday.date}-${normalizedCountry}`
-            const existing = dedupedHolidays.get(key)
-            
-            if (!existing) {
-              dedupedHolidays.set(key, holiday)
-              return
-            }
-            
-            const existingIsSpanish = isSpanishVariant(existing)
-            const currentIsSpanish = isSpanishVariant(holiday)
-            
-            // Reemplazar cuando el festivo actual está en español y el previo no
-            if (!existingIsSpanish && currentIsSpanish) {
-              dedupedHolidays.set(key, holiday)
-            }
-          })
-          
-          relevantHolidays = Array.from(dedupedHolidays.values())
-          
-          // Filtrar festivos por país del empleado si existe
-          if (employee?.country && relevantHolidays.length > 0) {
-            const employeeVariants = calendarHelpers.getCountryVariants(employee.country)
-            const employeeCountries = employeeVariants
-              ? [employeeVariants.en, employeeVariants.es, employee.country].filter(Boolean)
-              : [employee.country].filter(Boolean)
-            
-            relevantHolidays = relevantHolidays.filter(h => {
-              const holidayVariants = calendarHelpers.getCountryVariants(h.country)
-              const holidayCountries = holidayVariants
-                ? [holidayVariants.en, holidayVariants.es, h.country].filter(Boolean)
-                : [h.country].filter(Boolean)
-              
-              // Verificar si coinciden en cualquier variante
-              return employeeCountries.some(empCountry =>
-                holidayCountries.some(holCountry =>
-                  calendarHelpers.normalizeCountryName(empCountry) === calendarHelpers.normalizeCountryName(holCountry) ||
-                  empCountry === holCountry
-                )
-              )
-            })
-          }
-          
-          console.log('✅ Festivos cargados (todas las páginas):', relevantHolidays.length)
-        } catch (error) {
-          console.error('❌ Error cargando festivos del año:', error)
-          // Continuar sin festivos si hay error
         }
         
-        // Cargar actividades de todos los meses y empleados
+        // UNA SOLA petición HTTP para todo el año
+        const response = await fetch(url, {
+          credentials: 'include'
+        })
+        
+        if (!response.ok) {
+          console.error('❌ Error cargando calendario anual:', response.statusText)
+          setLoading(false)
+          return
+        }
+        
+        const data = await response.json()
+        
+        if (!data.success || !data.calendar) {
+          console.error('❌ Error en respuesta del calendario anual:', data)
+          setLoading(false)
+          return
+        }
+        
+        // El backend devuelve calendar.months[] con datos de cada mes
+        // Necesitamos aplanar los datos para el componente CalendarTableView
         const allActivities = []
-        let allEmployees = []
+        const allEmployees = []
+        const allHolidays = []
+        const employeesMap = new Map() // Para evitar duplicados
         
-        // Cargar datos de todos los meses en paralelo para mejor rendimiento
-        const monthPromises = []
-        for (let m = 1; m <= 12; m++) {
-          let url = `${import.meta.env.VITE_API_BASE_URL}/calendar?year=${year}&month=${m}`
-          // Solo agregar filtros si no es admin (admin ve todos los empleados sin filtros)
-          if (!isAdmin()) {
-            if (employee) {
-              url += `&employee_id=${employee.id}`
-            } else if (isManager() && employee?.team_id) {
-              url += `&team_id=${employee.team_id}`
-            }
-          }
-          
-          monthPromises.push(
-            fetch(url, { credentials: 'include' })
-              .then(response => {
-                if (response.ok) {
-                  return response.json()
-                } else {
-                  console.warn(`⚠️ Error HTTP cargando mes ${m}:`, response.status, response.statusText)
-                  return null
-                }
-              })
-              .catch(error => {
-                console.error(`❌ Error cargando mes ${m}:`, error)
-                return null
-              })
-          )
-        }
-        
-        // Esperar todas las peticiones
-        const monthResults = await Promise.all(monthPromises)
-        console.log('📊 Resultados de meses cargados:', monthResults.filter(r => r !== null).length, 'de 12')
-        
-        // Procesar resultados
-        monthResults.forEach((data, index) => {
-          if (data && data.success && data.calendar?.employees) {
-            // Recopilar empleados (evitar duplicados)
-            data.calendar.employees.forEach(emp => {
+        // Procesar cada mes del año
+        data.calendar.months.forEach((monthData) => {
+          // Procesar empleados (evitar duplicados)
+          if (monthData.employees) {
+            monthData.employees.forEach(emp => {
               const empData = emp.employee || emp
-              if (empData && !allEmployees.find(e => e.id === empData.id)) {
-                allEmployees.push({
+              if (empData && !employeesMap.has(empData.id)) {
+                const employeeInfo = {
                   id: empData.id,
-                  full_name: empData.full_name || empData.name,
+                  full_name: empData.full_name || empData.name || 'Sin nombre',
                   team_name: empData.team_name || empData.team?.name || 'Sin equipo',
                   country: empData.country,
                   region: empData.region,
@@ -291,10 +190,12 @@ const CalendarPage = () => {
                     region: empData.region,
                     city: empData.city
                   }
-                })
+                }
+                employeesMap.set(empData.id, employeeInfo)
+                allEmployees.push(employeeInfo)
               }
               
-              // Recopilar actividades
+              // Recopilar actividades del mes
               if (emp.activities) {
                 Object.values(emp.activities).forEach(activity => {
                   allActivities.push({
@@ -304,17 +205,25 @@ const CalendarPage = () => {
                 })
               }
             })
-          } else if (data && !data.success) {
-            console.warn(`⚠️ Mes ${index + 1} devolvió success=false:`, data.message || 'Sin mensaje')
+          }
+          
+          // Recopilar festivos del mes (evitar duplicados)
+          if (monthData.holidays) {
+            monthData.holidays.forEach(holiday => {
+              const holidayKey = `${holiday.date}-${holiday.country}-${holiday.region || ''}-${holiday.city || ''}`
+              if (!allHolidays.find(h => `${h.date}-${h.country}-${h.region || ''}-${h.city || ''}` === holidayKey)) {
+                allHolidays.push(holiday)
+              }
+            })
           }
         })
         
         // Si no hay empleados pero hay un empleado logueado, usar ese
         if (allEmployees.length === 0 && employee) {
           console.log('ℹ️ No se encontraron empleados, usando empleado logueado')
-          allEmployees = [{
+          allEmployees.push({
             id: employee.id,
-            full_name: employee.full_name || employee.name,
+            full_name: employee.full_name || employee.name || 'Sin nombre',
             team_name: employee.team_name || employee.team?.name || 'Sin equipo',
             country: employee.country,
             region: employee.region,
@@ -324,32 +233,19 @@ const CalendarPage = () => {
               region: employee.region,
               city: employee.city
             }
-          }]
+          })
         }
         
-        if (allEmployees.length > 0 && relevantHolidays.length > 0) {
-          const employeeLocations = allEmployees.map(emp => ({
-            country: emp.country || emp.location?.country,
-            region: emp.region || emp.location?.region,
-            city: emp.city || emp.location?.city,
-            location: emp.location
-          }))
-
-          relevantHolidays = relevantHolidays.filter(holiday =>
-            employeeLocations.some(location => calendarHelpers.doesHolidayApplyToLocation(holiday, location))
-          )
-        }
-
-        console.log('✅ Vista anual cargada:', {
+        console.log('✅ Vista anual optimizada cargada:', {
           empleados: allEmployees.length,
           actividades: allActivities.length,
-          festivos: relevantHolidays.length
+          festivos: allHolidays.length
         })
         
         setCalendarData({
           employees: allEmployees,
           activities: allActivities,
-          holidays: relevantHolidays
+          holidays: allHolidays
         })
         setLoading(false)
         return

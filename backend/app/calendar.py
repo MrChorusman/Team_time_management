@@ -90,22 +90,12 @@ def get_calendar():
         
         # Obtener datos del calendario
         if view == 'annual':
-            # Vista anual - obtener todos los meses
-            calendar_data = {
-                'view': 'annual',
-                'year': year,
-                'months': []
-            }
-            
-            for month_num in range(1, 13):
-                month_data = CalendarService.get_calendar_data(
-                    employee_id=employee_id,
-                    team_id=team_id,
-                    year=year,
-                    month=month_num
-                )
-                calendar_data['months'].append(month_data)
-        
+            # Vista anual - usar método optimizado que carga todo el año de una vez
+            calendar_data = CalendarService.get_annual_calendar_data(
+                employee_id=employee_id,
+                team_id=team_id,
+                year=year
+            )
         else:
             # Vista mensual
             calendar_data = CalendarService.get_calendar_data(
@@ -126,6 +116,98 @@ def get_calendar():
         return jsonify({
             'success': False,
             'message': 'Error obteniendo datos del calendario'
+        }), 500
+
+@calendar_bp.route('/annual', methods=['GET'])
+@auth_required()
+def get_annual_calendar():
+    """Endpoint optimizado específico para vista anual del calendario"""
+    try:
+        # Parámetros de consulta
+        employee_id = request.args.get('employee_id', type=int)
+        team_id = request.args.get('team_id', type=int)
+        year = request.args.get('year', datetime.now().year, type=int)
+        
+        # Verificar permisos (misma lógica que get_calendar)
+        if employee_id:
+            employee = Employee.query.get(employee_id)
+            if not employee:
+                return jsonify({
+                    'success': False,
+                    'message': 'Empleado no encontrado'
+                }), 404
+            
+            if not current_user.is_admin() and not current_user.can_manage_employee(employee):
+                if not (current_user.employee and 
+                       (current_user.employee.id == employee_id or 
+                        current_user.employee.team_id == employee.team_id)):
+                    return jsonify({
+                        'success': False,
+                        'message': 'Acceso denegado'
+                    }), 403
+        
+        elif team_id:
+            team = Team.query.get(team_id)
+            if not team:
+                return jsonify({
+                    'success': False,
+                    'message': 'Equipo no encontrado'
+                }), 404
+            
+            can_access = False
+            if current_user.is_admin():
+                can_access = True
+            elif current_user.is_manager():
+                managed_teams = current_user.get_managed_teams()
+                can_access = team in managed_teams
+            elif current_user.is_employee():
+                can_access = current_user.employee and current_user.employee.team_id == team_id
+            
+            if not can_access:
+                return jsonify({
+                    'success': False,
+                    'message': 'Acceso denegado'
+                }), 403
+        
+        else:
+            # Sin filtros específicos - usar empleado actual o su equipo
+            if current_user.is_admin():
+                employee_id = None
+                team_id = None
+            elif current_user.employee:
+                if current_user.is_manager():
+                    team_id = current_user.employee.team_id
+                else:
+                    employee_id = current_user.employee.id
+            else:
+                return jsonify({
+                    'success': False,
+                    'message': 'Debes especificar un empleado o equipo'
+                }), 400
+        
+        # Usar método optimizado para vista anual
+        calendar_data = CalendarService.get_annual_calendar_data(
+            employee_id=employee_id,
+            team_id=team_id,
+            year=year
+        )
+        
+        if 'error' in calendar_data:
+            return jsonify({
+                'success': False,
+                'message': calendar_data['error']
+            }), 500
+        
+        return jsonify({
+            'success': True,
+            'calendar': calendar_data
+        })
+        
+    except Exception as e:
+        logger.error(f"Error obteniendo calendario anual: {e}")
+        return jsonify({
+            'success': False,
+            'message': 'Error obteniendo datos del calendario anual'
         }), 500
 
 @calendar_bp.route('/activities', methods=['POST'])

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react'
 import { ChevronLeft, ChevronRight, CalendarDays, List } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -98,10 +98,10 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
     )
   }
 
-  // ===== HANDLERS (definidos después de las funciones helper) =====
+  // ===== HANDLERS OPTIMIZADOS CON useCallback =====
 
-  // Manejo de menú contextual (click derecho)
-  const handleContextMenu = (e, employeeId, employeeName, dateString, dayInfo) => {
+  // Manejo de menú contextual (click derecho) - memoizado
+  const handleContextMenu = useCallback((e, employeeId, employeeName, dateString, dayInfo) => {
     e.preventDefault()
     e.stopPropagation()
 
@@ -172,16 +172,16 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
         navigator.vibrate(50)
       }
     }, 500)
-  }
+  }, [handleContextMenu])
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = useCallback(() => {
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current)
     }
-  }
+  }, [])
 
-  // Manejo de selección en menú contextual
-  const handleMenuSelect = (option) => {
+  // Manejo de selección en menú contextual - memoizado
+  const handleMenuSelect = useCallback((option) => {
     if (option === 'delete') {
       handleDeleteActivity()
       return
@@ -261,10 +261,10 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
         variant: "destructive"
       })
     }
-  }
+  }, [activityModal, toast, onActivityCreate])
 
-  // Eliminar actividad
-  const handleDeleteActivity = async () => {
+  // Eliminar actividad - memoizado
+  const handleDeleteActivity = useCallback(async () => {
     if (!contextMenu.activity) return
 
     // Obtener el tipo de actividad (puede ser activity_type o type)
@@ -293,7 +293,7 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
         variant: "destructive"
       })
     }
-  }
+  }, [contextMenu, toast, onActivityDelete])
 
   return (
     <div className="space-y-4">
@@ -540,5 +540,6 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
   )
 }
 
-export default CalendarTableView
+// Memoizar el componente completo para evitar re-renders innecesarios
+export default memo(CalendarTableView)
 

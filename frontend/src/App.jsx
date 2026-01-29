@@ -1,9 +1,23 @@
 import { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { NotificationProvider } from './contexts/NotificationContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { Toaster } from 'sonner'
+
+// Configurar React Query con opciones optimizadas
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutos - datos considerados frescos
+      gcTime: 10 * 60 * 1000, // 10 minutos - tiempo de caché (antes cacheTime)
+      refetchOnWindowFocus: false, // No refetch automático al cambiar de ventana
+      refetchOnReconnect: true, // Refetch cuando se reconecta internet
+      retry: 1, // Solo 1 reintento en caso de error
+    },
+  },
+})
 
 // Componentes de layout
 import Sidebar from './components/layout/Sidebar'
@@ -257,21 +271,23 @@ function AppContent() {
 // Componente raíz de la aplicación
 function App() {
   return (
-    <ThemeProvider>
-      <Router 
-        future={{
-          v7_startTransition: true,
-          v7_relativeSplatPath: true
-        }}
-      >
-        <AuthProvider>
-          <NotificationProvider>
-            <AppContent />
-            <Toaster position="top-right" richColors />
-          </NotificationProvider>
-        </AuthProvider>
-      </Router>
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <Router 
+          future={{
+            v7_startTransition: true,
+            v7_relativeSplatPath: true
+          }}
+        >
+          <AuthProvider>
+            <NotificationProvider>
+              <AppContent />
+              <Toaster position="top-right" richColors />
+            </NotificationProvider>
+          </AuthProvider>
+        </Router>
+      </ThemeProvider>
+    </QueryClientProvider>
   )
 }
 

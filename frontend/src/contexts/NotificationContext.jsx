@@ -39,16 +39,53 @@ export const NotificationProvider = ({ children }) => {
       loadNotifications()
       loadSummary()
       
-      // Configurar polling para actualizaciones en tiempo real SOLO si hay usuario
-      const interval = setInterval(() => {
-        if (user) {
+      // OPTIMIZACIÓN: Configurar polling solo cuando la página está visible
+      let interval = null
+      
+      const startPolling = () => {
+        // Limpiar intervalo anterior si existe
+        if (interval) {
+          clearInterval(interval)
+        }
+        
+        // Configurar polling para actualizaciones en tiempo real
+        interval = setInterval(() => {
+          // Solo hacer polling si la página está visible y hay usuario
+          if (user && !document.hidden) {
+            loadSummary()
+          }
+        }, 30000) // Cada 30 segundos
+      }
+      
+      const stopPolling = () => {
+        if (interval) {
+          clearInterval(interval)
+          interval = null
+        }
+      }
+      
+      // Iniciar polling solo si la página está visible
+      if (!document.hidden) {
+        startPolling()
+      }
+      
+      // Manejar cambios de visibilidad de la página
+      const handleVisibilityChange = () => {
+        if (document.hidden) {
+          stopPolling()
+        } else {
+          startPolling()
+          // Cargar resumen inmediatamente cuando la página vuelve a ser visible
           loadSummary()
         }
-      }, 30000) // Cada 30 segundos
+      }
+      
+      document.addEventListener('visibilitychange', handleVisibilityChange)
       
       return () => {
-        console.log('[NotificationContext] Cleaning up interval')
-        clearInterval(interval)
+        console.log('[NotificationContext] Cleaning up interval and listeners')
+        stopPolling()
+        document.removeEventListener('visibilitychange', handleVisibilityChange)
       }
     } else {
       console.log('[NotificationContext] No user, clearing state')

@@ -162,8 +162,15 @@ class Employee(db.Model):
         
         return query.order_by('date').all()
     
-    def get_hours_summary(self, year=None, month=None):
-        """Calcula el resumen de horas del empleado"""
+    def get_hours_summary(self, year=None, month=None, precached_holidays=None):
+        """Calcula el resumen de horas del empleado
+        
+        Args:
+            year: Año a calcular
+            month: Mes a calcular (opcional, si es None calcula todo el año)
+            precached_holidays: Set de tuplas (date, country, location) con festivos precargados
+                                para optimización. Si es None, carga festivos normalmente.
+        """
         if not year:
             year = datetime.now().year
         
@@ -175,6 +182,69 @@ class Employee(db.Model):
         else:
             start_date = date(year, 1, 1)
             end_date = date(year, 12, 31)
+        
+        # Cargar festivos si no están precargados
+        if precached_holidays is None:
+            # Cargar festivos del período una sola vez
+            holidays_set = set()
+            from .holiday import Holiday
+            from utils.country_mapper import get_country_variants
+            
+            variants = get_country_variants(self.country) if self.country else None
+            countries_to_search = []
+            
+            if variants:
+                countries_to_search = [variants['en'], variants['es']]
+            elif self.country:
+                countries_to_search = [self.country]
+            
+            if countries_to_search:
+                holidays = Holiday.query.filter(
+                    Holiday.date >= start_date,
+                    Holiday.date <= end_date,
+                    Holiday.country.in_(countries_to_search),
+                    Holiday.active == True
+                ).all()
+                
+                for holiday in holidays:
+                    if not holiday.region:
+                        holidays_set.add((holiday.date, holiday.country, ''))
+                    elif holiday.region == self.region:
+                        holidays_set.add((holiday.date, holiday.country, holiday.region or ''))
+                    elif holiday.city == self.city:
+                        holidays_set.add((holiday.date, holiday.country, holiday.city or ''))
+            
+            precached_holidays = holidays_set
+        
+        # Función auxiliar para verificar si es festivo usando el set precargado
+        def is_holiday_cached(target_date):
+            """Verifica si una fecha es festivo usando el set precargado"""
+            if not precached_holidays:
+                return False
+            # Buscar en el set de festivos precargados
+            for holiday_tuple in precached_holidays:
+                if holiday_tuple[0] == target_date:
+                    return True
+            return False
+        
+        # Función auxiliar para obtener horas diarias usando festivos precargados
+        def get_daily_hours_cached(target_date):
+            """Obtiene las horas diarias usando festivos precargados"""
+            if is_holiday_cached(target_date):
+                return 0
+            
+            # Verificar si es horario de verano
+            if self.has_summer_schedule and self.is_summer_month(target_date.month):
+                return self.hours_summer or 7.0
+            
+            # Verificar día de la semana
+            weekday = target_date.weekday()
+            if weekday == 4:  # Viernes
+                return self.hours_friday or 6.0
+            elif weekday < 4:  # Lunes a Jueves
+                return self.hours_monday_thursday or 7.0
+            else:  # Fin de semana
+                return 0
         
         # Obtener actividades del período usando la relación directamente
         from models.calendar_activity import CalendarActivity
@@ -200,7 +270,7 @@ class Employee(db.Model):
         # Iterar por cada día del período
         current_date = start_date
         while current_date <= end_date:
-            daily_theoretical = self.get_daily_hours(current_date)
+            daily_theoretical = get_daily_hours_cached(current_date)
             theoretical_hours += daily_theoretical
             
             if current_date in activities_dict:
