@@ -806,17 +806,8 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
                         employees.map(employee => {
                           if (!employee || !month.date) return null
                           
-                          // Validar calendarHelpers antes de usarlo
-                          const helpers = loadedHelpers || getCalendarHelpersSync()
-                          let summary = { vacation: 0, absence: 0 }
-                          let monthDays = month.days || []
-                          
-                          if (helpers && typeof helpers.getMonthSummaryHelper === 'function') {
-                            summary = helpers.getMonthSummaryHelper(employee.id, month.date, activities)
-                          }
-                          if (helpers && typeof helpers.getDaysInMonth === 'function') {
-                            monthDays = helpers.getDaysInMonth(month.date)
-                          }
+                          const summary = getMonthSummaryHelper(employee.id, month.date, activities)
+                          const monthDays = month.days || []
                           
                           return (
                             <tr key={`${employee.id}-${month.date.toISOString()}`} className="hover:bg-gray-50">
