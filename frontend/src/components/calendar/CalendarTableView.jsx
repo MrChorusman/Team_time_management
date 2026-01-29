@@ -634,9 +634,36 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
   }, [contextMenu, toast, onActivityDelete])
 
   // Manejo de selección en menú contextual - memoizado
+  // NOTA: No incluimos handleDeleteActivity en dependencias para evitar referencia circular
+  // handleDeleteActivity ya tiene acceso a contextMenu, así que podemos llamarlo directamente
   const handleMenuSelect = useCallback((option) => {
     if (option === 'delete') {
-      handleDeleteActivity()
+      // Llamar directamente a la función sin dependencia circular
+      if (!contextMenu.activity) return
+
+      // Obtener el código de actividad
+      const activityCode = getActivityCodeHelper(contextMenu.activity) || 'ACT'
+
+      // Confirmación
+      if (!window.confirm(`¿Eliminar ${activityCode} del ${new Date(contextMenu.date).toLocaleDateString('es-ES')}?`)) {
+        return
+      }
+
+      // Callback al componente padre para eliminar en backend
+      if (onActivityDelete) {
+        onActivityDelete(contextMenu.activity.id).then(() => {
+          toast({
+            title: "🗑️ Actividad eliminada",
+            description: "La actividad ha sido eliminada correctamente",
+          })
+        }).catch((error) => {
+          toast({
+            title: "❌ Error",
+            description: error.message || "No se pudo eliminar la actividad",
+            variant: "destructive"
+          })
+        })
+      }
       return
     }
 
@@ -671,7 +698,7 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
       employeeId: contextMenu.employeeId,
       employeeName: contextMenu.employeeName
     })
-  }, [contextMenu, toast, handleDeleteActivity])
+  }, [contextMenu, toast, onActivityDelete])
 
   // Guardar actividad desde el modal - memoizado
   const handleSaveActivity = useCallback(async (activityData) => {
