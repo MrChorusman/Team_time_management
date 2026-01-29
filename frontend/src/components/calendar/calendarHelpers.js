@@ -529,9 +529,12 @@ export {
 // También exportar como objeto default para compatibilidad con código existente
 // Usar una función que retorna el objeto solo cuando se invoca
 // Esto evita completamente problemas de hoisting durante la minificación
-function getCalendarHelpersInstance() {
-  // Crear el objeto solo cuando se invoca la función
-  return {
+// Usar una función que se ejecuta inmediatamente para crear el objeto de forma segura
+const calendarHelpersModule = (function() {
+  'use strict'
+  
+  // Crear el objeto con todas las funciones ya definidas
+  const helpersObj = {
     // Exponer las funciones getter directamente para inicialización lazy
     get ISO_TO_COUNTRY_NAME() {
       return getIsoToCountryName()
@@ -553,13 +556,15 @@ function getCalendarHelpersInstance() {
     getMonthSummaryHelper: getMonthSummaryHelper,
     getMonthHolidaysHelper: getMonthHolidaysHelper
   }
-}
+  
+  return helpersObj
+})()
 
-// Crear una instancia singleton lazy
+// Crear una función getter singleton que retorna el objeto
 let _calendarHelpersInstance = null
 function getCalendarHelpersSingleton() {
   if (!_calendarHelpersInstance) {
-    _calendarHelpersInstance = getCalendarHelpersInstance()
+    _calendarHelpersInstance = calendarHelpersModule
   }
   return _calendarHelpersInstance
 }
