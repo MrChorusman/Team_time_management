@@ -181,7 +181,6 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
     }
 
     // Buscar si ya hay actividad en este día
-    const helpers = getCalendarHelpers()
     let existingActivity = null
     if (helpers && typeof helpers.getActivityForDayHelper === 'function') {
       existingActivity = helpers.getActivityForDayHelper(employeeId, dateString, activities)
