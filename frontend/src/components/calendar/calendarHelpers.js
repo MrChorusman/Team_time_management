@@ -6,13 +6,7 @@
 // Usar función getter para evitar problemas de hoisting durante la minificación
 let _COUNTRY_MAPPING = null
 function getCountryMapping() {
-  // #region agent log
-  logDebug('calendarHelpers.js:11','getCountryMapping called',{_COUNTRY_MAPPING:_COUNTRY_MAPPING===null?'null':'initialized'},'E');
-  // #endregion
   if (!_COUNTRY_MAPPING) {
-    // #region agent log
-    logDebug('calendarHelpers.js:14','Initializing _COUNTRY_MAPPING',{},'E');
-    // #endregion
     _COUNTRY_MAPPING = {
       'ES': { en: 'Spain', es: 'España' },
       'ESP': { en: 'Spain', es: 'España' },
@@ -220,9 +214,6 @@ function formatDateLocal(year, month, day) {
 
 // Obtener días del mes
 function getDaysInMonth(date) {
-  // #region agent log
-  logDebug('calendarHelpers.js:219','getDaysInMonth called',{date:date?.toString()},'C');
-  // #endregion
   const year = date.getFullYear()
   const month = date.getMonth()
   const daysInMonth = new Date(year, month + 1, 0).getDate()
@@ -231,13 +222,7 @@ function getDaysInMonth(date) {
   for (let day = 1; day <= daysInMonth; day++) {
     const currentDate = new Date(year, month, day)
     // Usar formato local en lugar de toISOString() para evitar problemas de zona horaria
-    // #region agent log
-    logDebug('calendarHelpers.js:228','About to call formatDateLocal',{year,month,day},'C');
-    // #endregion
     const dateString = formatDateLocal(year, month, day)
-    // #region agent log
-    logDebug('calendarHelpers.js:230','formatDateLocal returned',{dateString},'C');
-    // #endregion
     days.push({
       day,
       date: currentDate,
@@ -523,33 +508,14 @@ function getMonthHolidaysHelper(monthDate, holidays) {
   })
 }
 
-// Exportaciones nombradas individuales para evitar problemas de inicialización circular
-// Esto permite que cada función se importe independientemente sin problemas de hoisting
-export {
-  getIsoToCountryName,
-  getCountryMapping,
-  normalizeCountryName,
-  getCountryVariants,
-  doesHolidayApplyToLocation,
-  countriesMatch,
-  getDaysInMonth,
-  getMonthsInYear,
-  isHolidayHelper,
-  getActivityForDayHelper,
-  getActivityCodeHelper,
-  getCellBackgroundColorHelper,
-  getCellTextColorHelper,
-  getMonthSummaryHelper,
-  getMonthHolidaysHelper
-}
-
-// Exportar función helper para crear el objeto (se crea en el componente que lo importa)
+// Exportar función factory como default - el objeto se crea solo cuando se invoca
 // Esto evita completamente cualquier inicialización durante la evaluación del módulo
-function createCalendarHelpers() {
+export default function createCalendarHelpers() {
   // Llamar a las funciones getter una vez para inicializar las constantes
   const isoToCountryName = getIsoToCountryName()
   const countryMapping = getCountryMapping()
   
+  // Retornar objeto con todas las funciones ya definidas
   return {
     ISO_TO_COUNTRY_NAME: isoToCountryName,
     COUNTRY_MAPPING: countryMapping,
@@ -568,6 +534,3 @@ function createCalendarHelpers() {
     getMonthHolidaysHelper: getMonthHolidaysHelper
   }
 }
-
-// Exportar función factory como default para compatibilidad
-export default createCalendarHelpers
