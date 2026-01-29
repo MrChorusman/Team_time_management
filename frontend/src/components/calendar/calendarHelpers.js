@@ -512,27 +512,23 @@ export {
 }
 
 // También exportar como objeto default para compatibilidad con código existente
-// Crear el objeto directamente usando una función que se ejecuta inmediatamente (IIFE)
-// Esto asegura que todas las funciones están definidas antes de crear el objeto
-const calendarHelpers = (function() {
-  'use strict'
-  return {
-    ISO_TO_COUNTRY_NAME,
-    COUNTRY_MAPPING,
-    normalizeCountryName,
-    getCountryVariants,
-    doesHolidayApplyToLocation,
-    countriesMatch,
-    getDaysInMonth,
-    getMonthsInYear,
-    isHolidayHelper,
-    getActivityForDayHelper,
-    getActivityCodeHelper,
-    getCellBackgroundColorHelper,
-    getCellTextColorHelper,
-    getMonthSummaryHelper,
-    getMonthHolidaysHelper
-  }
-})()
+// Crear el objeto directamente - todas las funciones ya están definidas arriba
+// Usar una estructura que evite problemas de hoisting durante la minificación
+const calendarHelpersObj = {}
+calendarHelpersObj.ISO_TO_COUNTRY_NAME = ISO_TO_COUNTRY_NAME
+calendarHelpersObj.COUNTRY_MAPPING = COUNTRY_MAPPING
+calendarHelpersObj.normalizeCountryName = normalizeCountryName
+calendarHelpersObj.getCountryVariants = getCountryVariants
+calendarHelpersObj.doesHolidayApplyToLocation = doesHolidayApplyToLocation
+calendarHelpersObj.countriesMatch = countriesMatch
+calendarHelpersObj.getDaysInMonth = getDaysInMonth
+calendarHelpersObj.getMonthsInYear = getMonthsInYear
+calendarHelpersObj.isHolidayHelper = isHolidayHelper
+calendarHelpersObj.getActivityForDayHelper = getActivityForDayHelper
+calendarHelpersObj.getActivityCodeHelper = getActivityCodeHelper
+calendarHelpersObj.getCellBackgroundColorHelper = getCellBackgroundColorHelper
+calendarHelpersObj.getCellTextColorHelper = getCellTextColorHelper
+calendarHelpersObj.getMonthSummaryHelper = getMonthSummaryHelper
+calendarHelpersObj.getMonthHolidaysHelper = getMonthHolidaysHelper
 
-export default calendarHelpers
+export default calendarHelpersObj
