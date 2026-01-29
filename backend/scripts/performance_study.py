@@ -16,8 +16,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 import requests
 
 BASE_URL = "https://team-time-management.onrender.com"
-ADMIN_EMAIL = "admin.test@example.com"
-ADMIN_PASSWORD = "AdminTest123!"
+ADMIN_EMAIL = "admin@teamtime.com"
+ADMIN_PASSWORD = "Admin2025!"
 
 def login(session):
     """Login y retornar sesión"""

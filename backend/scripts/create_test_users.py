@@ -17,9 +17,11 @@ from datetime import datetime
 from dotenv import load_dotenv
 import os
 
-# Cargar variables de entorno
-load_dotenv()
-load_dotenv('.env.production')
+# Cargar variables de entorno - FORZAR PRODUCCIÓN
+import os
+os.environ['FLASK_ENV'] = 'production'
+load_dotenv('.env.production', override=True)
+# No cargar .env.development que podría sobrescribir
 
 def create_test_users():
     """Crear usuarios de prueba: admin y empleado"""

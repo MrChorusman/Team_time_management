@@ -22,8 +22,8 @@ BASE_URL = "https://team-time-management.onrender.com"  # URL de producción
 # BASE_URL = "http://localhost:5001"  # Para pruebas locales
 
 # Credenciales de usuarios de prueba
-ADMIN_EMAIL = "admin.test@example.com"
-ADMIN_PASSWORD = "AdminTest123!"
+ADMIN_EMAIL = "admin@teamtime.com"
+ADMIN_PASSWORD = "Admin2025!"
 EMPLOYEE_EMAIL = "employee.test@example.com"
 EMPLOYEE_PASSWORD = "EmployeeTest123!"
 

@@ -1,0 +1,95 @@
+{
+  "timestamp": "2026-01-29T14:39:44.251131",
+  "base_url": "https://team-time-management.onrender.com",
+  "results": [
+    {
+      "endpoint": "/api/dashboard",
+      "method": "GET",
+      "iterations": 5,
+      "avg_time_ms": 173.59,
+      "min_time_ms": 164.44,
+      "max_time_ms": 189.47,
+      "median_time_ms": 172.62,
+      "status_codes": [
+        404,
+        404,
+        404,
+        404,
+        404
+      ],
+      "avg_response_size_bytes": 94
+    },
+    {
+      "endpoint": "/api/calendar?year=2026&month=1",
+      "method": "GET",
+      "iterations": 5,
+      "avg_time_ms": 707.15,
+      "min_time_ms": 684.06,
+      "max_time_ms": 727.73,
+      "median_time_ms": 706.04,
+      "status_codes": [
+        200,
+        200,
+        200,
+        200,
+        200
+      ],
+      "avg_response_size_bytes": 8869
+    },
+    {
+      "endpoint": "/api/calendar/annual?year=2026",
+      "method": "GET",
+      "iterations": 5,
+      "avg_time_ms": 3354.39,
+      "min_time_ms": 3287.38,
+      "max_time_ms": 3436.78,
+      "median_time_ms": 3343.13,
+      "status_codes": [
+        200,
+        200,
+        200,
+        200,
+        200
+      ],
+      "avg_response_size_bytes": 107888
+    },
+    {
+      "endpoint": "/api/employees",
+      "method": "GET",
+      "iterations": 5,
+      "avg_time_ms": 595.22,
+      "min_time_ms": 572.58,
+      "max_time_ms": 616.45,
+      "median_time_ms": 597.03,
+      "status_codes": [
+        200,
+        200,
+        200,
+        200,
+        200
+      ],
+      "avg_response_size_bytes": 3081
+    },
+    {
+      "endpoint": "/api/teams",
+      "method": "GET",
+      "iterations": 5,
+      "avg_time_ms": 666.4,
+      "min_time_ms": 630.32,
+      "max_time_ms": 779.08,
+      "median_time_ms": 641.18,
+      "status_codes": [
+        200,
+        200,
+        200,
+        200,
+        200
+      ],
+      "avg_response_size_bytes": 1350
+    }
+  ],
+  "summary": {
+    "total_endpoints": 5,
+    "avg_response_time_ms": 1099.35
+  }
+}
