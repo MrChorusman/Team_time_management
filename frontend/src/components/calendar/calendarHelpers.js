@@ -493,7 +493,8 @@ function getMonthHolidaysHelper(monthDate, holidays) {
 
 // Export único como objeto al final - todas las funciones están definidas antes de exportarse
 // Esto evita problemas de hoisting durante la minificación
-export default {
+// Usar Object.freeze para prevenir modificaciones accidentales y asegurar inicialización completa
+const calendarHelpers = Object.freeze({
   ISO_TO_COUNTRY_NAME,
   COUNTRY_MAPPING,
   normalizeCountryName,
@@ -509,4 +510,6 @@ export default {
   getCellTextColorHelper,
   getMonthSummaryHelper,
   getMonthHolidaysHelper
-}
+})
+
+export default calendarHelpers

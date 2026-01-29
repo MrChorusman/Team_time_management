@@ -741,18 +741,24 @@ const CalendarPage = () => {
       {/* Contenido principal - Vista Tabla (primera vista por defecto) */}
       {selectedView === 'table' && (
         <>
-          <CalendarTableView
-            employees={calendarData?.employees || []}
-            activities={calendarData?.activities || []}
-            holidays={calendarData?.holidays || []}
-            currentMonth={currentMonth}
-            onMonthChange={setCurrentMonth}
-            onActivityCreate={handleCreateActivity}
-            onActivityDelete={handleDeleteActivity}
-            onViewModeChange={setCalendarViewMode}
-            viewMode={calendarViewMode}
-            employee={employee}
-          />
+          {calendarData ? (
+            <CalendarTableView
+              employees={calendarData?.employees || []}
+              activities={calendarData?.activities || []}
+              holidays={calendarData?.holidays || []}
+              currentMonth={currentMonth}
+              onMonthChange={setCurrentMonth}
+              onActivityCreate={handleCreateActivity}
+              onActivityDelete={handleDeleteActivity}
+              onViewModeChange={setCalendarViewMode}
+              viewMode={calendarViewMode}
+              employee={employee}
+            />
+          ) : (
+            <div className="flex items-center justify-center py-12">
+              <LoadingSpinner size="lg" text="Cargando datos del calendario..." />
+            </div>
+          )}
           {/* Información compacta bajo el calendario */}
           {employee && calendarData && (
             <CalendarSummary 

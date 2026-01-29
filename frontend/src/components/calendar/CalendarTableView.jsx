@@ -51,8 +51,31 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
 
   // Calcular meses usando useMemo en lugar de IIFE para mejor compatibilidad con minificación
   // Usar funciones directamente desde calendarHelpers sin destructurar
+  // Validar que calendarHelpers esté completamente inicializado antes de usarlo
   const calculatedMonths = useMemo(() => {
     try {
+      // Validar que calendarHelpers y sus funciones estén disponibles
+      if (!calendarHelpers || typeof calendarHelpers.getMonthsInYear !== 'function' || typeof calendarHelpers.getDaysInMonth !== 'function') {
+        console.warn('calendarHelpers no está completamente inicializado, usando valores por defecto')
+        // Retornar estructura básica para evitar errores
+        const monthName = currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
+        const year = currentMonth.getFullYear()
+        const month = currentMonth.getMonth()
+        const daysInMonth = new Date(year, month + 1, 0).getDate()
+        const days = []
+        for (let day = 1; day <= daysInMonth; day++) {
+          const currentDate = new Date(year, month, day)
+          days.push({
+            day,
+            date: currentDate,
+            dayOfWeek: currentDate.getDay(),
+            isWeekend: currentDate.getDay() === 0 || currentDate.getDay() === 6,
+            dateString: `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+          })
+        }
+        return viewMode === 'annual' ? [] : [{ date: currentMonth, name: monthName, days }]
+      }
+      
       if (viewMode === 'annual') {
         return calendarHelpers.getMonthsInYear(currentMonth) || []
       } else {
@@ -134,7 +157,10 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
     }
 
     // Buscar si ya hay actividad en este día
-    const existingActivity = calendarHelpers.getActivityForDayHelper(employeeId, dateString, activities)
+    let existingActivity = null
+    if (calendarHelpers && typeof calendarHelpers.getActivityForDayHelper === 'function') {
+      existingActivity = calendarHelpers.getActivityForDayHelper(employeeId, dateString, activities)
+    }
 
     // Calcular posición del menú (asegurar que esté dentro de la ventana)
     const menuX = Math.min(e.clientX, window.innerWidth - 250)
@@ -269,7 +295,10 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
 
     // Obtener el tipo de actividad (puede ser activity_type o type)
     const activityType = contextMenu.activity.activity_type || contextMenu.activity.type || 'actividad'
-    const activityCode = calendarHelpers.getActivityCodeHelper(contextMenu.activity) || activityType.toUpperCase()
+    let activityCode = activityType.toUpperCase()
+    if (calendarHelpers && typeof calendarHelpers.getActivityCodeHelper === 'function') {
+      activityCode = calendarHelpers.getActivityCodeHelper(contextMenu.activity) || activityCode
+    }
 
     // Confirmación
     if (!window.confirm(`¿Eliminar ${activityCode} del ${new Date(contextMenu.date).toLocaleDateString('es-ES')}?`)) {
@@ -389,8 +418,17 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
                       {employees && employees.length > 0 ? (
                         employees.map(employee => {
                           if (!employee || !month.date) return null
-                          const summary = calendarHelpers.getMonthSummaryHelper(employee.id, month.date, activities)
-                          const monthDays = calendarHelpers.getDaysInMonth(month.date)
+                          
+                          // Validar calendarHelpers antes de usarlo
+                          let summary = { vacation: 0, absence: 0 }
+                          let monthDays = month.days || []
+                          
+                          if (calendarHelpers && typeof calendarHelpers.getMonthSummaryHelper === 'function') {
+                            summary = calendarHelpers.getMonthSummaryHelper(employee.id, month.date, activities)
+                          }
+                          if (calendarHelpers && typeof calendarHelpers.getDaysInMonth === 'function') {
+                            monthDays = calendarHelpers.getDaysInMonth(month.date)
+                          }
                           
                           return (
                             <tr key={`${employee.id}-${month.date.toISOString()}`} className="hover:bg-gray-50">
@@ -416,12 +454,34 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
                               
                               {/* Días del mes (1-31) */}
                               {monthDays.map((dayInfo) => {
-                                const activity = calendarHelpers.getActivityForDayHelper(employee.id, dayInfo.dateString, activities)
+                                // Validar calendarHelpers antes de usarlo
+                                let activity = null
+                                let isHolidayDay = false
+                                let bgColor = 'bg-white border-gray-200'
+                                let textColor = 'text-gray-900'
+                                let code = ''
+                                
+                                if (calendarHelpers && typeof calendarHelpers.getActivityForDayHelper === 'function') {
+                                  activity = calendarHelpers.getActivityForDayHelper(employee.id, dayInfo.dateString, activities)
+                                }
+                                
                                 const employeeLocation = employee.location || { country: employee.country, region: employee.region, city: employee.city }
-                                const isHolidayDay = calendarHelpers.isHolidayHelper(dayInfo.dateString, employeeLocation, holidays)
-                                const bgColor = calendarHelpers.getCellBackgroundColorHelper(activity, dayInfo.isWeekend, isHolidayDay)
-                                const textColor = calendarHelpers.getCellTextColorHelper(activity, dayInfo.isWeekend, isHolidayDay)
-                                const code = calendarHelpers.getActivityCodeHelper(activity)
+                                
+                                if (calendarHelpers && typeof calendarHelpers.isHolidayHelper === 'function') {
+                                  isHolidayDay = calendarHelpers.isHolidayHelper(dayInfo.dateString, employeeLocation, holidays)
+                                }
+                                
+                                if (calendarHelpers && typeof calendarHelpers.getCellBackgroundColorHelper === 'function') {
+                                  bgColor = calendarHelpers.getCellBackgroundColorHelper(activity, dayInfo.isWeekend, isHolidayDay)
+                                }
+                                
+                                if (calendarHelpers && typeof calendarHelpers.getCellTextColorHelper === 'function') {
+                                  textColor = calendarHelpers.getCellTextColorHelper(activity, dayInfo.isWeekend, isHolidayDay)
+                                }
+                                
+                                if (calendarHelpers && typeof calendarHelpers.getActivityCodeHelper === 'function') {
+                                  code = calendarHelpers.getActivityCodeHelper(activity)
+                                }
                                 
                                 return (
                                   <td
@@ -456,8 +516,11 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
                     <h4 className="text-xs font-semibold text-gray-700 uppercase mb-2">Festivos del mes</h4>
                     <div className="flex flex-wrap gap-2">
                       {(() => {
-                        // Obtener festivos del mes
-                        const monthHolidays = calendarHelpers.getMonthHolidaysHelper(month.date, holidays)
+                        // Obtener festivos del mes - validar calendarHelpers
+                        let monthHolidays = []
+                        if (calendarHelpers && typeof calendarHelpers.getMonthHolidaysHelper === 'function') {
+                          monthHolidays = calendarHelpers.getMonthHolidaysHelper(month.date, holidays)
+                        }
                         
                         // Construir ubicaciones de los empleados visibles (país, región, ciudad)
                         const employeeLocations = (employees || [])
@@ -471,12 +534,15 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
                         
                         // Filtrar festivos relevantes solo para las ubicaciones mostradas
                         let relevantHolidays = []
-                        if (employeeLocations.length > 0) {
+                        if (employeeLocations.length > 0 && calendarHelpers && typeof calendarHelpers.doesHolidayApplyToLocation === 'function') {
                           relevantHolidays = monthHolidays.filter(holiday =>
                             employeeLocations.some(location =>
                               calendarHelpers.doesHolidayApplyToLocation(holiday, location)
                             )
                           )
+                        } else {
+                          // Si calendarHelpers no está disponible, mostrar todos los festivos del mes
+                          relevantHolidays = monthHolidays
                         }
                         
                         // Deduplicar festivos por fecha y nombre (evitar duplicados)
