@@ -6,85 +6,401 @@ import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/components/ui/use-toast'
 import ContextMenu from './ContextMenu'
 import ActivityModal from './ActivityModal'
-// Importar usando importación dinámica para evitar problemas de inicialización durante el bundling
-// Esto asegura que el módulo se carga solo cuando se necesita, no durante la evaluación del módulo
 
-// #region agent log
-// Función de logging que funciona en desarrollo y producción
-const logDebug = (location, message, data, hypothesisId) => {
-  const logData = {location,message,data,timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId};
-  // Usar console.log con prefijo para fácil identificación
-  console.log('[DEBUG]', JSON.stringify(logData));
-  // Almacenar en window para acceso desde consola del navegador
-  if (typeof window !== 'undefined') {
-    if (!window._debugLogs) window._debugLogs = [];
-    window._debugLogs.push(logData);
-    // Mantener solo los últimos 100 logs para evitar problemas de memoria
-    if (window._debugLogs.length > 100) window._debugLogs.shift();
+// ===== FUNCIONES HELPER INLINEADAS =====
+// Movidas directamente al componente para evitar problemas de evaluación durante el bundling
+
+// Mapeo completo bidireccional de países (inglés/español/códigos ISO)
+let _COUNTRY_MAPPING = null
+function getCountryMapping() {
+  if (!_COUNTRY_MAPPING) {
+    _COUNTRY_MAPPING = {
+      'ES': { en: 'Spain', es: 'España' },
+      'ESP': { en: 'Spain', es: 'España' },
+      'US': { en: 'United States', es: 'Estados Unidos' },
+      'USA': { en: 'United States', es: 'Estados Unidos' },
+      'GB': { en: 'United Kingdom', es: 'Reino Unido' },
+      'GBR': { en: 'United Kingdom', es: 'Reino Unido' },
+      'FR': { en: 'France', es: 'Francia' },
+      'FRA': { en: 'France', es: 'Francia' },
+      'DE': { en: 'Germany', es: 'Alemania' },
+      'DEU': { en: 'Germany', es: 'Alemania' },
+      'IT': { en: 'Italy', es: 'Italia' },
+      'ITA': { en: 'Italy', es: 'Italia' },
+      'PT': { en: 'Portugal', es: 'Portugal' },
+      'PRT': { en: 'Portugal', es: 'Portugal' },
+      'MX': { en: 'Mexico', es: 'México' },
+      'AR': { en: 'Argentina', es: 'Argentina' },
+      'CO': { en: 'Colombia', es: 'Colombia' },
+      'CL': { en: 'Chile', es: 'Chile' },
+      'PE': { en: 'Peru', es: 'Perú' },
+      'VE': { en: 'Venezuela', es: 'Venezuela' },
+      'EC': { en: 'Ecuador', es: 'Ecuador' },
+      'BO': { en: 'Bolivia', es: 'Bolivia' },
+      'PY': { en: 'Paraguay', es: 'Paraguay' },
+      'UY': { en: 'Uruguay', es: 'Uruguay' },
+      'CR': { en: 'Costa Rica', es: 'Costa Rica' },
+      'PA': { en: 'Panama', es: 'Panamá' },
+      'DO': { en: 'Dominican Republic', es: 'República Dominicana' },
+      'CA': { en: 'Canada', es: 'Canadá' },
+      'BR': { en: 'Brazil', es: 'Brasil' },
+      'AU': { en: 'Australia', es: 'Australia' },
+      'NZ': { en: 'New Zealand', es: 'Nueva Zelanda' },
+      'NL': { en: 'Netherlands', es: 'Países Bajos' },
+      'BE': { en: 'Belgium', es: 'Bélgica' },
+      'CH': { en: 'Switzerland', es: 'Suiza' },
+      'AT': { en: 'Austria', es: 'Austria' },
+      'SE': { en: 'Sweden', es: 'Suecia' },
+      'NO': { en: 'Norway', es: 'Noruega' },
+      'DK': { en: 'Denmark', es: 'Dinamarca' },
+      'FI': { en: 'Finland', es: 'Finlandia' },
+      'PL': { en: 'Poland', es: 'Polonia' },
+      'GR': { en: 'Greece', es: 'Grecia' },
+      'IE': { en: 'Ireland', es: 'Irlanda' }
+    }
   }
-};
-// #endregion
+  return _COUNTRY_MAPPING
+}
 
-let calendarHelpersModule = null
-let calendarHelpersPromise = null
+function normalizeCountryName(countryInput) {
+  if (!countryInput) return null
+  const COUNTRY_MAPPING = getCountryMapping()
+  const input = String(countryInput).trim()
+  if (input.length === 2 && input.toUpperCase() in COUNTRY_MAPPING) {
+    return COUNTRY_MAPPING[input.toUpperCase()].en
+  }
+  if (input.length === 3) {
+    const iso3ToIso2 = {
+      'ESP': 'ES', 'USA': 'US', 'GBR': 'GB', 'FRA': 'FR',
+      'DEU': 'DE', 'ITA': 'IT', 'PRT': 'PT'
+    }
+    if (input.toUpperCase() in iso3ToIso2) {
+      const code = iso3ToIso2[input.toUpperCase()]
+      return COUNTRY_MAPPING[code].en
+    }
+  }
+  const inputLower = input.toLowerCase()
+  for (const code in COUNTRY_MAPPING) {
+    const names = COUNTRY_MAPPING[code]
+    if (names.en.toLowerCase() === inputLower || names.es.toLowerCase() === inputLower) {
+      return names.en
+    }
+  }
+  for (const code in COUNTRY_MAPPING) {
+    const names = COUNTRY_MAPPING[code]
+    if (inputLower.includes(names.en.toLowerCase()) || names.en.toLowerCase().includes(inputLower) ||
+        inputLower.includes(names.es.toLowerCase()) || names.es.toLowerCase().includes(inputLower)) {
+      return names.en
+    }
+  }
+  return input
+}
 
-// Función helper para obtener calendarHelpers de forma segura usando importación dinámica
-const getCalendarHelpers = async () => {
-  try {
-    // Si ya tenemos el módulo cargado, retornarlo directamente
-    if (calendarHelpersModule) {
-      return calendarHelpersModule
-    }
-    
-    // Si hay una promesa de carga en curso, esperarla
-    if (calendarHelpersPromise) {
-      return await calendarHelpersPromise
-    }
-    
-    // Cargar el módulo de forma dinámica
-    calendarHelpersPromise = import('./calendarHelpers').then(module => {
-      // #region agent log
-      logDebug('CalendarTableView.jsx:45','Dynamic import completed',{hasDefault:!!module.default,defaultType:typeof module.default},'D');
-      // #endregion
-      // El módulo ahora exporta una función factory que crea el objeto
-      const createHelpers = module.default
-      if (!createHelpers || typeof createHelpers !== 'function') {
-        console.warn('calendarHelpers no exporta una función factory válida')
-        return null
+function getCountryVariants(countryInput) {
+  if (!countryInput) return null
+  const normalized = normalizeCountryName(countryInput)
+  if (!normalized) return null
+  const COUNTRY_MAPPING = getCountryMapping()
+  for (const code in COUNTRY_MAPPING) {
+    if (COUNTRY_MAPPING[code].en === normalized || COUNTRY_MAPPING[code].es === normalized) {
+      return {
+        en: COUNTRY_MAPPING[code].en,
+        es: COUNTRY_MAPPING[code].es,
+        code: code
       }
-      // #region agent log
-      logDebug('CalendarTableView.jsx:53','About to invoke createHelpers()',{},'D');
-      // #endregion
-      // Invocar la función factory para crear el objeto
-      const helpers = createHelpers()
-      // #region agent log
-      logDebug('CalendarTableView.jsx:56','createHelpers() returned',{hasHelpers:!!helpers,hasGetMonthsInYear:helpers&&typeof helpers.getMonthsInYear==='function'},'D');
-      // #endregion
-      if (!helpers || typeof helpers.getMonthsInYear !== 'function') {
-        console.warn('calendarHelpers no tiene las funciones necesarias')
-        return null
-      }
-      calendarHelpersModule = helpers
-      return helpers
-    }).catch(error => {
-      // #region agent log
-      logDebug('CalendarTableView.jsx:65','Error loading calendarHelpers',{error:error?.message,stack:error?.stack},'D');
-      // #endregion
-      console.warn('Error cargando calendarHelpers:', error)
-      return null
+    }
+  }
+  return { en: normalized, es: normalized, code: null }
+}
+
+function doesHolidayApplyToLocation(holiday, employeeLocation) {
+  if (!holiday || !employeeLocation?.country) return false
+  const employeeVariants = getCountryVariants(employeeLocation.country)
+  const holidayVariants = getCountryVariants(holiday.country)
+  const employeeCountries = employeeVariants
+    ? [employeeVariants.en, employeeVariants.es, employeeLocation.country].filter(Boolean)
+    : [employeeLocation.country].filter(Boolean)
+  const holidayCountries = holidayVariants
+    ? [holidayVariants.en, holidayVariants.es, holiday.country].filter(Boolean)
+    : [holiday.country].filter(Boolean)
+  const countriesMatch = employeeCountries.some(empCountry =>
+    holidayCountries.some(holCountry =>
+      normalizeCountryName(empCountry) === normalizeCountryName(holCountry) ||
+      empCountry === holCountry
+    )
+  )
+  if (!countriesMatch) return false
+  const holidayType = holiday.holiday_type || holiday.type || holiday.hierarchy_level || ''
+  const holidayRegion = holiday.region
+  const holidayCity = holiday.city
+  const employeeRegion = employeeLocation.region || employeeLocation.location?.region
+  const employeeCity = employeeLocation.city || employeeLocation.location?.city
+  if (holidayType === 'national' || !holidayRegion) {
+    return true
+  }
+  if (holidayType === 'regional') {
+    return holidayRegion === employeeRegion
+  }
+  if (holidayType === 'local') {
+    return holidayRegion === employeeRegion && holidayCity === employeeCity
+  }
+  return true
+}
+
+function countriesMatch(country1, country2) {
+  if (!country1 || !country2) return false
+  const norm1 = normalizeCountryName(country1)
+  const norm2 = normalizeCountryName(country2)
+  if (norm1 && norm2) {
+    return norm1.toLowerCase() === norm2.toLowerCase()
+  }
+  return String(country1).toLowerCase() === String(country2).toLowerCase()
+}
+
+let _ISO_TO_COUNTRY_NAME = null
+function getIsoToCountryName() {
+  if (!_ISO_TO_COUNTRY_NAME) {
+    _ISO_TO_COUNTRY_NAME = {
+      'ESP': 'España',
+      'ES': 'España',
+      'USA': 'United States',
+      'US': 'United States',
+      'GBR': 'United Kingdom',
+      'GB': 'United Kingdom',
+      'FRA': 'France',
+      'FR': 'France',
+      'DEU': 'Germany',
+      'DE': 'Germany',
+      'ITA': 'Italy',
+      'IT': 'Italy',
+      'PRT': 'Portugal',
+      'PT': 'Portugal'
+    }
+  }
+  return _ISO_TO_COUNTRY_NAME
+}
+
+function formatDateLocal(year, month, day) {
+  const monthStr = String(month + 1).padStart(2, '0')
+  const dayStr = String(day).padStart(2, '0')
+  return `${year}-${monthStr}-${dayStr}`
+}
+
+function getDaysInMonth(date) {
+  const year = date.getFullYear()
+  const month = date.getMonth()
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const days = []
+  for (let day = 1; day <= daysInMonth; day++) {
+    const currentDate = new Date(year, month, day)
+    const dateString = formatDateLocal(year, month, day)
+    days.push({
+      day,
+      date: currentDate,
+      dayOfWeek: currentDate.getDay(),
+      isWeekend: currentDate.getDay() === 0 || currentDate.getDay() === 6,
+      dateString: dateString
     })
-    
-    return await calendarHelpersPromise
-  } catch (error) {
-    console.warn('Error obteniendo calendarHelpers:', error)
-    return null
   }
+  return days
 }
 
-// Versión síncrona para uso inmediato (retorna null si no está cargado)
-const getCalendarHelpersSync = () => {
-  return calendarHelpersModule
+function getMonthsInYear(date) {
+  const year = date.getFullYear()
+  const months = []
+  for (let month = 0; month < 12; month++) {
+    const monthDate = new Date(year, month, 1)
+    const days = getDaysInMonth(monthDate)
+    months.push({
+      date: monthDate,
+      name: monthDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }),
+      days: days
+    })
+  }
+  return months
 }
+
+function isHolidayHelper(dateString, employeeLocation, holidays) {
+  if (!holidays || !Array.isArray(holidays) || !employeeLocation) return false
+  const employeeCountryInput = employeeLocation?.country || ''
+  const employeeVariants = getCountryVariants(employeeCountryInput)
+  const employeeCountries = employeeVariants 
+    ? [employeeVariants.en, employeeVariants.es, employeeLocation?.country].filter(Boolean)
+    : [employeeLocation?.country].filter(Boolean)
+  return holidays.some(holiday => {
+    if (holiday.date !== dateString) return false
+    const holidayVariants = getCountryVariants(holiday.country)
+    const holidayCountries = holidayVariants
+      ? [holidayVariants.en, holidayVariants.es, holiday.country].filter(Boolean)
+      : [holiday.country].filter(Boolean)
+    const countriesMatch = employeeCountries.some(empCountry => 
+      holidayCountries.some(holCountry => 
+        normalizeCountryName(empCountry) === normalizeCountryName(holCountry) ||
+        empCountry === holCountry
+      )
+    )
+    if (!countriesMatch) return false
+    const holidayType = holiday.holiday_type || holiday.type || ''
+    if (holidayType === 'national') {
+      return true
+    }
+    if (holidayType === 'regional') {
+      return holiday.region === employeeLocation?.region
+    }
+    if (holidayType === 'local') {
+      return holiday.region === employeeLocation?.region &&
+             holiday.city === employeeLocation?.city
+    }
+    return true
+  })
+}
+
+function getActivityForDayHelper(employeeId, dateString, activities) {
+  if (!activities || !Array.isArray(activities)) return null
+  return activities.find(activity => {
+    if (!activity || activity.employee_id !== employeeId) return false
+    const activityDate = activity.date || activity.start_date || activity.end_date
+    if (!activityDate) return false
+    if (activity.date === dateString) return true
+    if (activity.start_date && activity.end_date) {
+      return activity.start_date <= dateString && activity.end_date >= dateString
+    }
+    return false
+  })
+}
+
+function getActivityCodeHelper(activity) {
+  if (!activity) return ''
+  const activityType = activity.activity_type || activity.type || ''
+  if (!activityType) return ''
+  let code = ''
+  const typeUpper = activityType.toUpperCase()
+  const typeLower = activityType.toLowerCase()
+  if (typeUpper === 'V' || typeLower === 'vacation') {
+    code = 'V'
+  } else if (typeUpper === 'A' || typeLower === 'absence' || typeLower === 'sick_leave') {
+    code = 'A'
+  } else if (typeUpper === 'HLD' || typeLower === 'hld') {
+    code = 'HLD'
+  } else if (typeUpper === 'G' || typeLower === 'guard') {
+    code = 'G'
+  } else if (typeUpper === 'F' || typeLower === 'training') {
+    code = 'F'
+  } else if (typeUpper === 'C' || typeLower === 'other') {
+    code = 'C'
+  } else {
+    code = activityType.charAt(0).toUpperCase()
+  }
+  if (activity.hours) {
+    const hasHours = typeUpper === 'HLD' || typeUpper === 'G' || typeUpper === 'F' || 
+                     typeLower === 'hld' || typeLower === 'guard' || typeLower === 'training'
+    if (hasHours) {
+      const sign = (typeUpper === 'G' || typeLower === 'guard') ? '+' : '-'
+      return `${code} ${sign}${activity.hours}h`
+    }
+  }
+  return code
+}
+
+function getCellBackgroundColorHelper(activity, isWeekend, isHolidayDay) {
+  if (isHolidayDay) return 'bg-red-50 border-red-200'
+  if (isWeekend) return 'bg-gray-100 border-gray-200'
+  if (!activity) return 'bg-white border-gray-200'
+  const activityType = (activity.activity_type || activity.type || '').toLowerCase()
+  if (activityType === 'vacation' || activityType === 'v') {
+    return 'bg-green-100 border-green-300'
+  } else if (activityType === 'sick_leave' || activityType === 'absence' || activityType === 'a') {
+    return 'bg-yellow-100 border-yellow-300'
+  } else if (activityType === 'hld') {
+    return 'bg-green-200 border-green-400'
+  } else if (activityType === 'guard' || activityType === 'g') {
+    return 'bg-blue-100 border-blue-300'
+  } else if (activityType === 'training' || activityType === 'f') {
+    return 'bg-purple-100 border-purple-300'
+  } else if (activityType === 'other' || activityType === 'c') {
+    return 'bg-sky-100 border-sky-300'
+  }
+  return 'bg-gray-100 border-gray-300'
+}
+
+function getCellTextColorHelper(activity, isWeekend, isHolidayDay) {
+  if (isHolidayDay) return 'text-red-700'
+  if (isWeekend) return 'text-gray-500'
+  if (!activity) return 'text-gray-900'
+  const activityType = (activity.activity_type || activity.type || '').toLowerCase()
+  if (activityType === 'vacation' || activityType === 'v') {
+    return 'text-green-700'
+  } else if (activityType === 'sick_leave' || activityType === 'absence' || activityType === 'a') {
+    return 'text-yellow-700'
+  } else if (activityType === 'hld') {
+    return 'text-green-800'
+  } else if (activityType === 'guard' || activityType === 'g') {
+    return 'text-blue-700'
+  } else if (activityType === 'training' || activityType === 'f') {
+    return 'text-purple-700'
+  } else if (activityType === 'other' || activityType === 'c') {
+    return 'text-sky-700'
+  }
+  return 'text-gray-700'
+}
+
+function getMonthSummaryHelper(employeeId, monthDate, activities) {
+  if (!activities || !Array.isArray(activities)) return { vacation: 0, absence: 0 }
+  const year = monthDate.getFullYear()
+  const month = monthDate.getMonth()
+  const monthStart = formatDateLocal(year, month, 1)
+  const lastDay = new Date(year, month + 1, 0).getDate()
+  const monthEnd = formatDateLocal(year, month, lastDay)
+  const monthActivities = activities.filter(activity => {
+    if (!activity || activity.employee_id !== employeeId) return false
+    const activityDate = activity.date || activity.start_date || activity.end_date
+    if (!activityDate) return false
+    if (activity.date) {
+      return activity.date >= monthStart && activity.date <= monthEnd
+    } else if (activity.start_date && activity.end_date) {
+      return (activity.start_date >= monthStart && activity.start_date <= monthEnd) ||
+             (activity.end_date >= monthStart && activity.end_date <= monthEnd) ||
+             (activity.start_date <= monthStart && activity.end_date >= monthEnd)
+    }
+    return false
+  })
+  let vacationDays = 0
+  let absenceDays = 0
+  monthActivities.forEach(activity => {
+    const activityType = activity.activity_type || activity.type
+    if (activity.date) {
+      if (activityType === 'V' || activityType === 'vacation') vacationDays += 1
+      if (activityType === 'A' || activityType === 'absence' || activityType === 'sick_leave') absenceDays += 1
+    } else if (activity.start_date && activity.end_date) {
+      const activityStart = new Date(activity.start_date)
+      const activityEnd = new Date(activity.end_date)
+      const rangeStart = new Date(Math.max(activityStart, new Date(monthStart)))
+      const rangeEnd = new Date(Math.min(activityEnd, new Date(monthEnd)))
+      const days = Math.ceil((rangeEnd - rangeStart) / (1000 * 60 * 60 * 24)) + 1
+      if (activityType === 'V' || activityType === 'vacation') vacationDays += days
+      if (activityType === 'A' || activityType === 'absence' || activityType === 'sick_leave') absenceDays += days
+    }
+  })
+  return { vacation: vacationDays, absence: absenceDays }
+}
+
+function getMonthHolidaysHelper(monthDate, holidays) {
+  if (!holidays || !Array.isArray(holidays)) return []
+  const year = monthDate.getFullYear()
+  const month = monthDate.getMonth()
+  const monthStart = formatDateLocal(year, month, 1)
+  const lastDay = new Date(year, month + 1, 0).getDate()
+  const monthEnd = formatDateLocal(year, month, lastDay)
+  const monthHolidays = holidays.filter(holiday => 
+    holiday && holiday.date >= monthStart && holiday.date <= monthEnd
+  )
+  return monthHolidays.sort((a, b) => {
+    if (a.date < b.date) return -1
+    if (a.date > b.date) return 1
+    return 0
+  })
+}
+// ===== FIN FUNCIONES HELPER =====
 
 // NO destructurar al inicio - usar directamente desde el objeto para evitar problemas de inicialización
 // Usar una función que siempre obtenga la referencia más reciente
@@ -125,33 +441,8 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
   const [hoveredDay, setHoveredDay] = useState(null)
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, employeeId: null, date: null, activity: null })
   const [activityModal, setActivityModal] = useState({ visible: false, type: null, date: null, employeeId: null, employeeName: null })
-  const [loadedHelpers, setLoadedHelpers] = useState(null)
-  const [isLoadingHelpers, setIsLoadingHelpers] = useState(true)
   const longPressTimer = useRef(null)
   const { toast } = useToast()
-
-  // Cargar calendarHelpers cuando el componente se monta
-  useEffect(() => {
-    let isMounted = true
-    
-    getCalendarHelpers().then(helpers => {
-      if (isMounted) {
-        if (helpers) {
-          setLoadedHelpers(helpers)
-        }
-        setIsLoadingHelpers(false)
-      }
-    }).catch(error => {
-      console.error('Error cargando calendarHelpers:', error)
-      if (isMounted) {
-        setIsLoadingHelpers(false)
-      }
-    })
-    
-    return () => {
-      isMounted = false
-    }
-  }, [])
 
   // Función helper para calcular días del mes (fallback cuando calendarHelpers no está disponible)
   const calculateDaysInMonthFallback = (date) => {
@@ -172,59 +463,23 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
     return days
   }
 
-  // Calcular meses usando useMemo en lugar de IIFE para mejor compatibilidad con minificación
-  // Usar funciones directamente desde calendarHelpers sin destructurar
-  // Validar que calendarHelpers esté completamente inicializado antes de usarlo
+  // Calcular meses usando useMemo - funciones helper están inlineadas
   const calculatedMonths = useMemo(() => {
     try {
-      // #region agent log
-      logDebug('CalendarTableView.jsx:149','calculatedMonths useMemo executing',{hasLoadedHelpers:!!loadedHelpers,hasSyncHelpers:!!getCalendarHelpersSync()},'D');
-      // #endregion
-      // Obtener calendarHelpers de forma segura (versión síncrona)
-      const helpers = loadedHelpers || getCalendarHelpersSync()
-      // #region agent log
-      logDebug('CalendarTableView.jsx:153','Got helpers in useMemo',{hasHelpers:!!helpers,hasGetMonthsInYear:helpers&&typeof helpers.getMonthsInYear==='function',hasGetDaysInMonth:helpers&&typeof helpers.getDaysInMonth==='function'},'D');
-      // #endregion
-      
-      // Validar que calendarHelpers y sus funciones estén disponibles
-      if (!helpers || typeof helpers.getMonthsInYear !== 'function' || typeof helpers.getDaysInMonth !== 'function') {
-        // Retornar estructura básica para evitar errores
-        const monthName = currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
-        const days = calculateDaysInMonthFallback(currentMonth)
-        return viewMode === 'annual' ? [] : [{ date: currentMonth, name: monthName, days }]
-      }
-      
       if (viewMode === 'annual') {
-        // #region agent log
-        logDebug('CalendarTableView.jsx:162','About to call getMonthsInYear',{viewMode,currentMonth:currentMonth?.toString()},'C');
-        // #endregion
-        const result = helpers.getMonthsInYear(currentMonth) || []
-        // #region agent log
-        logDebug('CalendarTableView.jsx:165','getMonthsInYear returned',{resultCount:result?.length},'C');
-        // #endregion
-        return result
+        return getMonthsInYear(currentMonth) || []
       } else {
-        // #region agent log
-        logDebug('CalendarTableView.jsx:169','About to call getDaysInMonth',{viewMode,currentMonth:currentMonth?.toString()},'C');
-        // #endregion
-        const monthDays = helpers.getDaysInMonth(currentMonth)
-        // #region agent log
-        logDebug('CalendarTableView.jsx:171','getDaysInMonth returned',{monthDaysCount:monthDays?.length},'C');
-        // #endregion
+        const monthDays = getDaysInMonth(currentMonth)
         const monthName = currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
         return [{ date: currentMonth, name: monthName, days: monthDays }]
       }
     } catch (error) {
-      // #region agent log
-      logDebug('CalendarTableView.jsx:177','Error in calculatedMonths',{error:error?.message,stack:error?.stack},'C');
-      // #endregion
       console.error('Error calculando meses:', error)
-      // Retornar estructura básica en caso de error
       const monthName = currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
       const days = calculateDaysInMonthFallback(currentMonth)
       return viewMode === 'annual' ? [] : [{ date: currentMonth, name: monthName, days }]
     }
-  }, [viewMode, currentMonth, loadedHelpers])
+  }, [viewMode, currentMonth])
 
   // Renderizar encabezado de la tabla
   const renderTableHeader = (daysInMonth) => {
@@ -300,10 +555,7 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
     }
 
     // Buscar si ya hay actividad en este día
-    let existingActivity = null
-    if (helpers && typeof helpers.getActivityForDayHelper === 'function') {
-      existingActivity = helpers.getActivityForDayHelper(employeeId, dateString, activities)
-    }
+    const existingActivity = getActivityForDayHelper(employeeId, dateString, activities)
 
     // Calcular posición del menú (asegurar que esté dentro de la ventana)
     const menuX = Math.min(e.clientX, window.innerWidth - 250)
@@ -468,18 +720,6 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
     }
   }, [contextMenu, toast, onActivityDelete])
 
-  // Mostrar loading mientras se cargan los helpers
-  if (isLoadingHelpers && !loadedHelpers) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
-          <p className="text-sm text-gray-600">Cargando calendario...</p>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="space-y-4">
       {/* Controles superiores */}
@@ -611,35 +851,12 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
                               
                               {/* Días del mes (1-31) */}
                               {monthDays.map((dayInfo) => {
-                                // Validar calendarHelpers antes de usarlo
-                                const helpers = loadedHelpers || getCalendarHelpersSync()
-                                let activity = null
-                                let isHolidayDay = false
-                                let bgColor = 'bg-white border-gray-200'
-                                let textColor = 'text-gray-900'
-                                let code = ''
-                                
-                                if (helpers && typeof helpers.getActivityForDayHelper === 'function') {
-                                  activity = helpers.getActivityForDayHelper(employee.id, dayInfo.dateString, activities)
-                                }
-                                
+                                const activity = getActivityForDayHelper(employee.id, dayInfo.dateString, activities)
                                 const employeeLocation = employee.location || { country: employee.country, region: employee.region, city: employee.city }
-                                
-                                if (helpers && typeof helpers.isHolidayHelper === 'function') {
-                                  isHolidayDay = helpers.isHolidayHelper(dayInfo.dateString, employeeLocation, holidays)
-                                }
-                                
-                                if (helpers && typeof helpers.getCellBackgroundColorHelper === 'function') {
-                                  bgColor = helpers.getCellBackgroundColorHelper(activity, dayInfo.isWeekend, isHolidayDay)
-                                }
-                                
-                                if (helpers && typeof helpers.getCellTextColorHelper === 'function') {
-                                  textColor = helpers.getCellTextColorHelper(activity, dayInfo.isWeekend, isHolidayDay)
-                                }
-                                
-                                if (helpers && typeof helpers.getActivityCodeHelper === 'function') {
-                                  code = helpers.getActivityCodeHelper(activity)
-                                }
+                                const isHolidayDay = isHolidayHelper(dayInfo.dateString, employeeLocation, holidays)
+                                const bgColor = getCellBackgroundColorHelper(activity, dayInfo.isWeekend, isHolidayDay)
+                                const textColor = getCellTextColorHelper(activity, dayInfo.isWeekend, isHolidayDay)
+                                const code = getActivityCodeHelper(activity)
                                 
                                 return (
                                   <td
@@ -674,12 +891,8 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
                     <h4 className="text-xs font-semibold text-gray-700 uppercase mb-2">Festivos del mes</h4>
                     <div className="flex flex-wrap gap-2">
                       {(() => {
-                        // Obtener festivos del mes - validar calendarHelpers
-                        const helpers = loadedHelpers || getCalendarHelpersSync()
-                        let monthHolidays = []
-                        if (helpers && typeof helpers.getMonthHolidaysHelper === 'function') {
-                          monthHolidays = helpers.getMonthHolidaysHelper(month.date, holidays)
-                        }
+                        // Obtener festivos del mes
+                        const monthHolidays = getMonthHolidaysHelper(month.date, holidays)
                         
                         // Construir ubicaciones de los empleados visibles (país, región, ciudad)
                         const employeeLocations = (employees || [])
@@ -692,17 +905,13 @@ const CalendarTableView = ({ employees, activities, holidays, currentMonth, onMo
                           .filter(location => !!location.country)
                         
                         // Filtrar festivos relevantes solo para las ubicaciones mostradas
-                        let relevantHolidays = []
-                        if (employeeLocations.length > 0 && helpers && typeof helpers.doesHolidayApplyToLocation === 'function') {
-                          relevantHolidays = monthHolidays.filter(holiday =>
-                            employeeLocations.some(location =>
-                              helpers.doesHolidayApplyToLocation(holiday, location)
+                        const relevantHolidays = employeeLocations.length > 0
+                          ? monthHolidays.filter(holiday =>
+                              employeeLocations.some(location =>
+                                doesHolidayApplyToLocation(holiday, location)
+                              )
                             )
-                          )
-                        } else {
-                          // Si calendarHelpers no está disponible, mostrar todos los festivos del mes
-                          relevantHolidays = monthHolidays
-                        }
+                          : monthHolidays
                         
                         // Deduplicar festivos por fecha y nombre (evitar duplicados)
                         const uniqueHolidays = []
