@@ -25,7 +25,7 @@ const HolidayManagement = () => {
   const loadStatistics = async () => {
     try {
       setLoadingStats(true)
-      const token = localStorage.getItem('token')
+      const token = localStorage.getItem('auth_token') || localStorage.getItem('token')
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL}/holidays/statistics?year=${year}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -54,7 +54,7 @@ const HolidayManagement = () => {
     setShowConfirmDialog(false)
     setLoading(true)
     try {
-      const token = localStorage.getItem('token')
+      const token = localStorage.getItem('auth_token') || localStorage.getItem('token')
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL}/holidays/refresh-all`, {
         method: 'POST',
         headers: {
