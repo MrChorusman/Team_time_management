@@ -68,19 +68,29 @@ def create_project():
     # Verificar si el código ya existe antes de intentar crear
     # La restricción única se aplica a TODOS los proyectos (activos e inactivos)
     code = data['code'].strip()
-    logger.debug(f"Intentando crear proyecto con código: '{code}' (longitud: {len(code)})")
+    logger.debug(f"Intentando crear proyecto con código: '{code}' (longitud: {len(code)}, bytes: {code.encode('utf-8')})")
     
-    # Verificar todos los proyectos (activos e inactivos)
-    existing_project = Project.query.filter_by(code=code).first()
+    # Verificar todos los proyectos (activos e inactivos) - usar ilike para case-insensitive
+    existing_project = Project.query.filter(Project.code.ilike(code)).first()
     if existing_project:
         status_text = "activo" if existing_project.active else "inactivo"
-        logger.warning(f"Proyecto con código '{code}' ya existe (ID: {existing_project.id}, activo: {existing_project.active})")
+        logger.warning(f"Proyecto con código '{code}' ya existe (ID: {existing_project.id}, código BD: '{existing_project.code}', activo: {existing_project.active})")
         return jsonify({
             'success': False, 
-            'message': f'Ya existe un proyecto {status_text} con el código "{code}". Si deseas editarlo, utiliza la opción de edición.'
+            'message': f'Ya existe un proyecto {status_text} con el código "{existing_project.code}". Si deseas editarlo, utiliza la opción de edición.'
         }), 409
     
     logger.debug(f"No se encontró proyecto existente con código '{code}', procediendo a crear")
+    
+    # Manejar manager_id: convertir string vacío a None
+    manager_id = data.get('manager_id')
+    if manager_id == '' or manager_id is None:
+        manager_id = None
+    elif isinstance(manager_id, str):
+        try:
+            manager_id = int(manager_id)
+        except (ValueError, TypeError):
+            manager_id = None
 
     project = Project(
         code=code,
@@ -94,7 +104,7 @@ def create_project():
         end_date=_parse_date(data.get('end_date')),
         budget_hours=data.get('budget_hours'),
         budget_amount=data.get('budget_amount'),
-        manager_id=data.get('manager_id'),
+        manager_id=manager_id,
         active=True
     )
 

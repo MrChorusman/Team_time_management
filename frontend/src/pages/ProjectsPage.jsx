@@ -567,13 +567,25 @@ const ProjectsPage = () => {
                   <Input type="date" value={formData.end_date} onChange={(e) => handleFormChange('end_date', e.target.value)} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-sm">Manager (ID de empleado)</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={formData.manager_id}
-                    onChange={(e) => handleFormChange('manager_id', e.target.value)}
-                  />
+                  <Label className="text-sm">Manager</Label>
+                  <Select 
+                    value={formData.manager_id || ''} 
+                    onValueChange={(value) => handleFormChange('manager_id', value || '')}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona un manager (opcional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Sin asignar</SelectItem>
+                      {employeesOptions
+                        .filter(emp => emp.approved && emp.active)
+                        .map((employee) => (
+                          <SelectItem key={employee.id} value={employee.id.toString()}>
+                            {employee.full_name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-sm">Horas presupuestadas</Label>
