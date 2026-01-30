@@ -223,43 +223,43 @@ def register():
             raise
         
         # Crear notificación para administradores sobre nuevo usuario registrado
-        logger.debug(f"Creando notificaciones para administradores...")
+        # NOTA: Esto es opcional y no debe bloquear el registro si falla
+        logger.debug(f"Intentando crear notificaciones para administradores...")
         try:
             from models.notification import NotificationType, NotificationPriority
             admin_role = Role.query.filter_by(name='admin').first()
             if admin_role:
                 admin_users = User.query.join(User.roles).filter(Role.id == admin_role.id).all()
                 logger.debug(f"Encontrados {len(admin_users)} administradores")
-                for admin_user in admin_users:
+                if len(admin_users) > 0:
+                    # Intentar crear notificaciones, pero si falla, continuar
                     try:
-                        notification = Notification(
-                            user_id=admin_user.id,
-                            title="Nuevo usuario registrado",
-                            message=f"Un nuevo usuario se ha registrado: {email}",
-                            notification_type=NotificationType.SYSTEM_ALERT,
-                            priority=NotificationPriority.MEDIUM,
-                            send_email=False,
-                            created_by=new_user.id,
-                            data={
-                                'user_id': new_user.id,
-                                'user_email': email,
-                                'has_invitation': invitation is not None,
-                                'created_at': datetime.utcnow().isoformat()
-                            }
-                        )
-                        db.session.add(notification)
-                    except Exception as notif_create_error:
-                        logger.error(f"Error creando notificación individual (no crítico): {notif_create_error}")
-                        continue
-                try:
-                    db.session.commit()
-                    logger.debug(f"Notificaciones creadas exitosamente")
-                except Exception as commit_error:
-                    logger.error(f"Error haciendo commit de notificaciones (no crítico): {commit_error}")
-                    db.session.rollback()
+                        for admin_user in admin_users:
+                            notification = Notification(
+                                user_id=admin_user.id,
+                                title="Nuevo usuario registrado",
+                                message=f"Un nuevo usuario se ha registrado: {email}",
+                                notification_type=NotificationType.SYSTEM_ALERT,
+                                priority=NotificationPriority.MEDIUM,
+                                send_email=False,
+                                created_by=new_user.id,
+                                data={
+                                    'user_id': new_user.id,
+                                    'user_email': email,
+                                    'has_invitation': invitation is not None,
+                                    'created_at': datetime.utcnow().isoformat()
+                                }
+                            )
+                            db.session.add(notification)
+                        db.session.commit()
+                        logger.debug(f"Notificaciones creadas exitosamente")
+                    except Exception as notif_db_error:
+                        logger.warning(f"No se pudieron crear notificaciones (tipo enum puede no existir): {notif_db_error}")
+                        db.session.rollback()
+                        # Continuar sin notificaciones - el registro es exitoso
         except Exception as notif_error:
-            logger.error(f"Error creando notificaciones (no crítico): {notif_error}")
-            db.session.rollback()
+            logger.warning(f"Error creando notificaciones (no crítico, registro continúa): {notif_error}")
+            # No hacer rollback aquí porque el usuario ya fue creado exitosamente
             # No fallar el registro si las notificaciones fallan
         
         # Solo generar token de verificación si NO hay invitación
