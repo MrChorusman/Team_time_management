@@ -66,12 +66,14 @@ def create_project():
             return jsonify({'success': False, 'message': f'Campo requerido: {field}'}), 400
 
     # Verificar si el código ya existe antes de intentar crear
+    # La restricción única se aplica a TODOS los proyectos (activos e inactivos)
     code = data['code'].strip()
-    existing_project = Project.query.filter_by(code=code, active=True).first()
+    existing_project = Project.query.filter_by(code=code).first()
     if existing_project:
+        status_text = "activo" if existing_project.active else "inactivo"
         return jsonify({
             'success': False, 
-            'message': f'Ya existe un proyecto activo con el código "{code}". Si deseas editarlo, utiliza la opción de edición.'
+            'message': f'Ya existe un proyecto {status_text} con el código "{code}". Si deseas editarlo, utiliza la opción de edición.'
         }), 409
 
     project = Project(
