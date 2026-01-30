@@ -156,7 +156,7 @@ const ProjectsPage = () => {
         billing_model: project.billing_model || '',
         start_date: project.start_date || '',
         end_date: project.end_date || '',
-        manager_id: project.manager_id ? project.manager_id.toString() : '',
+        manager_id: project.manager_id ? project.manager_id.toString() : 'none',
         budget_hours: project.budget_hours ?? '',
         budget_amount: project.budget_amount ?? '',
         team_ids: (project.teams || []).map((team) => team.id)
@@ -201,7 +201,7 @@ const ProjectsPage = () => {
       billing_model: formData.billing_model || null,
       start_date: formData.start_date || null,
       end_date: formData.end_date || null,
-      manager_id: formData.manager_id ? parseInt(formData.manager_id, 10) : null,
+      manager_id: formData.manager_id && formData.manager_id !== 'none' ? parseInt(formData.manager_id, 10) : null,
       budget_hours: formData.budget_hours !== '' ? parseFloat(formData.budget_hours) : null,
       budget_amount: formData.budget_amount !== '' ? parseFloat(formData.budget_amount) : null,
       team_ids: formData.team_ids
@@ -569,14 +569,14 @@ const ProjectsPage = () => {
                 <div className="space-y-1.5">
                   <Label className="text-sm">Manager</Label>
                   <Select 
-                    value={formData.manager_id || ''} 
-                    onValueChange={(value) => handleFormChange('manager_id', value || '')}
+                    value={formData.manager_id || 'none'} 
+                    onValueChange={(value) => handleFormChange('manager_id', value === 'none' ? undefined : value)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecciona un manager (opcional)" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Sin asignar</SelectItem>
+                      <SelectItem value="none">Sin asignar</SelectItem>
                       {employeesOptions
                         .filter(emp => emp.approved && emp.active)
                         .map((employee) => (
