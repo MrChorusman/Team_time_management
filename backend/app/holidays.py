@@ -461,3 +461,74 @@ def check_holiday_date():
             'success': False,
             'message': 'Error verificando fecha'
         }), 500
+
+@holidays_bp.route('/load-local', methods=['POST'])
+@auth_required()
+def load_local_holidays():
+    """Carga festivos locales desde el BOE o datos manuales (solo admins)"""
+    try:
+        if not current_user.is_admin():
+            return jsonify({
+                'success': False,
+                'message': 'Solo los administradores pueden cargar festivos locales'
+            }), 403
+        
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({
+                'success': False,
+                'message': 'Datos requeridos'
+            }), 400
+        
+        from services.boe_holiday_service import BOEHolidayService
+        boe_service = BOEHolidayService()
+        
+        year = data.get('year', datetime.now().year)
+        source = data.get('source', 'auto')  # 'auto', 'manual', 'json_file'
+        
+        results = {
+            'year': year,
+            'source': source,
+            'total_loaded': 0,
+            'errors': []
+        }
+        
+        if source == 'manual' and 'holidays' in data:
+            # Cargar desde datos manuales proporcionados
+            created_count, errors = boe_service.load_local_holidays_from_manual_data(
+                data['holidays'], year
+            )
+            results['total_loaded'] = created_count
+            results['errors'] = errors
+            
+        elif source == 'json_file' and 'file_path' in data:
+            # Cargar desde archivo JSON
+            created_count, errors = boe_service.load_local_holidays_from_json_file(data['file_path'])
+            results['total_loaded'] = created_count
+            results['errors'] = errors
+            
+        elif source == 'auto':
+            # Carga automática desde múltiples fuentes
+            auto_results = boe_service.load_local_holidays_for_year(year)
+            results['total_loaded'] = auto_results['total_loaded']
+            results['sources'] = auto_results['sources']
+            results['errors'] = auto_results['errors']
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Fuente inválida. Use: auto, manual, o json_file'
+            }), 400
+        
+        return jsonify({
+            'success': True,
+            'message': f'Cargados {results["total_loaded"]} festivos locales para {year}',
+            'results': results
+        })
+        
+    except Exception as e:
+        logger.error(f"Error cargando festivos locales: {e}")
+        return jsonify({
+            'success': False,
+            'message': 'Error cargando festivos locales'
+        }), 500

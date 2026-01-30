@@ -1,0 +1,92 @@
+[
+  {
+    "name": "San Isidro",
+    "date": "2026-05-15",
+    "city": "Madrid",
+    "region": "Madrid",
+    "country": "España",
+    "description": "Fiesta patronal de Madrid",
+    "is_fixed": false
+  },
+  {
+    "name": "La Mercè",
+    "date": "2026-09-24",
+    "city": "Barcelona",
+    "region": "Cataluña",
+    "country": "España",
+    "description": "Fiesta mayor de Barcelona",
+    "is_fixed": false
+  },
+  {
+    "name": "Feria de Abril",
+    "date": "2026-04-20",
+    "city": "Sevilla",
+    "region": "Andalucía",
+    "country": "España",
+    "description": "Feria de Abril de Sevilla",
+    "is_fixed": false
+  },
+  {
+    "name": "Fallas",
+    "date": "2026-03-19",
+    "city": "Valencia",
+    "region": "Comunidad Valenciana",
+    "country": "España",
+    "description": "Fiesta de las Fallas de Valencia",
+    "is_fixed": false
+  },
+  {
+    "name": "San Fermín",
+    "date": "2026-07-07",
+    "city": "Pamplona",
+    "region": "Navarra",
+    "country": "España",
+    "description": "Fiesta de San Fermín",
+    "is_fixed": false
+  },
+  {
+    "name": "Aste Nagusia",
+    "date": "2026-08-15",
+    "city": "Bilbao",
+    "region": "País Vasco",
+    "country": "España",
+    "description": "Semana Grande de Bilbao",
+    "is_fixed": false
+  },
+  {
+    "name": "Fiesta de la Vendimia",
+    "date": "2026-09-21",
+    "city": "Logroño",
+    "region": "La Rioja",
+    "country": "España",
+    "description": "Fiesta de la Vendimia de La Rioja",
+    "is_fixed": false
+  },
+  {
+    "name": "Fiesta de la Virgen del Pilar",
+    "date": "2026-10-12",
+    "city": "Zaragoza",
+    "region": "Aragón",
+    "country": "España",
+    "description": "Fiesta del Pilar en Zaragoza",
+    "is_fixed": false
+  },
+  {
+    "name": "Fiesta de San Juan",
+    "date": "2026-06-24",
+    "city": "A Coruña",
+    "region": "Galicia",
+    "country": "España",
+    "description": "Fiesta de San Juan en A Coruña",
+    "is_fixed": false
+  },
+  {
+    "name": "Fiesta de la Virgen de la Paloma",
+    "date": "2026-08-15",
+    "city": "Madrid",
+    "region": "Madrid",
+    "country": "España",
+    "description": "Fiesta de la Paloma en Madrid",
+    "is_fixed": false
+  }
+]
