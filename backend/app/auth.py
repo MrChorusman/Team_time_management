@@ -249,30 +249,38 @@ def register():
         # Solo generar token de verificación si NO hay invitación
         email_sent = False
         if requires_email_verification:
-            # Generar token de verificación
-            verification_token = secrets.token_urlsafe(32)
-            expires_at = datetime.utcnow() + timedelta(hours=24)
-            
-            email_token = EmailVerificationToken(
-                user_id=new_user.id,
-                token=verification_token,
-                expires_at=expires_at
-            )
-            
-            db.session.add(email_token)
-            db.session.commit()
-            
-            # Enviar email de verificación
-            frontend_url = request.headers.get('Origin', 'https://team-time-management.vercel.app')
-            verification_link = f"{frontend_url}/verify-email?token={verification_token}&auto=1"
-            
-            email_sent = send_verification_email(
-                to_email=email,
-                verification_link=verification_link,
-                user_name=new_user.first_name or new_user.email.split('@')[0]
-            )
-            
-            logger.info(f"Nuevo usuario registrado: {email} - Email de verificación enviado: {email_sent}")
+            logger.debug(f"Generando token de verificación de email...")
+            try:
+                # Generar token de verificación
+                verification_token = secrets.token_urlsafe(32)
+                expires_at = datetime.utcnow() + timedelta(hours=24)
+                
+                email_token = EmailVerificationToken(
+                    user_id=new_user.id,
+                    token=verification_token,
+                    expires_at=expires_at
+                )
+                
+                db.session.add(email_token)
+                db.session.commit()
+                logger.debug(f"Token de verificación creado exitosamente")
+                
+                # Enviar email de verificación
+                frontend_url = request.headers.get('Origin', 'https://team-time-management.vercel.app')
+                verification_link = f"{frontend_url}/verify-email?token={verification_token}&auto=1"
+                
+                logger.debug(f"Enviando email de verificación a {email}...")
+                email_sent = send_verification_email(
+                    to_email=email,
+                    verification_link=verification_link,
+                    user_name=new_user.first_name or new_user.email.split('@')[0]
+                )
+                
+                logger.info(f"Nuevo usuario registrado: {email} - Email de verificación enviado: {email_sent}")
+            except Exception as email_error:
+                logger.error(f"Error en proceso de verificación de email (no crítico): {email_error}")
+                db.session.rollback()
+                # Continuar aunque falle el email
         else:
             logger.info(f"Nuevo usuario registrado con invitación: {email} - Email confirmado automáticamente")
         
