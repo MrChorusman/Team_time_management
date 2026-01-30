@@ -509,7 +509,7 @@ const ProjectsPage = () => {
       </div>
 
       <Dialog open={showProjectDialog} onOpenChange={setShowProjectDialog}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{currentProject ? 'Editar proyecto' : 'Nuevo proyecto'}</DialogTitle>
             <DialogDescription>
@@ -521,22 +521,22 @@ const ProjectsPage = () => {
               <TabsTrigger value="general">Información</TabsTrigger>
               {currentProject && <TabsTrigger value="assignments">Asignaciones</TabsTrigger>}
             </TabsList>
-            <TabsContent value="general" className="space-y-4 pt-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Código *</Label>
+            <TabsContent value="general" className="space-y-3 pt-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-sm">Código *</Label>
                   <Input value={formData.code} onChange={(e) => handleFormChange('code', e.target.value)} />
                 </div>
-                <div className="space-y-2">
-                  <Label>Nombre *</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-sm">Nombre *</Label>
                   <Input value={formData.name} onChange={(e) => handleFormChange('name', e.target.value)} />
                 </div>
-                <div className="space-y-2">
-                  <Label>Cliente</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-sm">Cliente</Label>
                   <Input value={formData.client_name} onChange={(e) => handleFormChange('client_name', e.target.value)} />
                 </div>
-                <div className="space-y-2">
-                  <Label>Estado</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-sm">Estado</Label>
                   <Select value={formData.status} onValueChange={(value) => handleFormChange('status', value)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Estado" />
@@ -550,24 +550,24 @@ const ProjectsPage = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label>Línea de servicio</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-sm">Línea de servicio</Label>
                   <Input value={formData.service_line} onChange={(e) => handleFormChange('service_line', e.target.value)} />
                 </div>
-                <div className="space-y-2">
-                  <Label>Modelo de facturación</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-sm">Modelo de facturación</Label>
                   <Input value={formData.billing_model} onChange={(e) => handleFormChange('billing_model', e.target.value)} />
                 </div>
-                <div className="space-y-2">
-                  <Label>Fecha de inicio</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-sm">Fecha de inicio</Label>
                   <Input type="date" value={formData.start_date} onChange={(e) => handleFormChange('start_date', e.target.value)} />
                 </div>
-                <div className="space-y-2">
-                  <Label>Fecha de fin</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-sm">Fecha de fin</Label>
                   <Input type="date" value={formData.end_date} onChange={(e) => handleFormChange('end_date', e.target.value)} />
                 </div>
-                <div className="space-y-2">
-                  <Label>Manager (ID de empleado)</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-sm">Manager (ID de empleado)</Label>
                   <Input
                     type="number"
                     min="0"
@@ -575,8 +575,8 @@ const ProjectsPage = () => {
                     onChange={(e) => handleFormChange('manager_id', e.target.value)}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Horas presupuestadas</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-sm">Horas presupuestadas</Label>
                   <Input
                     type="number"
                     min="0"
@@ -584,8 +584,8 @@ const ProjectsPage = () => {
                     onChange={(e) => handleFormChange('budget_hours', e.target.value)}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Importe presupuestado (€)</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-sm">Importe presupuestado (€)</Label>
                   <Input
                     type="number"
                     min="0"
@@ -594,17 +594,17 @@ const ProjectsPage = () => {
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label>Descripción</Label>
+              <div className="space-y-1.5">
+                <Label className="text-sm">Descripción</Label>
                 <Textarea
                   value={formData.description}
                   onChange={(e) => handleFormChange('description', e.target.value)}
-                  rows={4}
+                  rows={3}
                   placeholder="Detalles del proyecto, alcance u observaciones relevantes."
                 />
               </div>
-              <div className="space-y-2">
-                <Label>Equipos asociados</Label>
+              <div className="space-y-1.5">
+                <Label className="text-sm">Equipos asociados</Label>
                 <div className="flex flex-wrap gap-2">
                   {availableTeams.map((team) => {
                     const selected = formData.team_ids.includes(team.id)
@@ -613,7 +613,7 @@ const ProjectsPage = () => {
                         key={team.id}
                         type="button"
                         onClick={() => toggleTeamSelection(team.id)}
-                        className={`px-3 py-2 text-sm rounded-lg border transition ${
+                        className={`px-3 py-1.5 text-sm rounded-lg border transition ${
                           selected
                             ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-100'
                             : 'border-gray-200 dark:border-gray-700 hover:border-blue-200'
