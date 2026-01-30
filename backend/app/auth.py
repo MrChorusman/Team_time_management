@@ -256,10 +256,14 @@ def register():
         
     except Exception as e:
         db.session.rollback()
+        import traceback
+        error_trace = traceback.format_exc()
         logger.error(f"Error en registro: {e}")
+        logger.error(f"Traceback completo: {error_trace}")
         return jsonify({
             'success': False,
-            'message': 'Error interno del servidor'
+            'message': 'Error interno del servidor',
+            'error': str(e) if current_app.config.get('DEBUG') else None
         }), 500
 
 @auth_bp.route('/logout', methods=['POST'])
