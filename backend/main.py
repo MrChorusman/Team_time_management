@@ -75,6 +75,19 @@ def create_app(config_name=None):
          allow_headers=['Content-Type', 'Authorization'],
          methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
     
+    # Manejar preflight OPTIONS explícitamente antes de cualquier otro middleware
+    @app.before_request
+    def handle_preflight():
+        from flask import request, jsonify
+        if request.method == 'OPTIONS':
+            response = jsonify({})
+            response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin', '*'))
+            response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+            response.headers.add('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+            response.headers.add('Access-Control-Allow-Credentials', 'true')
+            response.headers.add('Access-Control-Max-Age', '3600')
+            return response
+    
     # Configuración de sesiones para cross-domain (Vercel → Render)
     is_production = os.environ.get('FLASK_ENV') == 'production' or os.environ.get('RENDER')
     app.config['SESSION_COOKIE_SECURE'] = is_production  # Solo HTTPS en producción
