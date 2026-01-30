@@ -27,8 +27,9 @@ const HolidayManagement = () => {
       setLoadingStats(true)
       const token = localStorage.getItem('auth_token') || localStorage.getItem('token')
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL}/holidays/statistics?year=${year}`, {
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': token ? `Bearer ${token}` : undefined,
           'Content-Type': 'application/json'
         }
       })
@@ -55,12 +56,16 @@ const HolidayManagement = () => {
     setLoading(true)
     try {
       const token = localStorage.getItem('auth_token') || localStorage.getItem('token')
+      const headers = {
+        'Content-Type': 'application/json'
+      }
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+      }
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL}/holidays/refresh-all`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
+        credentials: 'include',
+        headers,
         body: JSON.stringify({ 
           year,
           clean_before_load: true  // Siempre limpiar antes de cargar para evitar festivos obsoletos
