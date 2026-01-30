@@ -145,10 +145,32 @@ def register_employee():
         extra_team_ids = data.get('team_ids', [])
         team_ids = []
 
+        logger.debug(f"Datos recibidos - team_id: {primary_team_id} (tipo: {type(primary_team_id)}), team_ids: {extra_team_ids} (tipo: {type(extra_team_ids)})")
+
         if isinstance(extra_team_ids, list) and len(extra_team_ids) > 0:
-            team_ids = [int(tid) for tid in extra_team_ids if tid]
-        if primary_team_id and primary_team_id not in team_ids:
-            team_ids.insert(0, primary_team_id)
+            try:
+                team_ids = [int(tid) for tid in extra_team_ids if tid is not None]
+            except (ValueError, TypeError) as e:
+                logger.error(f"Error convirtiendo team_ids a int: {e}")
+                return jsonify({
+                    'success': False,
+                    'message': 'IDs de equipos inválidos'
+                }), 400
+        
+        # Convertir primary_team_id a int si existe y agregarlo si no está en la lista
+        if primary_team_id:
+            try:
+                primary_team_id = int(primary_team_id)
+                if primary_team_id not in team_ids:
+                    team_ids.insert(0, primary_team_id)
+            except (ValueError, TypeError) as e:
+                logger.error(f"Error convirtiendo primary_team_id a int: {e}")
+                return jsonify({
+                    'success': False,
+                    'message': 'ID de equipo principal inválido'
+                }), 400
+        
+        logger.debug(f"Equipos normalizados: {team_ids}")
 
         # Asegurar que exista al menos un equipo válido
         if not team_ids:
@@ -302,10 +324,14 @@ def register_employee():
         
     except Exception as e:
         db.session.rollback()
+        import traceback
+        error_trace = traceback.format_exc()
         logger.error(f"Error registrando empleado: {e}")
+        logger.error(f"Traceback completo: {error_trace}")
         return jsonify({
             'success': False,
-            'message': 'Error interno del servidor'
+            'message': 'Error interno del servidor',
+            'error': str(e) if app.config.get('DEBUG') else None
         }), 500
 
 @employees_bp.route('/me', methods=['GET'])
