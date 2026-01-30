@@ -86,7 +86,16 @@ const RegisterPage = () => {
         registerData.invitation_token = invitationToken
       }
       
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/a491d860-bd0b-4baf-92b3-3f62268aaf57',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RegisterPage.jsx:89',message:'Datos preparados para registro',data:{registerData,hasInvitationToken:!!invitationToken},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
+      
       const result = await registerUser(registerData)
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/a491d860-bd0b-4baf-92b3-3f62268aaf57',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RegisterPage.jsx:95',message:'Resultado del registro recibido',data:{result,success:result?.success},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
+      
       console.log('Resultado del registro:', result)
       
       if (result && result.success) {
