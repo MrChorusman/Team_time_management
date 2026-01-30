@@ -20,6 +20,7 @@ class UnifiedHolidayService:
     def __init__(self):
         self.holiday_service = HolidayService()
         self.boe_service = BOEHolidayService()
+        self.ccaa_boe_service = CCAABOEService()
     
     def refresh_all_holidays_for_year(self, year: int = None, clean_before_load: bool = True) -> Dict:
         """
