@@ -45,7 +45,7 @@ const HolidayManagement = () => {
   }
 
   const handleRefreshAll = async () => {
-    if (!confirm(`¿Recargar todos los festivos para ${year}?\n\nEsto cargará:\n- Festivos nacionales y autonómicos\n- Festivos locales desde el BOE\n\nLos duplicados se evitarán automáticamente.`)) {
+    if (!confirm(`¿Recargar todos los festivos para ${year}?\n\n⚠️ IMPORTANTE:\n- Se ELIMINARÁN todos los festivos existentes del año\n- Se cargarán nuevos desde las fuentes oficiales\n- Esto asegura que festivos que cambiaron de tipo se actualicen correctamente\n\nEsto cargará:\n- Festivos nacionales y autonómicos\n- Festivos locales desde el BOE\n- Festivos locales desde Boletines de CCAA\n\n¿Continuar?`)) {
       return
     }
 
@@ -58,7 +58,10 @@ const HolidayManagement = () => {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ year })
+        body: JSON.stringify({ 
+          year,
+          clean_before_load: true  // Siempre limpiar antes de cargar para evitar festivos obsoletos
+        })
       })
 
       const data = await response.json()
@@ -191,6 +194,11 @@ const HolidayManagement = () => {
                   {lastRefresh.timestamp.toLocaleString('es-ES')}
                 </Badge>
               </div>
+              {lastRefresh.results.cleaned > 0 && (
+                <div className="text-xs text-muted-foreground mb-2">
+                  🧹 Se eliminaron {lastRefresh.results.cleaned} festivos anteriores antes de cargar
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4 mt-2">
                 <div>
                   <div className="text-xs text-muted-foreground">Nacionales/Autonómicos</div>

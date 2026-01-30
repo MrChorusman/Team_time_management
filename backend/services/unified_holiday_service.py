@@ -21,11 +21,16 @@ class UnifiedHolidayService:
         self.holiday_service = HolidayService()
         self.boe_service = BOEHolidayService()
     
-    def refresh_all_holidays_for_year(self, year: int = None) -> Dict:
+    def refresh_all_holidays_for_year(self, year: int = None, clean_before_load: bool = True) -> Dict:
         """
         Recarga todos los festivos para un año específico:
         - Nacionales y autonómicos desde Nager.Date API
         - Locales desde BOE y Boletines de CCAA
+        
+        Args:
+            year: Año para el cual recargar festivos
+            clean_before_load: Si True, elimina festivos existentes del año antes de cargar nuevos
+                              (útil cuando festivos pueden cambiar de tipo entre años)
         
         Evita duplicados usando la lógica de deduplicación mejorada
         """
@@ -34,6 +39,7 @@ class UnifiedHolidayService:
         
         results = {
             'year': year,
+            'cleaned': 0,
             'national_regional': {
                 'loaded': 0,
                 'errors': []
@@ -48,6 +54,38 @@ class UnifiedHolidayService:
         }
         
         logger.info(f"🔄 Iniciando recarga completa de festivos para {year}")
+        
+        # Limpiar festivos existentes del año si se solicita
+        if clean_before_load:
+            logger.info(f"🧹 Limpiando festivos existentes para {year}...")
+            try:
+                start_date = date(year, 1, 1)
+                end_date = date(year, 12, 31)
+                
+                # Contar festivos que se van a eliminar
+                holidays_to_delete = Holiday.query.filter(
+                    Holiday.date >= start_date,
+                    Holiday.date <= end_date
+                ).all()
+                
+                deleted_count = len(holidays_to_delete)
+                
+                # Eliminar festivos del año
+                Holiday.query.filter(
+                    Holiday.date >= start_date,
+                    Holiday.date <= end_date
+                ).delete(synchronize_session=False)
+                
+                db.session.commit()
+                
+                results['cleaned'] = deleted_count
+                logger.info(f"✅ Eliminados {deleted_count} festivos existentes para {year}")
+                
+            except Exception as e:
+                error_msg = f"Error limpiando festivos existentes: {e}"
+                logger.error(error_msg)
+                results['errors'].append(error_msg)
+                db.session.rollback()
         
         # 1. Cargar festivos nacionales y autonómicos desde Nager.Date
         logger.info(f"📅 Cargando festivos nacionales y autonómicos para {year}...")

@@ -549,11 +549,12 @@ def refresh_all_holidays():
         
         data = request.get_json() or {}
         year = data.get('year', datetime.now().year)
+        clean_before_load = data.get('clean_before_load', True)  # Por defecto, limpiar antes de cargar
         
         from services.unified_holiday_service import UnifiedHolidayService
         unified_service = UnifiedHolidayService()
         
-        results = unified_service.refresh_all_holidays_for_year(year)
+        results = unified_service.refresh_all_holidays_for_year(year, clean_before_load=clean_before_load)
         
         # Obtener estadísticas después de la carga
         stats = unified_service.get_holiday_statistics(year)
