@@ -43,8 +43,49 @@ class Notification(db.Model):
     # Contenido de la notificación
     title = db.Column(db.String(200), nullable=False)
     message = db.Column(db.Text, nullable=False)
-    notification_type = db.Column(db.Enum(NotificationType), nullable=False)
-    priority = db.Column(db.Enum(NotificationPriority), default=NotificationPriority.MEDIUM)
+    # Usar VARCHAR en lugar de Enum para evitar problemas con tipos ENUM en PostgreSQL
+    _notification_type = db.Column('notification_type', db.String(50), nullable=False)
+    _priority = db.Column('priority', db.String(20), default='medium')
+    
+    @property
+    def notification_type(self):
+        """Convierte el string almacenado a Enum para uso en código"""
+        if self._notification_type:
+            try:
+                return NotificationType(self._notification_type)
+            except ValueError:
+                return None
+        return None
+    
+    @notification_type.setter
+    def notification_type(self, value):
+        """Convierte Enum a string para almacenamiento"""
+        if isinstance(value, NotificationType):
+            self._notification_type = value.value
+        elif isinstance(value, str):
+            self._notification_type = value
+        else:
+            self._notification_type = None
+    
+    @property
+    def priority(self):
+        """Convierte el string almacenado a Enum para uso en código"""
+        if self._priority:
+            try:
+                return NotificationPriority(self._priority)
+            except ValueError:
+                return NotificationPriority.MEDIUM
+        return NotificationPriority.MEDIUM
+    
+    @priority.setter
+    def priority(self, value):
+        """Convierte Enum a string para almacenamiento"""
+        if isinstance(value, NotificationPriority):
+            self._priority = value.value
+        elif isinstance(value, str):
+            self._priority = value
+        else:
+            self._priority = NotificationPriority.MEDIUM.value
     
     
     # Estado de la notificación
@@ -428,7 +469,7 @@ class Notification(db.Model):
             cls.send_email == True,
             cls.email_sent == False
         ).order_by(
-            cls.priority.desc(),
+            cls._priority.desc(),
             cls.created_at.asc()
         ).limit(limit).all()
     
@@ -452,47 +493,54 @@ class Notification(db.Model):
     
     def get_priority_color(self):
         """Obtiene el color asociado a la prioridad"""
+        # Manejar tanto Enum como string para compatibilidad
+        priority_value = self.priority.value if isinstance(self.priority, NotificationPriority) else self._priority
         colors = {
-            NotificationPriority.LOW: '#28a745',      # Verde
-            NotificationPriority.MEDIUM: '#ffc107',   # Amarillo
-            NotificationPriority.HIGH: '#fd7e14',     # Naranja
-            NotificationPriority.URGENT: '#dc3545'    # Rojo
+            'low': '#28a745',      # Verde
+            'medium': '#ffc107',   # Amarillo
+            'high': '#fd7e14',     # Naranja
+            'urgent': '#dc3545'    # Rojo
         }
-        return colors.get(self.priority, '#6c757d')
+        return colors.get(priority_value, '#6c757d')
     
     def get_type_icon(self):
         """Obtiene el icono asociado al tipo de notificación"""
+        # Manejar tanto Enum como string para compatibilidad
+        type_value = self.notification_type.value if isinstance(self.notification_type, NotificationType) else self._notification_type
         icons = {
-            NotificationType.EMPLOYEE_REGISTRATION: 'user-plus',
-            NotificationType.EMPLOYEE_APPROVED: 'check-circle',
-            NotificationType.EMPLOYEE_CREATED: 'user-plus',
-            NotificationType.EMPLOYEE_UPDATED: 'user-edit',
-            NotificationType.EMPLOYEE_DELETED: 'user-minus',
-            NotificationType.USER_DELETED: 'user-x',
-            NotificationType.PROJECT_CREATED: 'folder-plus',
-            NotificationType.PROJECT_UPDATED: 'folder-edit',
-            NotificationType.PROJECT_DELETED: 'folder-minus',
-            NotificationType.COMPANY_CREATED: 'building-plus',
-            NotificationType.COMPANY_UPDATED: 'building-edit',
-            NotificationType.COMPANY_DELETED: 'building-minus',
-            NotificationType.INVITATION_SENT: 'mail',
-            NotificationType.PROJECT_ASSIGNMENT: 'briefcase',
-            NotificationType.TEAM_ASSIGNMENT: 'users',
-            NotificationType.VACATION_CONFLICT: 'alert-triangle',
-            NotificationType.CALENDAR_CHANGE: 'calendar',
-            NotificationType.WEEKLY_REPORT: 'file-text',
-            NotificationType.SYSTEM_ALERT: 'bell'
+            'employee_registration': 'user-plus',
+            'employee_approved': 'check-circle',
+            'employee_created': 'user-plus',
+            'employee_updated': 'user-edit',
+            'employee_deleted': 'user-minus',
+            'user_deleted': 'user-x',
+            'project_created': 'folder-plus',
+            'project_updated': 'folder-edit',
+            'project_deleted': 'folder-minus',
+            'company_created': 'building-plus',
+            'company_updated': 'building-edit',
+            'company_deleted': 'building-minus',
+            'invitation_sent': 'mail',
+            'project_assignment': 'briefcase',
+            'team_assignment': 'users',
+            'vacation_conflict': 'alert-triangle',
+            'calendar_change': 'calendar',
+            'weekly_report': 'file-text',
+            'system_alert': 'bell'
         }
-        return icons.get(self.notification_type, 'bell')
+        return icons.get(type_value, 'bell')
     
     def to_dict(self):
         """Convierte la notificación a diccionario para JSON"""
+        # Obtener valores como strings para JSON
+        type_value = self.notification_type.value if isinstance(self.notification_type, NotificationType) else self._notification_type
+        priority_value = self.priority.value if isinstance(self.priority, NotificationPriority) else self._priority
         return {
             'id': self.id,
             'title': self.title,
             'message': self.message,
-            'notification_type': self.notification_type.value if self.notification_type else None,
-            'priority': self.priority.value if self.priority else None,
+            'notification_type': type_value,
+            'priority': priority_value,
             'priority_color': self.get_priority_color(),
             'type_icon': self.get_type_icon(),
             'data': self.data,
@@ -509,4 +557,5 @@ class Notification(db.Model):
         return f"{self.title} - {self.user.email if self.user else 'Unknown'}"
     
     def __repr__(self):
-        return f'<Notification {self.id} {self.notification_type.value if self.notification_type else "Unknown"}>'
+        type_value = self.notification_type.value if isinstance(self.notification_type, NotificationType) else self._notification_type
+        return f'<Notification {self.id} {type_value or "Unknown"}>'
