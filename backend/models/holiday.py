@@ -127,22 +127,65 @@ class Holiday(db.Model):
     
     @classmethod
     def bulk_create_holidays(cls, holidays_data):
-        """Crea múltiples festivos de forma eficiente"""
+        """
+        Crea múltiples festivos de forma eficiente
+        Evita duplicados usando múltiples criterios de comparación
+        """
         holidays_to_create = []
+        skipped_count = 0
         
         for holiday_data in holidays_data:
-            # Verificar si ya existe
+            # Verificar si ya existe usando múltiples criterios
+            # 1. Misma fecha, país, región, ciudad y nombre exacto
             existing = cls.query.filter(
                 cls.date == holiday_data['date'],
                 cls.country == holiday_data['country'],
-                cls.region == holiday_data.get('region'),
-                cls.city == holiday_data.get('city'),
+                db.or_(
+                    db.and_(
+                        cls.region == holiday_data.get('region'),
+                        cls.city == holiday_data.get('city')
+                    ),
+                    db.and_(
+                        cls.region.is_(None) if holiday_data.get('region') is None else False,
+                        cls.city.is_(None) if holiday_data.get('city') is None else False
+                    )
+                ),
                 cls.name == holiday_data['name']
             ).first()
             
-            if not existing:
-                holiday = cls(**holiday_data)
-                holidays_to_create.append(holiday)
+            if existing:
+                skipped_count += 1
+                continue
+            
+            # 2. Verificar también por source_id si existe
+            if holiday_data.get('source_id'):
+                existing_by_source = cls.query.filter(
+                    cls.source_id == holiday_data['source_id']
+                ).first()
+                
+                if existing_by_source:
+                    skipped_count += 1
+                    continue
+            
+            # 3. Para festivos locales, verificar si hay otro festivo en la misma fecha/ciudad
+            # pero con nombre diferente (podría ser el mismo festivo con nombre alternativo)
+            if holiday_data.get('holiday_type') == 'local' and holiday_data.get('city'):
+                existing_local = cls.query.filter(
+                    cls.date == holiday_data['date'],
+                    cls.country == holiday_data['country'],
+                    cls.city == holiday_data['city'],
+                    cls.holiday_type == 'local'
+                ).first()
+                
+                if existing_local:
+                    # Si ya existe un festivo local en esa fecha/ciudad, considerar duplicado
+                    # a menos que el nombre sea significativamente diferente
+                    skipped_count += 1
+                    continue
+            
+            # Si no existe, crear nuevo festivo
+            holiday = cls(**holiday_data)
+            holidays_to_create.append(holiday)
         
         if holidays_to_create:
             db.session.bulk_save_objects(holidays_to_create)

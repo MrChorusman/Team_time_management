@@ -117,32 +117,28 @@ class BOEHolidayService:
         local_holidays = []
         
         try:
-            # Buscar notas aclaratorias que mencionan festivos locales
-            # El BOE menciona festivos locales en notas como:
-            # "en El Hierro: el 24 de septiembre, festividad de Nuestra Señora de los Reyes"
-            
-            # Patrón mejorado para encontrar festivos locales individuales
-            # Captura: "en [ubicación]: el [día] de [mes], festividad de [nombre]"
-            # Usamos lookahead negativo para evitar capturar múltiples festivos
-            pattern = r'en\s+([^:]+?):\s+el\s+(\d+)\s+de\s+(\w+),\s+festividad\s+de\s+([^;]+?)(?=\s*;|\.|$)'
-            
             import re
-            matches = re.finditer(pattern, boe_text, re.IGNORECASE | re.DOTALL)
             
             month_names_es = {
                 'enero': 1, 'febrero': 2, 'marzo': 3, 'abril': 4, 'mayo': 5, 'junio': 6,
                 'julio': 7, 'agosto': 8, 'septiembre': 9, 'octubre': 10, 'noviembre': 11, 'diciembre': 12
             }
             
-            for match in matches:
+            # Patrón 1: Festivos locales de Canarias y otras islas
+            # "en El Hierro: el 24 de septiembre, festividad de Nuestra Señora de los Reyes"
+            pattern1 = r'en\s+([^:]+?):\s+el\s+(\d+)\s+de\s+(\w+),\s+festividad\s+de\s+([^;]+?)(?=\s*;|\.|$)'
+            
+            matches1 = re.finditer(pattern1, boe_text, re.IGNORECASE | re.DOTALL)
+            for match in matches1:
                 location = match.group(1).strip()
                 day = int(match.group(2))
                 month_name = match.group(3).lower().strip()
                 holiday_name = match.group(4).strip()
                 
-                # Limpiar nombre del festivo (puede tener caracteres especiales)
+                # Limpiar nombre del festivo (eliminar caracteres especiales al final)
                 holiday_name = re.sub(r'\s+', ' ', holiday_name).strip()
-                # Truncar si es muy largo (máximo 200 caracteres para la BD)
+                # Eliminar caracteres especiales al final como », ", etc.
+                holiday_name = re.sub(r'[»"»««]+$', '', holiday_name).strip()
                 if len(holiday_name) > 200:
                     holiday_name = holiday_name[:197] + '...'
                 
@@ -154,7 +150,6 @@ class BOEHolidayService:
                         logger.warning(f"Fecha inválida: {day}/{month}/{year} para {location}")
                         continue
                     
-                    # Determinar ciudad y región basándose en la ubicación
                     city = location
                     region = None
                     
@@ -168,15 +163,84 @@ class BOEHolidayService:
                     local_holidays.append({
                         'name': holiday_name,
                         'date': holiday_date.isoformat(),
-                        'city': city[:100] if city else None,  # Truncar ciudad también
-                        'region': region[:100] if region else None,  # Truncar región también
+                        'city': city[:100] if city else None,
+                        'region': region[:100] if region else None,
                         'country': 'España',
-                        'description': f'Festivo local de {location}'[:500] if location else '',  # Truncar descripción
+                        'description': f'Festivo local de {location}'[:500] if location else '',
                         'is_fixed': False
                     })
             
+            # Patrón 2: Sustituciones de festivos (ej: Arán)
+            # "En el territorio de Arán, la fiesta del día 26 de diciembre (Sant Esteve) queda sustituida por la de 17 de junio (Fiesta de Arán)"
+            pattern2 = r'En\s+el\s+territorio\s+de\s+([^,]+?),\s+la\s+fiesta\s+del\s+día\s+\d+\s+de\s+\w+\s+\([^)]+\)\s+queda\s+sustituida\s+por\s+la\s+de\s+(\d+)\s+de\s+(\w+)\s+\(([^)]+)\)'
+            
+            matches2 = re.finditer(pattern2, boe_text, re.IGNORECASE | re.DOTALL)
+            for match in matches2:
+                location = match.group(1).strip()
+                day = int(match.group(2))
+                month_name = match.group(3).lower().strip()
+                holiday_name = match.group(4).strip()
+                
+                # Limpiar nombre
+                holiday_name = re.sub(r'\s+', ' ', holiday_name).strip()
+                if len(holiday_name) > 200:
+                    holiday_name = holiday_name[:197] + '...'
+                
+                if month_name in month_names_es:
+                    month = month_names_es[month_name]
+                    try:
+                        holiday_date = date(year, month, day)
+                    except ValueError:
+                        logger.warning(f"Fecha inválida: {day}/{month}/{year} para {location}")
+                        continue
+                    
+                    city = location
+                    region = None
+                    
+                    if 'Arán' in location or 'Aran' in location:
+                        region = 'Cataluña'
+                    
+                    local_holidays.append({
+                        'name': holiday_name,
+                        'date': holiday_date.isoformat(),
+                        'city': city[:100] if city else None,
+                        'region': region[:100] if region else None,
+                        'country': 'España',
+                        'description': f'Festivo local de {location} (sustitución)'[:500],
+                        'is_fixed': False
+                    })
+            
+            # Patrón 3: Buscar referencias a Boletines Oficiales de CCAA que mencionan festivos locales
+            # Ejemplo: "BOC de 5 de mayo de 2025" o "DOGC de 6 de mayo de 2025"
+            # Estas referencias indican dónde están publicados los festivos locales completos
+            
+            boe_references_pattern = r'(BOC|DOGC|BOP|BORM|BOPA|BOPV|DOG|BOJA|BOCM|BOCYL|BOCA|BODA|BOCL|BOCM|BORM|BOP|BOPA|BOPV|DOG|BOE)\s+de\s+(\d+)\s+de\s+(\w+)\s+de\s+(\d{4})'
+            boe_refs = re.finditer(boe_references_pattern, boe_text, re.IGNORECASE)
+            
+            boe_references = []
+            for ref_match in boe_refs:
+                boe_type = ref_match.group(1).upper()
+                day = int(ref_match.group(2))
+                month_name = ref_match.group(3).lower().strip()
+                year_ref = int(ref_match.group(4))
+                
+                if month_name in month_names_es:
+                    month = month_names_es[month_name]
+                    boe_references.append({
+                        'type': boe_type,
+                        'date': date(year_ref, month, day),
+                        'year': year_ref
+                    })
+            
+            if boe_references:
+                logger.info(f"Referencias encontradas a Boletines Oficiales: {len(boe_references)}")
+                # Guardar referencias para procesamiento futuro
+                # TODO: Implementar scraping de estos boletines
+            
         except Exception as e:
             logger.error(f"Error parseando resolución del BOE: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
         
         return local_holidays
     

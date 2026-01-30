@@ -532,3 +532,70 @@ def load_local_holidays():
             'success': False,
             'message': 'Error cargando festivos locales'
         }), 500
+
+@holidays_bp.route('/refresh-all', methods=['POST'])
+@auth_required()
+def refresh_all_holidays():
+    """
+    Recarga todos los festivos (nacionales, autonómicos y locales) para un año
+    Solo administradores
+    """
+    try:
+        if not current_user.is_admin():
+            return jsonify({
+                'success': False,
+                'message': 'Solo los administradores pueden recargar festivos'
+            }), 403
+        
+        data = request.get_json() or {}
+        year = data.get('year', datetime.now().year)
+        
+        from services.unified_holiday_service import UnifiedHolidayService
+        unified_service = UnifiedHolidayService()
+        
+        results = unified_service.refresh_all_holidays_for_year(year)
+        
+        # Obtener estadísticas después de la carga
+        stats = unified_service.get_holiday_statistics(year)
+        
+        return jsonify({
+            'success': True,
+            'message': f'Recarga completada para {year}',
+            'results': results,
+            'statistics': stats
+        })
+        
+    except Exception as e:
+        logger.error(f"Error recargando festivos: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return jsonify({
+            'success': False,
+            'message': f'Error recargando festivos: {str(e)}'
+        }), 500
+
+@holidays_bp.route('/statistics', methods=['GET'])
+@auth_required()
+def get_holiday_statistics():
+    """Obtiene estadísticas de festivos para un año"""
+    try:
+        year = request.args.get('year', type=int)
+        if not year:
+            year = datetime.now().year
+        
+        from services.unified_holiday_service import UnifiedHolidayService
+        unified_service = UnifiedHolidayService()
+        
+        stats = unified_service.get_holiday_statistics(year)
+        
+        return jsonify({
+            'success': True,
+            'statistics': stats
+        })
+        
+    except Exception as e:
+        logger.error(f"Error obteniendo estadísticas: {e}")
+        return jsonify({
+            'success': False,
+            'message': 'Error obteniendo estadísticas'
+        }), 500

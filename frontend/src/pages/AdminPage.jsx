@@ -41,6 +41,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '../components/ui/dropdown-menu'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import { useToast } from '../components/ui/use-toast'
+import HolidayManagement from '../components/admin/HolidayManagement'
 
 const AdminPage = () => {
   const { user, isAdmin } = useAuth()
@@ -1152,6 +1153,9 @@ const AdminPage = () => {
 
         {/* Pestaña de Sistema */}
         <TabsContent value="system" className="space-y-6">
+          {/* Gestión de Festivos */}
+          <HolidayManagement />
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
@@ -1169,16 +1173,6 @@ const AdminPage = () => {
                 >
                   <Download className="w-4 h-4 mr-2" />
                   Crear Backup Manual
-                </Button>
-                
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start"
-                  onClick={() => handleSystemAction('sync_holidays')}
-                  disabled={loading}
-                >
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Sincronizar Festivos
                 </Button>
                 
                 <Button 
