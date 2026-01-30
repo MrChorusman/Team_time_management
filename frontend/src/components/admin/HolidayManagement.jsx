@@ -247,16 +247,12 @@ const HolidayManagement = () => {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-yellow-500 fill-yellow-500 mt-0.5 flex-shrink-0" />
-              <div className="space-y-2 flex-1">
-                <p className="font-semibold text-base">IMPORTANTE:</p>
-                <ul className="list-disc list-inside space-y-2 text-sm">
-                  <li>Se <strong>ELIMINARÁN</strong> todos los festivos existentes del año {year}</li>
-                  <li>Se cargarán nuevos desde las fuentes oficiales</li>
-                  <li>Esto asegura que festivos que cambiaron de tipo se actualicen correctamente</li>
-                </ul>
-              </div>
+            <div className="space-y-2">
+              <ul className="list-disc list-inside space-y-2 text-sm">
+                <li>Se <strong>ELIMINARÁN</strong> todos los festivos existentes del año {year}</li>
+                <li>Se cargarán nuevos desde las fuentes oficiales</li>
+                <li>Esto asegura que festivos que cambiaron de tipo se actualicen correctamente</li>
+              </ul>
             </div>
             
             <div className="pt-3 border-t">
@@ -277,7 +273,7 @@ const HolidayManagement = () => {
             </Button>
             <Button
               onClick={confirmRefreshAll}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white dark:text-white"
             >
               Aceptar y Continuar
             </Button>
