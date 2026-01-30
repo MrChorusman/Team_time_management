@@ -215,24 +215,32 @@ def register():
                 admin_users = User.query.join(User.roles).filter(Role.id == admin_role.id).all()
                 logger.debug(f"Encontrados {len(admin_users)} administradores")
                 for admin_user in admin_users:
-                    notification = Notification(
-                        user_id=admin_user.id,
-                        title="Nuevo usuario registrado",
-                        message=f"Un nuevo usuario se ha registrado: {email}",
-                        notification_type=NotificationType.SYSTEM_ALERT,
-                        priority=NotificationPriority.MEDIUM,
-                        send_email=False,
-                        created_by=new_user.id,
-                        data={
-                            'user_id': new_user.id,
-                            'user_email': email,
-                            'has_invitation': invitation is not None,
-                            'created_at': datetime.utcnow().isoformat()
-                        }
-                    )
-                    db.session.add(notification)
-                db.session.commit()
-                logger.debug(f"Notificaciones creadas exitosamente")
+                    try:
+                        notification = Notification(
+                            user_id=admin_user.id,
+                            title="Nuevo usuario registrado",
+                            message=f"Un nuevo usuario se ha registrado: {email}",
+                            notification_type=NotificationType.SYSTEM_ALERT,
+                            priority=NotificationPriority.MEDIUM,
+                            send_email=False,
+                            created_by=new_user.id,
+                            data={
+                                'user_id': new_user.id,
+                                'user_email': email,
+                                'has_invitation': invitation is not None,
+                                'created_at': datetime.utcnow().isoformat()
+                            }
+                        )
+                        db.session.add(notification)
+                    except Exception as notif_create_error:
+                        logger.error(f"Error creando notificación individual (no crítico): {notif_create_error}")
+                        continue
+                try:
+                    db.session.commit()
+                    logger.debug(f"Notificaciones creadas exitosamente")
+                except Exception as commit_error:
+                    logger.error(f"Error haciendo commit de notificaciones (no crítico): {commit_error}")
+                    db.session.rollback()
         except Exception as notif_error:
             logger.error(f"Error creando notificaciones (no crítico): {notif_error}")
             db.session.rollback()
