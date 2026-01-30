@@ -65,8 +65,17 @@ def create_project():
         if not data.get(field):
             return jsonify({'success': False, 'message': f'Campo requerido: {field}'}), 400
 
+    # Verificar si el código ya existe antes de intentar crear
+    code = data['code'].strip()
+    existing_project = Project.query.filter_by(code=code, active=True).first()
+    if existing_project:
+        return jsonify({
+            'success': False, 
+            'message': f'Ya existe un proyecto activo con el código "{code}". Si deseas editarlo, utiliza la opción de edición.'
+        }), 409
+
     project = Project(
-        code=data['code'].strip(),
+        code=code,
         name=data['name'].strip(),
         description=data.get('description'),
         client_name=data.get('client_name'),
@@ -89,9 +98,13 @@ def create_project():
     db.session.add(project)
     try:
         db.session.commit()
-    except IntegrityError:
+    except IntegrityError as e:
         db.session.rollback()
-        return jsonify({'success': False, 'message': 'El código del proyecto ya existe'}), 409
+        logger.error(f"Error de integridad al crear proyecto: {e}")
+        return jsonify({
+            'success': False, 
+            'message': f'El código del proyecto "{code}" ya existe en la base de datos.'
+        }), 409
 
     # Notificar sobre la creación del proyecto
     try:
