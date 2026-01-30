@@ -76,12 +76,16 @@ def create_app(config_name=None):
          methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
     
     # Manejar preflight OPTIONS explícitamente antes de cualquier otro middleware
+    # Esto evita que Render redirija las peticiones OPTIONS antes de que Flask pueda responder
     @app.before_request
     def handle_preflight():
-        from flask import request, jsonify
+        from flask import request, Response
         if request.method == 'OPTIONS':
-            response = jsonify({})
-            response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin', '*'))
+            # Crear respuesta vacía con headers CORS
+            response = Response()
+            origin = request.headers.get('Origin')
+            if origin and origin in app.config['CORS_ORIGINS']:
+                response.headers.add('Access-Control-Allow-Origin', origin)
             response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
             response.headers.add('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
             response.headers.add('Access-Control-Allow-Credentials', 'true')
