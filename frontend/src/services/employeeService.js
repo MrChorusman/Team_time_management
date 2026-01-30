@@ -10,10 +10,22 @@ class EmployeeService {
    * @returns {Promise<Object>} Respuesta del servidor
    */
   async createEmployee(employeeData) {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/a491d860-bd0b-4baf-92b3-3f62268aaf57',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'employeeService.js:12',message:'createEmployee llamado',data:{employeeData},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
     try {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/a491d860-bd0b-4baf-92b3-3f62268aaf57',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'employeeService.js:15',message:'Antes de llamar API',data:{url:'/employees/register',payload:employeeData},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
       const response = await apiClient.post('/employees/register', employeeData)
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/a491d860-bd0b-4baf-92b3-3f62268aaf57',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'employeeService.js:17',message:'Respuesta exitosa recibida',data:{status:response.status,data:response.data},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
       return response.data
     } catch (error) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/a491d860-bd0b-4baf-92b3-3f62268aaf57',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'employeeService.js:20',message:'Error capturado',data:{error:error.message,response:error.response?.data,status:error.response?.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+      // #endregion
       console.error('Error creando empleado:', error)
       throw error
     }

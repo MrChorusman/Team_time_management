@@ -295,6 +295,10 @@ const EmployeeRegisterPage = () => {
 
       employeeData.team_ids = normalizedTeamIds.map((id) => parseInt(id, 10))
 
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/a491d860-bd0b-4baf-92b3-3f62268aaf57',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'EmployeeRegisterPage.jsx:296',message:'Datos preparados para envío',data:{employeeData,normalizedTeamIds,effectivePrimaryTeamId,primaryTeamId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
+
       // Llamada real al API para crear el empleado
       const response = await employeeService.createEmployee(employeeData)
       
