@@ -193,7 +193,12 @@ def register():
         )
         
         logger.debug(f"Usuario creado en memoria, agregando rol...")
-        new_user.roles.append(viewer_role)
+        try:
+            new_user.roles.append(viewer_role)
+            logger.debug(f"Rol agregado exitosamente")
+        except Exception as role_error:
+            logger.error(f"Error agregando rol: {role_error}")
+            raise
         
         # Si hay invitación válida, confirmar email automáticamente
         if invitation and not requires_email_verification:
@@ -201,10 +206,21 @@ def register():
             logger.info(f"✅ Email confirmado automáticamente por invitación: {email}")
         
         logger.debug(f"Agregando usuario a la sesión de BD...")
-        db.session.add(new_user)
+        try:
+            db.session.add(new_user)
+            logger.debug(f"Usuario agregado a la sesión")
+        except Exception as add_error:
+            logger.error(f"Error agregando usuario a la sesión: {add_error}")
+            raise
+        
         logger.debug(f"Haciendo commit de usuario...")
-        db.session.commit()
-        logger.info(f"Usuario creado exitosamente en BD: {email} (ID: {new_user.id})")
+        try:
+            db.session.commit()
+            logger.info(f"Usuario creado exitosamente en BD: {email} (ID: {new_user.id})")
+        except Exception as commit_error:
+            logger.error(f"Error haciendo commit: {commit_error}")
+            db.session.rollback()
+            raise
         
         # Crear notificación para administradores sobre nuevo usuario registrado
         logger.debug(f"Creando notificaciones para administradores...")
