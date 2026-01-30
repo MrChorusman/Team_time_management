@@ -223,44 +223,10 @@ def register():
             raise
         
         # Crear notificación para administradores sobre nuevo usuario registrado
-        # NOTA: Esto es opcional y no debe bloquear el registro si falla
-        logger.debug(f"Intentando crear notificaciones para administradores...")
-        try:
-            from models.notification import NotificationType, NotificationPriority
-            admin_role = Role.query.filter_by(name='admin').first()
-            if admin_role:
-                admin_users = User.query.join(User.roles).filter(Role.id == admin_role.id).all()
-                logger.debug(f"Encontrados {len(admin_users)} administradores")
-                if len(admin_users) > 0:
-                    # Intentar crear notificaciones, pero si falla, continuar
-                    try:
-                        for admin_user in admin_users:
-                            notification = Notification(
-                                user_id=admin_user.id,
-                                title="Nuevo usuario registrado",
-                                message=f"Un nuevo usuario se ha registrado: {email}",
-                                notification_type=NotificationType.SYSTEM_ALERT,
-                                priority=NotificationPriority.MEDIUM,
-                                send_email=False,
-                                created_by=new_user.id,
-                                data={
-                                    'user_id': new_user.id,
-                                    'user_email': email,
-                                    'has_invitation': invitation is not None,
-                                    'created_at': datetime.utcnow().isoformat()
-                                }
-                            )
-                            db.session.add(notification)
-                        db.session.commit()
-                        logger.debug(f"Notificaciones creadas exitosamente")
-                    except Exception as notif_db_error:
-                        logger.warning(f"No se pudieron crear notificaciones (tipo enum puede no existir): {notif_db_error}")
-                        db.session.rollback()
-                        # Continuar sin notificaciones - el registro es exitoso
-        except Exception as notif_error:
-            logger.warning(f"Error creando notificaciones (no crítico, registro continúa): {notif_error}")
-            # No hacer rollback aquí porque el usuario ya fue creado exitosamente
-            # No fallar el registro si las notificaciones fallan
+        # NOTA: Temporalmente deshabilitado porque el tipo enum 'notificationtype' no existe en la BD
+        # TODO: Crear migración para crear el tipo enum o cambiar el modelo a usar VARCHAR
+        # Por ahora, el registro funciona sin notificaciones
+        logger.debug(f"Creación de notificaciones deshabilitada temporalmente (tipo enum no existe en BD)")
         
         # Solo generar token de verificación si NO hay invitación
         email_sent = False
