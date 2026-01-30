@@ -165,21 +165,34 @@ def register():
             logger.info(f"Registro con invitación válida: {email} (token: {invitation_token})")
         
         # Crear nuevo usuario
+        logger.debug(f"Buscando rol 'viewer'...")
         viewer_role = Role.query.filter_by(name='viewer').first()
         if not viewer_role:
+            logger.error("Rol 'viewer' no encontrado en la base de datos")
             return jsonify({
                 'success': False,
                 'message': 'Error de configuración del sistema'
             }), 500
         
+        logger.debug(f"Rol 'viewer' encontrado: {viewer_role.id}")
+        logger.debug(f"Creando usuario con email: {email}")
+        
+        try:
+            hashed_password = hash_password(password)
+            logger.debug(f"Contraseña hasheada correctamente")
+        except Exception as hash_error:
+            logger.error(f"Error hasheando contraseña: {hash_error}")
+            raise
+        
         new_user = User(
             email=email,
-            password=hash_password(password),
+            password=hashed_password,
             active=True,
             first_name=data.get('first_name', ''),
             last_name=data.get('last_name', '')
         )
         
+        logger.debug(f"Usuario creado en memoria, agregando rol...")
         new_user.roles.append(viewer_role)
         
         # Si hay invitación válida, confirmar email automáticamente
@@ -187,32 +200,43 @@ def register():
             new_user.confirmed_at = datetime.utcnow()
             logger.info(f"✅ Email confirmado automáticamente por invitación: {email}")
         
+        logger.debug(f"Agregando usuario a la sesión de BD...")
         db.session.add(new_user)
+        logger.debug(f"Haciendo commit de usuario...")
         db.session.commit()
+        logger.info(f"Usuario creado exitosamente en BD: {email} (ID: {new_user.id})")
         
         # Crear notificación para administradores sobre nuevo usuario registrado
-        from models.notification import NotificationType, NotificationPriority
-        admin_role = Role.query.filter_by(name='admin').first()
-        if admin_role:
-            admin_users = User.query.join(User.roles).filter(Role.id == admin_role.id).all()
-            for admin_user in admin_users:
-                notification = Notification(
-                    user_id=admin_user.id,
-                    title="Nuevo usuario registrado",
-                    message=f"Un nuevo usuario se ha registrado: {email}",
-                    notification_type=NotificationType.SYSTEM_ALERT,
-                    priority=NotificationPriority.MEDIUM,
-                    send_email=False,
-                    created_by=new_user.id,
-                    data={
-                        'user_id': new_user.id,
-                        'user_email': email,
-                        'has_invitation': invitation is not None,
-                        'created_at': datetime.utcnow().isoformat()
-                    }
-                )
-                db.session.add(notification)
-            db.session.commit()
+        logger.debug(f"Creando notificaciones para administradores...")
+        try:
+            from models.notification import NotificationType, NotificationPriority
+            admin_role = Role.query.filter_by(name='admin').first()
+            if admin_role:
+                admin_users = User.query.join(User.roles).filter(Role.id == admin_role.id).all()
+                logger.debug(f"Encontrados {len(admin_users)} administradores")
+                for admin_user in admin_users:
+                    notification = Notification(
+                        user_id=admin_user.id,
+                        title="Nuevo usuario registrado",
+                        message=f"Un nuevo usuario se ha registrado: {email}",
+                        notification_type=NotificationType.SYSTEM_ALERT,
+                        priority=NotificationPriority.MEDIUM,
+                        send_email=False,
+                        created_by=new_user.id,
+                        data={
+                            'user_id': new_user.id,
+                            'user_email': email,
+                            'has_invitation': invitation is not None,
+                            'created_at': datetime.utcnow().isoformat()
+                        }
+                    )
+                    db.session.add(notification)
+                db.session.commit()
+                logger.debug(f"Notificaciones creadas exitosamente")
+        except Exception as notif_error:
+            logger.error(f"Error creando notificaciones (no crítico): {notif_error}")
+            db.session.rollback()
+            # No fallar el registro si las notificaciones fallan
         
         # Solo generar token de verificación si NO hay invitación
         email_sent = False
