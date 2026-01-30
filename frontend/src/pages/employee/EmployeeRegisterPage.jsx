@@ -44,21 +44,17 @@ const EmployeeRegisterPage = () => {
   const [tokenValidating, setTokenValidating] = useState(false)
   const [tokenError, setTokenError] = useState(null)
 
-  const toggleTeamSelection = (teamId) => {
-    setSelectedTeamIds((prev) => {
-      if (prev.includes(teamId)) {
-        const updated = prev.filter(id => id !== teamId)
-        if (primaryTeamId === teamId) {
-          setPrimaryTeamId(updated[0] || null)
-        }
-        return updated
-      }
-      const updated = [...prev, teamId]
-      if (!primaryTeamId) {
-        setPrimaryTeamId(teamId)
-      }
-      return updated
-    })
+  // Función para manejar cambios en la selección de equipos desde MultiSelect
+  const handleTeamSelectionChange = (selectedIds) => {
+    setSelectedTeamIds(selectedIds)
+    // Si el equipo principal ya no está seleccionado, cambiarlo al primero disponible
+    if (primaryTeamId && !selectedIds.includes(primaryTeamId)) {
+      setPrimaryTeamId(selectedIds[0] || null)
+    }
+    // Si no hay equipo principal y hay equipos seleccionados, establecer el primero como principal
+    if (!primaryTeamId && selectedIds.length > 0) {
+      setPrimaryTeamId(selectedIds[0])
+    }
   }
   
   // Estados para países, regiones y ciudades desde BD
