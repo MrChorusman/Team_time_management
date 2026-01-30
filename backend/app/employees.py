@@ -331,7 +331,7 @@ def register_employee():
         return jsonify({
             'success': False,
             'message': 'Error interno del servidor',
-            'error': str(e) if app.config.get('DEBUG') else None
+            'error': str(e) if current_app.config.get('DEBUG') else None
         }), 500
 
 @employees_bp.route('/me', methods=['GET'])
