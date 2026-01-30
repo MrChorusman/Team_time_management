@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { RefreshCw, Calendar, AlertCircle, CheckCircle, Loader2, Info } from 'lucide-react'
+import { RefreshCw, Calendar, AlertCircle, CheckCircle, Loader2, Info, AlertTriangle } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Alert, AlertDescription } from '../ui/alert'
@@ -7,6 +7,7 @@ import { useToast } from '../ui/use-toast'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 import { Badge } from '../ui/badge'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog'
 
 const HolidayManagement = () => {
   const { toast } = useToast()
@@ -15,6 +16,7 @@ const HolidayManagement = () => {
   const [statistics, setStatistics] = useState(null)
   const [loadingStats, setLoadingStats] = useState(true)
   const [lastRefresh, setLastRefresh] = useState(null)
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
 
   useEffect(() => {
     loadStatistics()
@@ -44,11 +46,12 @@ const HolidayManagement = () => {
     }
   }
 
-  const handleRefreshAll = async () => {
-    if (!confirm(`¿Recargar todos los festivos para ${year}?\n\n⚠️ IMPORTANTE:\n- Se ELIMINARÁN todos los festivos existentes del año\n- Se cargarán nuevos desde las fuentes oficiales\n- Esto asegura que festivos que cambiaron de tipo se actualicen correctamente\n\nEsto cargará:\n- Festivos nacionales y autonómicos\n- Festivos locales desde el BOE\n- Festivos locales desde Boletines de CCAA\n\n¿Continuar?`)) {
-      return
-    }
+  const handleRefreshAll = () => {
+    setShowConfirmDialog(true)
+  }
 
+  const confirmRefreshAll = async () => {
+    setShowConfirmDialog(false)
     setLoading(true)
     try {
       const token = localStorage.getItem('token')
@@ -233,6 +236,54 @@ const HolidayManagement = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Diálogo de confirmación */}
+      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <DialogContent className="max-w-3xl max-h-[85vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <AlertTriangle className="w-6 h-6 text-yellow-500 fill-yellow-500" />
+              Aviso Importante
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-yellow-500 fill-yellow-500 mt-0.5 flex-shrink-0" />
+              <div className="space-y-2 flex-1">
+                <p className="font-semibold text-base">IMPORTANTE:</p>
+                <ul className="list-disc list-inside space-y-2 text-sm">
+                  <li>Se <strong>ELIMINARÁN</strong> todos los festivos existentes del año {year}</li>
+                  <li>Se cargarán nuevos desde las fuentes oficiales</li>
+                  <li>Esto asegura que festivos que cambiaron de tipo se actualicen correctamente</li>
+                </ul>
+              </div>
+            </div>
+            
+            <div className="pt-3 border-t">
+              <p className="font-medium mb-2 text-sm">Esto cargará:</p>
+              <ul className="list-disc list-inside space-y-1 text-sm ml-2">
+                <li>Festivos nacionales y autonómicos</li>
+                <li>Festivos locales desde el BOE</li>
+                <li>Festivos locales desde Boletines de CCAA</li>
+              </ul>
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setShowConfirmDialog(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={confirmRefreshAll}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              Aceptar y Continuar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

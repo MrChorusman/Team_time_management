@@ -22,6 +22,7 @@ import { Textarea } from '../../components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card'
 import { Alert, AlertDescription } from '../../components/ui/alert'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
+import { MultiSelect } from '../../components/ui/multi-select'
 import employeeService from '../../services/employeeService'
 import teamService from '../../services/teamService'
 
@@ -527,35 +528,26 @@ const EmployeeRegisterPage = () => {
                       Selecciona uno o varios equipos a los que perteneces
                     </p>
                   </div>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {selectedTeamIds.length} seleccionados
-                  </span>
+                  {selectedTeamIds.length > 0 && (
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {selectedTeamIds.length} seleccionado{selectedTeamIds.length !== 1 ? 's' : ''}
+                    </span>
+                  )}
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {teams.map((team) => {
-                    const selected = selectedTeamIds.includes(team.id)
-                    return (
-                      <button
-                        key={team.id}
-                        type="button"
-                        disabled={loadingTeams}
-                        onClick={() => toggleTeamSelection(team.id)}
-                        className={`flex items-center justify-between border rounded-lg px-3 py-2 text-left transition ${
-                          selected
-                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-200'
-                            : 'border-gray-200 hover:border-blue-200 dark:border-gray-700 dark:hover:border-blue-800'
-                        }`}
-                      >
-                        <span className="text-sm font-medium">{team.name}</span>
-                        {selected && (
-                          <span className="text-xs font-semibold text-blue-600 dark:text-blue-300">
-                            Seleccionado
-                          </span>
-                        )}
-                      </button>
-                    )
-                  })}
-                </div>
+                <MultiSelect
+                  options={teams.map(team => ({ id: team.id, name: team.name }))}
+                  selected={selectedTeamIds}
+                  onSelect={handleTeamSelectionChange}
+                  placeholder="Selecciona equipos..."
+                  searchPlaceholder="Buscar equipos..."
+                  emptyText="No se encontraron equipos."
+                  disabled={loadingTeams}
+                />
+                {selectedTeamIds.length === 0 && (
+                  <p className="text-xs text-red-600 dark:text-red-400">
+                    Debes seleccionar al menos un equipo
+                  </p>
+                )}
                 {selectedTeamIds.length > 0 && (
                   <div className="pt-2 space-y-2">
                     <Label>Equipo principal</Label>
